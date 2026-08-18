@@ -22,6 +22,95 @@ namespace DATN_BE.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.Permission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Permissions", (string)null);
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.Role", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<bool>("IsSystemRole")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Roles", (string)null);
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.RolePermission", b =>
+                {
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("RoleId", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("RolePermissions", (string)null);
+                });
+
             modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -76,6 +165,80 @@ namespace DATN_BE.Migrations
                         .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("AssignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.Notifications.Domain.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("EntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("EntityType")
+                        .HasMaxLength(50)
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ReceiverId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SenderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex("ReceiverId", "IsRead", "CreatedAt");
+
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("DATN_BE.Modules.ProjectManagement.Domain.Entities.Board", b =>
@@ -223,14 +386,86 @@ namespace DATN_BE.Migrations
                     b.Property<DateTimeOffset>("JoinedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("RoleId")
+                    b.Property<Guid?>("RoleId")
                         .HasColumnType("uuid");
 
                     b.HasKey("ProjectId", "UserId");
 
+                    b.HasIndex("RoleId");
+
                     b.HasIndex("UserId");
 
                     b.ToTable("ProjectMembers", (string)null);
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.ProjectManagement.Domain.Entities.Sprint", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Goal")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("Sprints", (string)null);
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.ProjectManagement.Domain.Entities.UserBoardPreference", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BoardId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsPinned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset>("LastViewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId", "BoardId");
+
+                    b.HasIndex("BoardId");
+
+                    b.ToTable("UserBoardPreferences", (string)null);
                 });
 
             modelBuilder.Entity("DATN_BE.Modules.Security.Domain.Entities.ActivityLog", b =>
@@ -345,6 +580,8 @@ namespace DATN_BE.Migrations
                     b.HasIndex("AssigneeId");
 
                     b.HasIndex("ReporterId");
+
+                    b.HasIndex("SprintId");
 
                     b.HasIndex("ColumnId", "Position")
                         .IsUnique()
@@ -488,9 +725,67 @@ namespace DATN_BE.Migrations
 
                     b.HasKey("WorkspaceId", "UserId");
 
+                    b.HasIndex("RoleId");
+
                     b.HasIndex("UserId");
 
                     b.ToTable("WorkspaceMembers", (string)null);
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.RolePermission", b =>
+                {
+                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.Permission", "Permission")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.Role", "Role")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.UserRole", b =>
+                {
+                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.Notifications.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "Receiver")
+                        .WithMany("ReceivedNotifications")
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "Sender")
+                        .WithMany("SentNotifications")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("DATN_BE.Modules.ProjectManagement.Domain.Entities.Board", b =>
@@ -542,6 +837,11 @@ namespace DATN_BE.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "User")
                         .WithMany("ProjectMembers")
                         .HasForeignKey("UserId")
@@ -549,6 +849,38 @@ namespace DATN_BE.Migrations
                         .IsRequired();
 
                     b.Navigation("Project");
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.ProjectManagement.Domain.Entities.Sprint", b =>
+                {
+                    b.HasOne("DATN_BE.Modules.ProjectManagement.Domain.Entities.Project", "Project")
+                        .WithMany("Sprints")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.ProjectManagement.Domain.Entities.UserBoardPreference", b =>
+                {
+                    b.HasOne("DATN_BE.Modules.ProjectManagement.Domain.Entities.Board", "Board")
+                        .WithMany("UserBoardPreferences")
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "User")
+                        .WithMany("UserBoardPreferences")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Board");
 
                     b.Navigation("User");
                 });
@@ -583,11 +915,18 @@ namespace DATN_BE.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("DATN_BE.Modules.ProjectManagement.Domain.Entities.Sprint", "Sprint")
+                        .WithMany("Cards")
+                        .HasForeignKey("SprintId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Assignee");
 
                     b.Navigation("Column");
 
                     b.Navigation("Reporter");
+
+                    b.Navigation("Sprint");
                 });
 
             modelBuilder.Entity("DATN_BE.Modules.Task.Domain.Entities.CardComment", b =>
@@ -641,6 +980,12 @@ namespace DATN_BE.Migrations
 
             modelBuilder.Entity("DATN_BE.Modules.Workspaces.Domain.Entities.WorkspaceMember", b =>
                 {
+                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "User")
                         .WithMany("WorkspaceMembers")
                         .HasForeignKey("UserId")
@@ -653,9 +998,23 @@ namespace DATN_BE.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Role");
+
                     b.Navigation("User");
 
                     b.Navigation("Workspace");
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.Permission", b =>
+                {
+                    b.Navigation("RolePermissions");
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.Role", b =>
+                {
+                    b.Navigation("RolePermissions");
+
+                    b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.User", b =>
@@ -668,11 +1027,19 @@ namespace DATN_BE.Migrations
 
                     b.Navigation("ProjectMembers");
 
+                    b.Navigation("ReceivedNotifications");
+
                     b.Navigation("ReportedCards");
+
+                    b.Navigation("SentNotifications");
 
                     b.Navigation("UserActivityLogs");
 
+                    b.Navigation("UserBoardPreferences");
+
                     b.Navigation("UserCardComments");
+
+                    b.Navigation("UserRoles");
 
                     b.Navigation("WorkspaceMembers");
                 });
@@ -680,6 +1047,8 @@ namespace DATN_BE.Migrations
             modelBuilder.Entity("DATN_BE.Modules.ProjectManagement.Domain.Entities.Board", b =>
                 {
                     b.Navigation("Columns");
+
+                    b.Navigation("UserBoardPreferences");
                 });
 
             modelBuilder.Entity("DATN_BE.Modules.ProjectManagement.Domain.Entities.Column", b =>
@@ -692,6 +1061,13 @@ namespace DATN_BE.Migrations
                     b.Navigation("Boards");
 
                     b.Navigation("ProjectMembers");
+
+                    b.Navigation("Sprints");
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.ProjectManagement.Domain.Entities.Sprint", b =>
+                {
+                    b.Navigation("Cards");
                 });
 
             modelBuilder.Entity("DATN_BE.Modules.Task.Domain.Entities.Card", b =>

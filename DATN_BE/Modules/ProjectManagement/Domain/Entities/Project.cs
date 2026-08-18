@@ -18,5 +18,6 @@ namespace DATN_BE.Modules.ProjectManagement.Domain.Entities
 
         public ICollection<Board> Boards { get; set; } = new List<Board>();
         public ICollection<ProjectMember> ProjectMembers { get; set; } = new List<ProjectMember>();
+        public ICollection<Sprint> Sprints { get; set; } = new List<Sprint>();
     }
 }

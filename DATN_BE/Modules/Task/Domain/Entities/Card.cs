@@ -32,6 +32,7 @@ namespace DATN_BE.Modules.Task.Domain.Entities
 
         // Thuộc Sprint nào (nếu null -> nằm trong Backlog)
         public Guid? SprintId { get; set; }
+        public Sprint? Sprint { get; set; }
 
         // Soft Delete
         public bool IsDeleted { get; set; } = false;

@@ -38,6 +38,12 @@ namespace DATN_BE.Modules.Task.Infrastructure.Configurations
                 .HasForeignKey(c => c.ReporterId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Quan hệ Sprint (1 Sprint có nhiều Card)
+            builder.HasOne(c => c.Sprint)
+                .WithMany(s => s.Cards)
+                .HasForeignKey(c => c.SprintId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             // Partial Unique Index: Position không trùng nhau trong CÙNG 1 Column
             builder.HasIndex(c => new { c.ColumnId, c.Position })
                 .IsUnique()

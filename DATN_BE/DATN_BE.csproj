@@ -23,6 +23,8 @@
   <ItemGroup>
     <Folder Include="Controllers\" />
     <Folder Include="Modules\ProjectManagement\Domain\Enum\" />
+    <Folder Include="Modules\Security\Domain\Entities\" />
+    <Folder Include="Modules\Security\Infrastructure\Configuration\" />
     <Folder Include="Modules\Task\Domain\Enum\" />
     <Folder Include="Modules\Task\Infrastructure\Configurations\" />
   </ItemGroup>
