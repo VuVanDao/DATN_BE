@@ -1,0 +1,51 @@
+# Build results / Output directories
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+out/
+
+# Visual Studio / IDE temporary files & settings
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# User-specific project files
+*.csproj.user
+
+# Publish output / Artifacts
+publish/
+*.pubxml.user
+
+# NuGet Packages & cache
+*.nupkg
+**/packages/
+project.lock.json
+project.fragment.lock.json
+*.nuget.props
+*.nuget.targets
+
+# Environment secrets / Local overrides
+appsettings.Local.json
+appsettings.Development.local.json
+appsettings.Secrets.json
+*.env
+secrets.json
+
+# Logs & Temporary files
+*.log
+[Tt]emp/
+[Ll]ogs/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
