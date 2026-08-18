@@ -4,13 +4,14 @@ using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.Security.Domain.Entities;
 using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Modules.Workspaces.Domain.Entities;
+using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Domain;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace DATN_BE.Shared.Infrastructure.Persistence
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : DbContext, IApplicationDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
