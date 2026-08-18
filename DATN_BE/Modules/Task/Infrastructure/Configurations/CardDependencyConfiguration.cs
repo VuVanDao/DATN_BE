@@ -11,7 +11,9 @@ namespace DATN_BE.Modules.Task.Infrastructure.Configurations
             builder.ToTable("CardDependencies");
             builder.HasKey(cd => cd.Id);
 
-            builder.Property(cd => cd.DependencyType).IsRequired().HasMaxLength(30);
+            builder.Property(cd => cd.DependencyType)
+                .HasConversion<string>()
+                .HasMaxLength(30);
 
             // Quan hệ Thẻ bị chặn
             builder.HasOne(cd => cd.BlockedCard)

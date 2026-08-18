@@ -12,7 +12,9 @@ namespace DATN_BE.Modules.ProjectManagement.Infrastructure.Configurations
             builder.HasKey(b => b.Id);
             builder.Property(b => b.Title).IsRequired().HasMaxLength(100);
             builder.Property(b => b.Slug).IsRequired().HasMaxLength(120);
-            builder.Property(b => b.Type).IsRequired().HasMaxLength(20);
+            builder.Property(b => b.Type)
+                .HasConversion<string>() // Lưu thành chữ trong DB
+                .HasMaxLength(20);
             builder.HasOne(b => b.Project).WithMany(p => p.Boards)
                 .HasForeignKey(p => p.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);

@@ -1,5 +1,6 @@
 using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
+using DATN_BE.Modules.Task.Domain.Enum;
 using DATN_BE.Shared.Domain;
 
 namespace DATN_BE.Modules.Task.Domain.Entities
@@ -10,8 +11,8 @@ namespace DATN_BE.Modules.Task.Domain.Entities
         public string? Description { get; set; }
         public int Position { get; set; } // Thứ tự từ trên xuống trong Column
         public string? CoverUrl { get; set; }
-        public string Type { get; set; } = "Task"; // Task, Bug, Story, Epic
-        public string Priority { get; set; } = "Medium"; // Low, Medium, High, Urgent
+        public CardType Type { get; set; } = CardType.Task; // Task, Bug, Story, Epic
+        public CardPriority Priority { get; set; } = CardPriority.Low; // Low, Medium, High, Urgent
         public int? StoryPoints { get; set; }
         public DateTimeOffset? StartDate { get; set; }
         public DateTimeOffset? DueDate { get; set; }

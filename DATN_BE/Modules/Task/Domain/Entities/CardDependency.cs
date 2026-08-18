@@ -1,5 +1,6 @@
 ﻿using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
+using DATN_BE.Modules.Task.Domain.Enum;
 using DATN_BE.Shared.Domain;
 
 namespace DATN_BE.Modules.Task.Domain.Entities
@@ -12,6 +13,6 @@ namespace DATN_BE.Modules.Task.Domain.Entities
         // Thẻ gây chặn (Blocking Card - cần làm xong trước)
         public Guid BlockingCardId { get; set; }
         public Card BlockingCard { get; set; } = null!;
-        public string DependencyType { get; set; } = "Blocks"; // Blocks, IsBlockedBy, RelatedTo
+        public DependencyType DependencyType { get; set; } = DependencyType.Blocks; // Blocks, IsBlockedBy, RelatedTo
     }
 }

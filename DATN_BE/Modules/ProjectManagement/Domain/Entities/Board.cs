@@ -1,3 +1,4 @@
+using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Shared.Domain;
 
 namespace DATN_BE.Modules.ProjectManagement.Domain.Entities
@@ -6,7 +7,7 @@ namespace DATN_BE.Modules.ProjectManagement.Domain.Entities
     {
         public string Title { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
-        public string Type { get; set; } = "Kanban";
+        public BoardType Type { get; set; } = BoardType.Kanban;
         public Guid ProjectId { get; set; }
         public Project Project { get; set; } = null!;
         public bool IsDeleted { get; set; } = false;
