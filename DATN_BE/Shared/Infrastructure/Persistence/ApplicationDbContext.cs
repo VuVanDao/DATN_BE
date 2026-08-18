@@ -1,5 +1,6 @@
 using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
+using DATN_BE.Modules.Security.Domain.Entities;
 using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Domain;
@@ -24,6 +25,7 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
         public DbSet<Card> Cards => Set<Card>();
         public DbSet<CardComment> CardComments => Set<CardComment>();
         public DbSet<CardDependency> CardDependencies => Set<CardDependency>();
+        public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

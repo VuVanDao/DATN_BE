@@ -233,6 +233,46 @@ namespace DATN_BE.Migrations
                     b.ToTable("ProjectMembers", (string)null);
                 });
 
+            modelBuilder.Entity("DATN_BE.Modules.Security.Domain.Entities.ActivityLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActionType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DetailsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "EntityId");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("ActivityLogs", (string)null);
+                });
+
             modelBuilder.Entity("DATN_BE.Modules.Task.Domain.Entities.Card", b =>
                 {
                     b.Property<Guid>("Id")
@@ -513,10 +553,21 @@ namespace DATN_BE.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("DATN_BE.Modules.Security.Domain.Entities.ActivityLog", b =>
+                {
+                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "User")
+                        .WithMany("UserActivityLogs")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DATN_BE.Modules.Task.Domain.Entities.Card", b =>
                 {
                     b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "Assignee")
-                        .WithMany("AssignedCard")
+                        .WithMany("AssignedCards")
                         .HasForeignKey("AssigneeId")
                         .OnDelete(DeleteBehavior.SetNull);
 
@@ -527,7 +578,7 @@ namespace DATN_BE.Migrations
                         .IsRequired();
 
                     b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "Reporter")
-                        .WithMany("ReportedCard")
+                        .WithMany("ReportedCards")
                         .HasForeignKey("ReporterId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -609,7 +660,7 @@ namespace DATN_BE.Migrations
 
             modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.User", b =>
                 {
-                    b.Navigation("AssignedCard");
+                    b.Navigation("AssignedCards");
 
                     b.Navigation("OwnedProjects");
 
@@ -617,7 +668,9 @@ namespace DATN_BE.Migrations
 
                     b.Navigation("ProjectMembers");
 
-                    b.Navigation("ReportedCard");
+                    b.Navigation("ReportedCards");
+
+                    b.Navigation("UserActivityLogs");
 
                     b.Navigation("UserCardComments");
 

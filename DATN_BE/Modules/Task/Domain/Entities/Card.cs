@@ -38,8 +38,8 @@ namespace DATN_BE.Modules.Task.Domain.Entities
         public DateTimeOffset? DeletedAt { get; set; }
 
         // Navigation Properties
-        public ICollection<CardComment> Comments { get; set; } 
-        public ICollection<CardDependency> BlockedByDependencies { get; set; } 
-        public ICollection<CardDependency> BlockingDependencies { get; set; } 
+        public ICollection<CardComment> Comments { get; set; } = new List<CardComment>();
+        public ICollection<CardDependency> BlockedByDependencies { get; set; } = new List<CardDependency>();
+        public ICollection<CardDependency> BlockingDependencies { get; set; } = new List<CardDependency>();
     }
 }

@@ -28,13 +28,13 @@ namespace DATN_BE.Modules.Task.Infrastructure.Configurations
 
             // Quan hệ Assignee (1 User được giao nhiều Card)
             builder.HasOne(c => c.Assignee)
-                .WithMany(u => u.AssignedCard)
+                .WithMany(u => u.AssignedCards)
                 .HasForeignKey(c => c.AssigneeId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             // Quan hệ Reporter (1 User tạo nhiều Card)
             builder.HasOne(c => c.Reporter)
-                .WithMany(u => u.ReportedCard)
+                .WithMany(u => u.ReportedCards)
                 .HasForeignKey(c => c.ReporterId)
                 .OnDelete(DeleteBehavior.Restrict);
 

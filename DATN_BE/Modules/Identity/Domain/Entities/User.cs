@@ -1,4 +1,5 @@
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
+using DATN_BE.Modules.Security.Domain.Entities;
 using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Domain;
@@ -16,12 +17,13 @@ namespace DATN_BE.Modules.Identity.Domain.Entities
         public bool IsDeleted { get; set; } = false;
         public DateTimeOffset? DeletedAt { get; set; }
 
-        public ICollection<Workspace> OwnedWorkspaces { get; set; } = new List<Workspace>();
-        public ICollection<WorkspaceMember> WorkspaceMembers { get; set; } = new List<WorkspaceMember>();
-        public ICollection<Project> OwnedProjects { get; set; } = new List<Project>();
-        public ICollection<ProjectMember> ProjectMembers { get; set; } = new List<ProjectMember>();
-        public ICollection<Card>? AssignedCard { get; set; }
-        public ICollection<Card> ReportedCard { get; set; }
-        public ICollection<CardComment> UserCardComments { get; set; }
+        public ICollection<Workspace> OwnedWorkspaces { get; set; } 
+        public ICollection<WorkspaceMember> WorkspaceMembers { get; set; } 
+        public ICollection<Project> OwnedProjects { get; set; } 
+        public ICollection<ProjectMember> ProjectMembers { get; set; } 
+        public ICollection<Card> AssignedCards { get; set; } 
+        public ICollection<Card> ReportedCards { get; set; } 
+        public ICollection<CardComment> UserCardComments { get; set; } 
+        public ICollection<ActivityLog> UserActivityLogs { get; set; }
     }
 }

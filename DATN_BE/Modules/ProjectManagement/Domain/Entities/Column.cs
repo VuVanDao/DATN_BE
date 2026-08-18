@@ -13,6 +13,6 @@ namespace DATN_BE.Modules.ProjectManagement.Domain.Entities
         public bool IsDeleted { get; set; } = false;
         public DateTimeOffset? DeletedAt { get; set; }
 
-        public ICollection<Card> Cards { get; set; }
+        public ICollection<Card> Cards { get; set; } = new List<Card>();
     }
 }
