@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <Folder Include="Controllers\" />
+    <Folder Include="Modules\Task\Infrastructure\Configurations\" />
   </ItemGroup>
 
 </Project>

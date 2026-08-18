@@ -3,7 +3,7 @@ using DATN_BE.Shared.Domain;
 
 namespace DATN_BE.Modules.Workspaces.Domain.Entities
 {
-    public class WorkspaceMember : BaseEntity
+    public class WorkspaceMember
     {
         public Guid WorkspaceId { get; set; }
         public Workspace Workspace { get; set; } = null!;
