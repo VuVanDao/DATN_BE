@@ -14,6 +14,6 @@ namespace DATN_BE.Modules.Workspaces.Domain.Entities
         public Guid RoleId { get; set; }
         public Role Role { get; set; } = null!;
 
-        public DateTimeOffset JoinAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset JoinedAt { get; set; } = DateTimeOffset.UtcNow;
     }
 }
