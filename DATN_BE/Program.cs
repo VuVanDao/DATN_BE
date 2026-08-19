@@ -47,7 +47,6 @@ namespace DATN_BE
 
             app.UseAuthorization();
 
-
             app.MapControllers();
 
             app.Run();

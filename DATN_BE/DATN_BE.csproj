@@ -31,8 +31,6 @@
     <Folder Include="Modules\Security\Infrastructure\Configuration\" />
     <Folder Include="Modules\Task\Domain\Enum\" />
     <Folder Include="Modules\Task\Infrastructure\Configurations\" />
-    <Folder Include="Shared\Application\Interfaces\" />
-    <Folder Include="Shared\Presentation\Middlewares\" />
   </ItemGroup>
 
 </Project>

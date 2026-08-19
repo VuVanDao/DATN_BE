@@ -15,13 +15,13 @@ namespace DATN_BE.Shared.Presentation.Middlewares
             _next = next;
             _logger = logger;
         }
-        public async Task InvoleAsync(HttpContext context)
+        public async Task InvokeAsync(HttpContext context)
         {
             try
             {
-                await _next(context);
+                await _next(context);// Cho request đi qua toàn bộ hệ thống
             }
-            catch(Exception ex)
+            catch(Exception ex) // Nếu ở bất kỳ đâu phát sinh lỗi (kể cả lỗi sập server)
             {
                 _logger.LogError(ex, "Đã xảy ra ngoại lệ chưa xử lý: {Message}", ex.Message);
                 await HandleExceptionAsync(context, ex);

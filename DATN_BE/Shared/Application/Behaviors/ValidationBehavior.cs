@@ -22,11 +22,15 @@ namespace DATN_BE.Shared.Application.Behaviors
                 return await next();
             }
             var context = new ValidationContext<TRequest>(request);
+            /*
+            * _validators.Select(...): MediatR tự động tìm xem Request này có file kiểm tra dữ liệu (Validator) nào không.
+            * ValidateAsync(...): Chạy kiểm tra dữ liệu (Ví dụ: Email có đúng định dạng không? Mật khẩu có đủ 6 ký tự không?).
+            */
             var validationResult = await Task.WhenAll(_validator.Select(v => v.ValidateAsync(context, cancellationToken)));
             var failures = validationResult.SelectMany(r => r.Errors).Where(f => f != null).ToList();
             if (failures.Count() != 0)
             {
-                throw new ValidationException(failures);
+                throw new ValidationException(failures); // Tự động chặn và ném lỗi
             }
             return await next();
         }
