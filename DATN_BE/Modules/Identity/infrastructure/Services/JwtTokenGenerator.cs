@@ -7,7 +7,7 @@ using System.Text;
 
 namespace DATN_BE.Modules.Identity.infrastructure.Services
 {
-    public class JwtTokenGenerator : IJwtGenerator
+    public class JwtTokenGenerator : IJwtTokenGenerator
     {
         private readonly IConfiguration _configuration;
         public JwtTokenGenerator(IConfiguration configuration)

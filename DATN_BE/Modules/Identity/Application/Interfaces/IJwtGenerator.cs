@@ -2,7 +2,7 @@
 
 namespace DATN_BE.Modules.Identity.Application.Interfaces
 {
-    public interface IJwtGenerator
+    public interface IJwtTokenGenerator
     {
         string GenerateToken(User user, IEnumerable<string> roles);
     }
