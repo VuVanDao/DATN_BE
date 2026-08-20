@@ -11,6 +11,7 @@
         public string OwnerName { get; set; } = string.Empty;
         public int BoardsCount { get; set; }
         public int MembersCount { get; set; }
+        public int SprintCOunt {  get; set; }
         public DateTimeOffset CreatedAt { get; set; }
     }
 }

@@ -25,7 +25,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Modules\ProjectManagement\Application\Queries\" />
     <Folder Include="Modules\ProjectManagement\Domain\Enum\" />
     <Folder Include="Modules\Security\Domain\Entities\" />
     <Folder Include="Modules\Security\Infrastructure\Configuration\" />
