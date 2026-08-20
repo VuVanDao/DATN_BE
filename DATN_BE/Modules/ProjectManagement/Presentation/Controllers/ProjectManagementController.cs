@@ -1,4 +1,5 @@
-﻿using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject;
+﻿using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetWorkspaceProjects;
 using DATN_BE.Shared.Application.Models;
@@ -21,7 +22,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         /// <summary>
         /// Tạo Dự án mới trong Workspace
         /// </summary>
-        [HttpPost]
+        [HttpPost("project")]
         public async Task<ActionResult<ApiResponse<ProjectDto>>> CreateProject([FromBody] CreateProjectCommand command)
         {
             var result = await _mediator.Send(command);
@@ -35,6 +36,15 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         {
             var result = await _mediator.Send(new GetWorkspaceProjectsQuery(workspaceId));
             return Ok(ApiResponse<List<ProjectDto>>.Ok(result, "Lấy danh sách Dự án thành công."));
+        }
+        /// <summary>
+        /// Tạo mới column
+        /// </summary>
+        [HttpPost("column")]
+        public async Task<ActionResult<ApiResponse<ColumnDto>>> CreateColumn([FromBody] CreateColumnCommand command)
+        {
+            var result = await _mediator.Send(command);
+            return Ok(ApiResponse<ColumnDto>.Ok(result,"Tạo mới cột thành công"));
         }
     }
 }

@@ -12,7 +12,6 @@ namespace DATN_BE.Modules.ProjectManagement.Domain.Entities
         public Board Board { get; set; } = null!;
         public bool IsDeleted { get; set; } = false;
         public DateTimeOffset? DeletedAt { get; set; }
-
         public ICollection<Card> Cards { get; set; } = new List<Card>();
     }
 }
