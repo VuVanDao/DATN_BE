@@ -14,36 +14,32 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.ReorderColumns
         }
         public async Task<bool> Handle(ReorderColumnsCommand request, CancellationToken cancellationToken)
         {
-            // tìm tất cả các column của request.BoardId
-            var columns = await _context.Columns.Where(c => c.BoardId == request.BoardId).ToListAsync(cancellationToken);
-            if (!columns.Any())
+            if (request.OrderedColumnIds == null || !request.OrderedColumnIds.Any())
             {
-                throw new NotFoundException("Không tìm thấy cột nào trong Bảng này.");
+                return false;
             }
-            // Cập nhật lại Position theo đúng thứ tự mảng gửi lên
-            // BƯỚC 1: Đổi sang số âm tạm thời để xóa bỏ xung đột Unique Index trong PostgreSQL
+            // Xây dựng câu lệnh UPDATE CASE WHEN động
+            var caseStatements = new List<string>();
             for (int i = 0; i < request.OrderedColumnIds.Count; i++)
             {
-                var colId = request.OrderedColumnIds[i];
-                var col = columns.FirstOrDefault(c => c.Id == colId);
-                if (col != null)
-                {
-                    col.Position = -(i + 1); // -1, -2, -3...
-                }
+                caseStatements.Add($"WHEN '{request.OrderedColumnIds[i]}' THEN {i}");
             }
-            await _context.SaveChangesAsync(cancellationToken);
+            var inClause = string.Join(", ", request.OrderedColumnIds.Select(id => $"'{id}'"));
+            var sql = $@"
+            -- Bước 1: Dời toàn bộ cột của Board sang số âm để xóa sạch xung đột Unique
+                UPDATE ""Columns""
+                SET ""Position"" = - (""Position"" + 1000)
+                WHERE ""BoardId"" = '{request.BoardId}';
+            -- Bước 2: Cập nhật vị trí mới theo đúng thứ tự mảng
+                UPDATE ""Columns""
+                SET ""Position"" = CASE ""Id""
+                    {string.Join(" ", caseStatements)}
+                END
+                WHERE ""BoardId"" = '{request.BoardId}' AND ""Id"" IN ({inClause});
+        ";
 
-            // BƯỚC 2: Cập nhật lại vị trí chuẩn (0, 1, 2, 3...) theo đúng thứ tự mảng gửi lên
-            for (int i = 0; i < request.OrderedColumnIds.Count; i++)
-            {
-                var colId = request.OrderedColumnIds[i];
-                var col = columns.FirstOrDefault(c => c.Id == colId);
-                if (col != null)
-                {
-                    col.Position = i; // 0, 1, 2, 3...
-                }
-            }
-            await _context.SaveChangesAsync(cancellationToken);
+            // Thực thi ĐÚNG 1 LẦN DUY NHẤT xuống PostgreSQL
+            await ((DbContext)_context).Database.ExecuteSqlRawAsync(sql, cancellationToken);
             return true;
         }
     }
