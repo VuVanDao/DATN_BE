@@ -23,9 +23,14 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == currentUserId && !u.IsDeleted, cancellationToken) ?? throw new NotFoundException("Người dùng không tồn tại");
             // 1. Tự động sinh Slug và xử lý chống trùng Slug
             var baseSlug = SlugHelper.GenerateSlug(request.Name);
+            var existingSlugs = await _context.Workspaces
+                .Where(w => w.Slug.StartsWith(baseSlug))
+                .Select(w => w.Slug)
+                .ToListAsync(cancellationToken);
+            var slugSet = new HashSet<string>(existingSlugs);
             var slug = baseSlug;
             var counter = 1;
-            while (await _context.Workspaces.AnyAsync(w => w.Slug == slug && !w.IsDeleted, cancellationToken))
+            while (slugSet.Contains(slug))
             {
                 slug = $"{baseSlug}-{counter}";
                 counter++;
