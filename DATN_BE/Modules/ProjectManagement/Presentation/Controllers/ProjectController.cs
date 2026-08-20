@@ -12,10 +12,10 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class ProjectManagementController : ControllerBase
+    public class ProjectController : ControllerBase
     {
         private readonly IMediator _mediator;
-        public ProjectManagementController(IMediator mediator)
+        public ProjectController(IMediator mediator)
         {
             _mediator = mediator;
         }
@@ -37,14 +37,6 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             var result = await _mediator.Send(new GetWorkspaceProjectsQuery(workspaceId));
             return Ok(ApiResponse<List<ProjectDto>>.Ok(result, "Lấy danh sách Dự án thành công."));
         }
-        /// <summary>
-        /// Tạo mới column
-        /// </summary>
-        [HttpPost("column")]
-        public async Task<ActionResult<ApiResponse<ColumnDto>>> CreateColumn([FromBody] CreateColumnCommand command)
-        {
-            var result = await _mediator.Send(command);
-            return Ok(ApiResponse<ColumnDto>.Ok(result,"Tạo mới cột thành công"));
-        }
+
     }
 }
