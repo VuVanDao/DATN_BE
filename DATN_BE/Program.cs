@@ -4,6 +4,7 @@ using DATN_BE.Modules.Identity.infrastructure.Services;
 using DATN_BE.Shared.Application.Behaviors;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Infrastructure.Persistence;
+using DATN_BE.Shared.Infrastructure.Services;
 using DATN_BE.Shared.Presentation.Middlewares;
 using FluentValidation;
 using MediatR;
@@ -29,6 +30,8 @@ namespace DATN_BE
             builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddScoped<IApplicationDbContext>(provider 
                 => provider.GetRequiredService<ApplicationDbContext>());
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
             // 3. Register Identity Services
             builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
