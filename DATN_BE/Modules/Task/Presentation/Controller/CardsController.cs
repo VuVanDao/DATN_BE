@@ -1,4 +1,5 @@
 ﻿using DATN_BE.Modules.Task.Application.Commands.CreateCard;
+using DATN_BE.Modules.Task.Application.Commands.UpdateCard;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Modules.Task.Application.Queries.GetCardById;
 using DATN_BE.Shared.Application.Models;
@@ -29,6 +30,13 @@ namespace DATN_BE.Modules.Task.Presentation.Controller
         {
             var result = await _mediator.Send(new GetCardByIdQuery(cardId));
             return Ok(ApiResponse<CardDetailDto>.Ok(result, "Lấy chi tiết card thành công"));
+        }
+        [HttpPut("{cardId}")]
+        public async Task<ActionResult<ApiResponse<CardDto>>> UpdateCard(Guid cardId, [FromBody] UpdateCardCommand command)
+        {
+            command.CardId = cardId;
+            var result = await _mediator.Send(command);
+            return Ok(ApiResponse<CardDto>.Ok(result, "Cập nhật card thành công"));
         }
     }
 }
