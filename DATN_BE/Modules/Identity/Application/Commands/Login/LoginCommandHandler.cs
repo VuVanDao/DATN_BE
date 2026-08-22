@@ -35,6 +35,10 @@ namespace DATN_BE.Modules.Identity.Application.Commands.Login
             var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
             // 5. Sinh JWT Token
             var token = _jwtTokenGenerator.GenerateToken(user, roles);
+            // Sinh Refresh Token và lưu vào DB
+            var refreshToken = _jwtTokenGenerator.GenerateRefreshToken(user.Id);
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync(cancellationToken);
 
             return new AuthResponseDto
             {
@@ -43,7 +47,9 @@ namespace DATN_BE.Modules.Identity.Application.Commands.Login
                 Username = user.Username,
                 AvatarUrl = user.AvatarUrl,
                 Token = token,
-                Roles = roles
+                Roles = roles,
+                RefreshToken = refreshToken.Token,
+                RefreshTokenExpiresAt = refreshToken.ExpiresAt
             };
         }
     }

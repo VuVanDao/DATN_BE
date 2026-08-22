@@ -28,6 +28,7 @@ namespace DATN_BE.Shared.Application.Interfaces
         DbSet<Sprint> Sprints { get; }
         DbSet<UserBoardPreference> UserBoardPreferences { get; }
         DbSet<Notification> Notifications { get; }
+        DbSet<RefreshToken> RefreshTokens { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

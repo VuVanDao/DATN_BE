@@ -1,5 +1,7 @@
 ﻿using DATN_BE.Modules.Identity.Application.Commands.Login;
+using DATN_BE.Modules.Identity.Application.Commands.RefrehToken;
 using DATN_BE.Modules.Identity.Application.Commands.RegisterUser;
+using DATN_BE.Modules.Identity.Application.Commands.RevokeToken;
 using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Shared.Application.Models;
@@ -45,6 +47,21 @@ namespace DATN_BE.Modules.Identity.Presentation.Controllers
                 Email = email,
                 Username = username
             }, "Lấy thông tin tài khoản hiện tại thành công."));
+        }
+        [HttpPost("refresh-token")]
+        public async Task<ActionResult<ApiResponse<AuthResponseDto>>> RefreshToken([FromBody] RefreshTokenCommand command)
+        {
+            command.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var result = await _mediator.Send(command);
+            return Ok(ApiResponse<AuthResponseDto>.Ok(result, "Cấp lại Token thành công."));
+        }
+
+        [HttpPost("revoke-token")]
+        public async Task<ActionResult<ApiResponse<bool>>> RevokeToken([FromBody] RevokeTokenCommand command)
+        {
+            command.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+            await _mediator.Send(command);
+            return Ok(ApiResponse<bool>.Ok(true, "Thu hồi Token (Đăng xuất) thành công."));
         }
     }
 }

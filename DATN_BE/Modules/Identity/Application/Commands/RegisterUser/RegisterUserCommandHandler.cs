@@ -44,7 +44,13 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RegisterUser
                 IsActive = true
             };
             _context.Users.Add(user);
+
+            // sinh và lưu refreshToken
+            var refreshToken = _jwtTokenGenerator.GenerateRefreshToken(user.Id);
+            _context.RefreshTokens.Add(refreshToken);
+
             await _context.SaveChangesAsync(cancellationToken);
+
             // 5. Sinh JWT Token
             var token = _jwtTokenGenerator.GenerateToken(user, new List<string>());
 
@@ -55,7 +61,9 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RegisterUser
                 Username = user.Username,
                 AvatarUrl = user.AvatarUrl,
                 Token = token,
-                Roles = new List<string>()
+                Roles = new List<string>(),
+                RefreshToken  =refreshToken.Token,
+                RefreshTokenExpiresAt = refreshToken.ExpiresAt
             };
         }
     }

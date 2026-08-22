@@ -30,5 +30,6 @@ namespace DATN_BE.Modules.Identity.Domain.Entities
         public ICollection<ActivityLog> UserActivityLogs { get; set; } = new List<ActivityLog>();
         public ICollection<Notification> ReceivedNotifications { get; set; } = new List<Notification>();
         public ICollection<Notification> SentNotifications { get; set; } = new List<Notification>();
+        public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }
 }

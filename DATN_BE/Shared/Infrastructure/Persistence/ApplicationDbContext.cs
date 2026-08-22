@@ -35,6 +35,7 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
         public DbSet<Sprint> Sprints => Set<Sprint>();
         public DbSet<UserBoardPreference> UserBoardPreferences => Set<UserBoardPreference>();
         public DbSet<Notification> Notifications => Set<Notification>();
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

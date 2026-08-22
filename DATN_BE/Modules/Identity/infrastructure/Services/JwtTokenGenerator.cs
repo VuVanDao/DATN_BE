@@ -3,6 +3,7 @@ using DATN_BE.Modules.Identity.Domain.Entities;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace DATN_BE.Modules.Identity.infrastructure.Services
@@ -14,6 +15,7 @@ namespace DATN_BE.Modules.Identity.infrastructure.Services
         {
             _configuration = configuration;
         }
+
         public string GenerateToken(User user, IEnumerable<string> roles)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
@@ -41,6 +43,21 @@ namespace DATN_BE.Modules.Identity.infrastructure.Services
                 signingCredentials: credential
              );
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        public RefreshToken GenerateRefreshToken(Guid userId, string? ipAddress = null)
+        {
+            var randomBytes = new byte[64];
+            // sử dụng using để tự động giải phóng cái rng để tránh memory leak
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomBytes);
+            var daysToExpire = int.Parse(_configuration["JwtSettings:RefreshTokenExpiryDays"] ?? "7");
+            return new RefreshToken
+            {
+                UserId = userId,
+                Token = Convert.ToBase64String(randomBytes),
+                ExpiresAt = DateTimeOffset.UtcNow.AddDays(daysToExpire),
+                CreatedByIp = ipAddress
+            };
         }
     }
 }
