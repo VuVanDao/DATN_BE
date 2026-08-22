@@ -320,9 +320,7 @@ namespace DATN_BE.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BoardId", "Position")
-                        .IsUnique()
-                        .HasFilter("\"IsDeleted\" = false");
+                    b.HasIndex("BoardId", "Position");
 
                     b.ToTable("Columns", (string)null);
                 });
@@ -583,9 +581,7 @@ namespace DATN_BE.Migrations
 
                     b.HasIndex("SprintId");
 
-                    b.HasIndex("ColumnId", "Position")
-                        .IsUnique()
-                        .HasFilter("\"IsDeleted\" = false");
+                    b.HasIndex("ColumnId", "Position");
 
                     b.ToTable("Cards", (string)null);
                 });

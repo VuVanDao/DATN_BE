@@ -44,10 +44,8 @@ namespace DATN_BE.Modules.Task.Infrastructure.Configurations
                 .HasForeignKey(c => c.SprintId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Partial Unique Index: Position không trùng nhau trong CÙNG 1 Column
-            builder.HasIndex(c => new { c.ColumnId, c.Position })
-                .IsUnique()
-                .HasFilter("\"IsDeleted\" = false");
+            // Index thông thường phục vụ ORDER BY Position nhanh chóng
+            builder.HasIndex(c => new { c.ColumnId, c.Position });
         }
     }
 }

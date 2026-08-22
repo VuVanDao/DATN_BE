@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.ProjectManagement.Domain.Entities;
+using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -14,10 +14,9 @@ namespace DATN_BE.Modules.ProjectManagement.Infrastructure.Configurations
             builder.HasOne(c => c.Board).WithMany(b => b.Columns)
                 .HasForeignKey(c => c.BoardId)
                 .OnDelete(DeleteBehavior.Cascade);
-            // Partial Unique Index: Vị trí Position không trùng nhau trong CÙNG 1 Board
-            builder.HasIndex(c => new { c.BoardId, c.Position })
-            .IsUnique()
-            .HasFilter("\"IsDeleted\" = false");
+
+            // Index thông thường phục vụ ORDER BY Position nhanh chóng
+            builder.HasIndex(c => new { c.BoardId, c.Position });
         }
     }
 }
