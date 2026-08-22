@@ -57,5 +57,53 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
                 }
             }
         }
+        // 1. Ghi đè phương thức SaveChangesAsync (Bất đồng bộ)
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            HandleBeforeSaveChanges();
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+        // 2. Ghi đè phương thức SaveChanges (Đồng bộ)
+        public override int SaveChanges()
+        {
+            HandleBeforeSaveChanges();
+            return base.SaveChanges();
+        }
+        // 3. Hàm cốt lõi: Tự động can thiệp vào ChangeTracker
+        private void HandleBeforeSaveChanges()
+        {
+            var now = DateTimeOffset.UtcNow;
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                // A. Tự động cập nhật CreatedAt và UpdatedAt cho BaseEntity
+                if (entry.Entity is BaseEntity baseEntity)
+                {
+                    if (entry.State == EntityState.Added)
+                    {
+                        baseEntity.CreatedAt = now;
+                        baseEntity.UpdatedAt = now;
+                    }
+                    else if (entry.State == EntityState.Modified)
+                    {
+                        baseEntity.UpdatedAt = now;
+                    }
+                }
+                // B. Tự động chuyển đổi Xóa cứng thành Xóa mềm cho ISoftDelete
+                if (entry.Entity is ISoftDelete softDeleteEntity && entry.State == EntityState.Deleted)
+                {
+                    // Chuyển trạng thái từ "Xóa khỏi DB" thành "Cập nhật dòng này"
+                    entry.State = EntityState.Modified;
+                    // Gán các cờ xóa mềm
+                    softDeleteEntity.IsDeleted = true;
+                    softDeleteEntity.DeletedAt = now;
+
+                    // Nếu đối tượng đó cũng kế thừa BaseEntity, cập nhật luôn UpdatedAt
+                    if (entry.Entity is BaseEntity entityWithBase)
+                    {
+                        entityWithBase.UpdatedAt = now;
+                    }
+                }
+            }
+        }
     }
 }
