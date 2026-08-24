@@ -32,6 +32,7 @@ namespace DATN_BE
                 => provider.GetRequiredService<ApplicationDbContext>());
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+            builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
             // 3. Register Identity Services
             builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();

@@ -1,5 +1,6 @@
 ﻿using DATN_BE.Modules.Identity.Application.Commands.ChangePassword;
 using DATN_BE.Modules.Identity.Application.Commands.UpdateProfile;
+using DATN_BE.Modules.Identity.Application.Commands.UploadAvatar;
 using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Modules.Identity.Application.Queries.GetProfile;
 using DATN_BE.Shared.Application.Models;
@@ -45,6 +46,16 @@ namespace DATN_BE.Modules.Identity.Presentation.Controllers
         {
             await _mediator.Send(command);
             return Ok(ApiResponse<bool>.Ok(true, "Đổi mật khẩu thành công. Vui lòng sử dụng mật khẩu mới cho các lần đăng nhập sau."));
+        }
+        /// <summary>
+        /// Upload ảnh đại diện (Avatar) lên Cloudinary
+        /// </summary>
+        [HttpPost("me/avatar")]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ApiResponse<string>>> UploadAvatar([FromForm] UploadAvatarCommand command)
+        {
+            var avatarUrl = await _mediator.Send(command);
+            return Ok(ApiResponse<string>.Ok(avatarUrl, "Cập nhật ảnh đại diện thành công."));
         }
     }
 }
