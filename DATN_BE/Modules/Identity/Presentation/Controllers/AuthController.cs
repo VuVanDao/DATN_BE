@@ -32,6 +32,8 @@ namespace DATN_BE.Modules.Identity.Presentation.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Login([FromBody] LoginCommand command)
         {
+            command.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+            command.UserAgent = Request.Headers["User-Agent"].ToString();
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<AuthResponseDto>.Ok(result, "Đăng nhập thành công"));
         }

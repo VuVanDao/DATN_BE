@@ -37,6 +37,7 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+        public DbSet<LoginHistory> LoginHistories => Set<LoginHistory>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
