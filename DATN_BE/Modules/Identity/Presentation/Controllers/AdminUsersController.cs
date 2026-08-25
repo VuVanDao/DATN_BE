@@ -1,7 +1,9 @@
-﻿using DATN_BE.Modules.Identity.Application.Commands.UpdateUserStatus;
+﻿using DATN_BE.Modules.Identity.Application.Commands.AssignUserRoles;
+using DATN_BE.Modules.Identity.Application.Commands.UpdateUserStatus;
 using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Modules.Identity.Application.Queries.GetAdminUsers;
 using DATN_BE.Shared.Application.Models;
+using DATN_BE.Shared.Infrastructure.Security;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -37,6 +39,21 @@ namespace DATN_BE.Modules.Identity.Presentation.Controllers
             await _mediator.Send(command);
             var message = command.IsActive ? "Mở khóa tài khoản thành công." : "Khóa tài khoản thành công.";
             return Ok(ApiResponse<bool>.Ok(true, message));
+        }
+        /// <summary>
+        /// Gán danh sách vai trò cho một Người dùng
+        /// </summary>
+        [HttpPost("{id:guid}/roles")]
+        [HasPermission("role:manage")]
+        public async Task<ActionResult<ApiResponse<bool>>> AssignRoles(Guid id, [FromBody] List<Guid> roleIds)
+        {
+            var command = new AssignUserRolesCommand
+            {
+                UserId = id,
+                RoleIds = roleIds
+            };
+            await _mediator.Send(command);
+            return Ok(ApiResponse<bool>.Ok(true, "Cập nhật vai trò cho người dùng thành công."));
         }
     }
 }
