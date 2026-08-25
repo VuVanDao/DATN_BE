@@ -29,6 +29,7 @@ namespace DATN_BE.Shared.Application.Interfaces
         DbSet<UserBoardPreference> UserBoardPreferences { get; }
         DbSet<Notification> Notifications { get; }
         DbSet<RefreshToken> RefreshTokens { get; }
+        DbSet<PasswordResetToken> PasswordResetTokens { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

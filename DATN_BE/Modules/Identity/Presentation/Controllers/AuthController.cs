@@ -1,6 +1,8 @@
-﻿using DATN_BE.Modules.Identity.Application.Commands.Login;
+﻿using DATN_BE.Modules.Identity.Application.Commands.ForgotPassword;
+using DATN_BE.Modules.Identity.Application.Commands.Login;
 using DATN_BE.Modules.Identity.Application.Commands.RefrehToken;
 using DATN_BE.Modules.Identity.Application.Commands.RegisterUser;
+using DATN_BE.Modules.Identity.Application.Commands.ResetPassword;
 using DATN_BE.Modules.Identity.Application.Commands.RevokeToken;
 using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Modules.Identity.Domain.Entities;
@@ -62,6 +64,24 @@ namespace DATN_BE.Modules.Identity.Presentation.Controllers
             command.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
             await _mediator.Send(command);
             return Ok(ApiResponse<bool>.Ok(true, "Thu hồi Token (Đăng xuất) thành công."));
+        }
+        /// <summary>
+        /// Yêu cầu đặt lại mật khẩu khi quên mật khẩu
+        /// </summary>
+        [HttpPost("forgot-password")]
+        public async Task<ActionResult<ApiResponse<string>>> ForgotPassword([FromBody] ForgotPasswordCommand command)
+        {
+            var result = await _mediator.Send(command);
+            return Ok(ApiResponse<string>.Ok(result, "Yêu cầu đặt lại mật khẩu đã được xử lý."));
+        }
+        /// <summary>
+        /// Xác nhận Token và đặt lại mật khẩu mới
+        /// </summary>
+        [HttpPost("reset-password")]
+        public async Task<ActionResult<ApiResponse<bool>>> ResetPassword([FromBody] ResetPasswordCommand command)
+        {
+            await _mediator.Send(command);
+            return Ok(ApiResponse<bool>.Ok(true, "Đặt lại mật khẩu thành công. Vui lòng đăng nhập với mật khẩu mới."));
         }
     }
 }

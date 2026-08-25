@@ -31,5 +31,6 @@ namespace DATN_BE.Modules.Identity.Domain.Entities
         public ICollection<Notification> ReceivedNotifications { get; set; } = new List<Notification>();
         public ICollection<Notification> SentNotifications { get; set; } = new List<Notification>();
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+        public ICollection<PasswordResetToken> PasswordResetTokens { get; set; } = new List<PasswordResetToken>();
     }
 }

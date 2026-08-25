@@ -22,6 +22,44 @@ namespace DATN_BE.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.PasswordResetToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Token");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PasswordResetTokens", (string)null);
+                });
+
             modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.Permission", b =>
                 {
                     b.Property<Guid>("Id")
@@ -776,6 +814,17 @@ namespace DATN_BE.Migrations
                     b.ToTable("WorkspaceMembers", (string)null);
                 });
 
+            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.PasswordResetToken", b =>
+                {
+                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "User")
+                        .WithMany("PasswordResetTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "User")
@@ -1079,6 +1128,8 @@ namespace DATN_BE.Migrations
                     b.Navigation("OwnedProjects");
 
                     b.Navigation("OwnedWorkspaces");
+
+                    b.Navigation("PasswordResetTokens");
 
                     b.Navigation("ProjectMembers");
 
