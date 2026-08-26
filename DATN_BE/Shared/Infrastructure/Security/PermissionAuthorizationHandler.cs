@@ -26,7 +26,7 @@ namespace DATN_BE.Shared.Infrastructure.Security
             var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
             // Lấy danh sách tất cả các Permission Code của User thông qua các Role
             var userPermissions = await dbContext.Users
-                .Where(u => u.Id == userId)
+                .Where(u => u.Id == userId && u.IsActive)
                 .SelectMany(u => u.UserRoles)
                 .Select(u => u.Role)
                 .SelectMany(r => r.RolePermissions)

@@ -3,7 +3,6 @@ using DATN_BE.Modules.Identity.Application.Commands.UpdateProfile;
 using DATN_BE.Modules.Identity.Application.Commands.UploadAvatar;
 using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Modules.Identity.Application.Queries.GetProfile;
-using DATN_BE.Modules.Security.Application.DTOs;
 using DATN_BE.Shared.Application.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -57,15 +56,6 @@ namespace DATN_BE.Modules.Identity.Presentation.Controllers
         {
             var avatarUrl = await _mediator.Send(command);
             return Ok(ApiResponse<string>.Ok(avatarUrl, "Cập nhật ảnh đại diện thành công."));
-        }
-        /// <summary>
-        /// Xem lịch sử các lần đăng nhập gần nhất của chính mình
-        /// </summary>
-        [HttpGet("me/login-history")]
-        public async Task<ActionResult<ApiResponse<List<LoginHistoryDto>>>> GetMyLoginHistory([FromQuery] int limit = 20)
-        {
-            var result = await _mediator.Send(new DATN_BE.Modules.Security.Application.Queries.GetMyLoginHistory.GetMyLoginHistoryQuery { Limit = limit });
-            return Ok(ApiResponse<List<LoginHistoryDto>>.Ok(result, "Lấy lịch sử đăng nhập thành công."));
         }
     }
 }
