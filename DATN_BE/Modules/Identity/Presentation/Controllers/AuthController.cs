@@ -1,16 +1,13 @@
-﻿using DATN_BE.Modules.Identity.Application.Commands.ForgotPassword;
+using DATN_BE.Modules.Identity.Application.Commands.ForgotPassword;
 using DATN_BE.Modules.Identity.Application.Commands.Login;
 using DATN_BE.Modules.Identity.Application.Commands.RefrehToken;
 using DATN_BE.Modules.Identity.Application.Commands.RegisterUser;
 using DATN_BE.Modules.Identity.Application.Commands.ResetPassword;
 using DATN_BE.Modules.Identity.Application.Commands.RevokeToken;
 using DATN_BE.Modules.Identity.Application.DTOs;
-using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Shared.Application.Models;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DATN_BE.Modules.Identity.Presentation.Controllers
 {
@@ -37,21 +34,7 @@ namespace DATN_BE.Modules.Identity.Presentation.Controllers
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<AuthResponseDto>.Ok(result, "Đăng nhập thành công"));
         }
-        [Authorize]
-        [HttpGet("me")]
-        public IActionResult GetCurrentUser()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            var email = User.FindFirstValue(ClaimTypes.Email); 
-            var username = User.FindFirstValue(ClaimTypes.Name) ?? User.FindFirstValue("unique_name");
 
-            return Ok(ApiResponse<object>.Ok(new
-            {
-                Id = userId,
-                Email = email,
-                Username = username
-            }, "Lấy thông tin tài khoản hiện tại thành công."));
-        }
         [HttpPost("refresh-token")]
         public async Task<ActionResult<ApiResponse<AuthResponseDto>>> RefreshToken([FromBody] RefreshTokenCommand command)
         {
