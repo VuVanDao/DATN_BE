@@ -1,5 +1,6 @@
 ﻿using DATN_BE.Modules.Task.Application.Commands.AddCardComment;
 using DATN_BE.Modules.Task.Application.Commands.CreateCard;
+using DATN_BE.Modules.Task.Application.Commands.DeleteCard;
 using DATN_BE.Modules.Task.Application.Commands.MoveCard;
 using DATN_BE.Modules.Task.Application.Commands.UpdateCard;
 using DATN_BE.Modules.Task.Application.DTOs;
@@ -68,6 +69,15 @@ namespace DATN_BE.Modules.Task.Presentation.Controller
             command.CardId = id;
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<CardCommentDto>.Ok(result, "Bình luận thành công."));
+        }
+        /// <summary>
+        /// Xoá 1 thẻ
+        /// </summary>
+        [HttpDelete("{cardId}")]
+        public async Task<ActionResult<ApiResponse<bool>>> DeleteCard(Guid cardId)
+        {
+            var result = await _mediator.Send(new DeleteCardCommand(cardId));
+            return Ok(ApiResponse<bool>.Ok(result, "Xoá card thành công"));
         }
     }
 }
