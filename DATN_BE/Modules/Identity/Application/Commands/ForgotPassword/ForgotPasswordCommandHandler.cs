@@ -10,9 +10,11 @@ namespace DATN_BE.Modules.Identity.Application.Commands.ForgotPassword
     public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand, string>
     {
         private readonly IApplicationDbContext _context;
-        public ForgotPasswordCommandHandler(IApplicationDbContext context)
+        private readonly IEmailService _emailService;
+        public ForgotPasswordCommandHandler(IApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         public async Task<string> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
@@ -46,8 +48,11 @@ namespace DATN_BE.Modules.Identity.Application.Commands.ForgotPassword
             };
             _context.PasswordResetTokens.Add(resetToken);
             await _context.SaveChangesAsync(cancellationToken);
-            // Giai đoạn hiện tại (chưa có Email Service): Trả về token kèm message để tiện test qua Postman/Swagger
-            return resetTokenString;
+
+            // 4. GỬI EMAIL QUA RESEND ĐẾN NGƯỜI DÙNG
+            await _emailService.SendForgotPasswordEmailAsync(email,user.Username,resetToken.Token,cancellationToken);
+
+            return "Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư.";
         }
     }
 }

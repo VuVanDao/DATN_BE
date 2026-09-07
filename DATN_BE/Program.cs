@@ -35,6 +35,7 @@ namespace DATN_BE
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
             builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+            builder.Services.AddHttpClient<IEmailService, ResendEmailService>();
 
             // 3. Register Identity Services
             builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
