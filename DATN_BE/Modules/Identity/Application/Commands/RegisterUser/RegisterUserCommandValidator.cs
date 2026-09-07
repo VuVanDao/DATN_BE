@@ -9,7 +9,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RegisterUser
             RuleFor(x => x.Email)
                 .NotEmpty().WithMessage("Email không được để trống")
                 .EmailAddress().WithMessage("Email không đúng định dạng")
-                .MaximumLength(255).WithMessage("Emial không được vượt quá");
+                .MaximumLength(255).WithMessage("Email không được vượt quá");
             RuleFor(x => x.Username)
                 .NotEmpty().WithMessage("Tên người dùng không được để trống.")
                 .MinimumLength(3).WithMessage("Tên người dùng phải từ 3 ký tự trở lên.")

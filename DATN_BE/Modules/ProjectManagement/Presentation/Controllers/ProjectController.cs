@@ -22,7 +22,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         /// <summary>
         /// Tạo Dự án mới trong Workspace
         /// </summary>
-        [HttpPost("project")]
+        [HttpPost]
         public async Task<ActionResult<ApiResponse<ProjectDto>>> CreateProject([FromBody] CreateProjectCommand command)
         {
             var result = await _mediator.Send(command);
