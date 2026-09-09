@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 using System.Text;
 
 namespace DATN_BE
@@ -25,6 +26,15 @@ namespace DATN_BE
 
             // 1. Add Controllers
             builder.Services.AddControllers();
+            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() 
+                                 ?? new[] { "http://localhost:4200" };
+            builder.Services.AddCors(options => options.AddPolicy("AllowAngularApp", policy =>
+            {
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            }));
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
@@ -93,9 +103,12 @@ namespace DATN_BE
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.MapScalarApiReference();
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCors("AllowAngularApp");
 
             app.UseAuthentication();
 
