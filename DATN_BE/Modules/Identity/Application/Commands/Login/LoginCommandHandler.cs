@@ -68,6 +68,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.Login
                 AvatarUrl = user.AvatarUrl,
                 Token = token,
                 Roles = roles,
+                IsActive = user.IsActive,
                 RefreshToken = refreshToken.Token,
                 RefreshTokenExpiresAt = refreshToken.ExpiresAt
             };
