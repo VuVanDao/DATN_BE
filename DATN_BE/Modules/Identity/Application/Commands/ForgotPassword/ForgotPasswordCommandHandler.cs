@@ -19,8 +19,12 @@ namespace DATN_BE.Modules.Identity.Application.Commands.ForgotPassword
 
         public async Task<string> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
         {
-            var email = request.Email.Trim().ToLower();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email) ?? throw new NotFoundException("Nếu địa chỉ email này tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi");
+            var email = request.Email.Trim();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower()) ;
+            if (user == null)
+            {
+                throw new NotFoundException("Không tìm thấy địa chỉ email của bạn trong hệ thống. Vui lòng kiểm tra lại");
+            }
             if (!user.IsActive)
             {
                 throw new BadRequestException("Tài khoản của bạn hiện đang bị khóa. Vui lòng liên hệ quản trị viên");
@@ -52,7 +56,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.ForgotPassword
             // 4. GỬI EMAIL QUA RESEND ĐẾN NGƯỜI DÙNG
             await _emailService.SendForgotPasswordEmailAsync(email,user.Username,resetToken.Token,cancellationToken);
 
-            return "Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư.";
+            return "Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư";
         }
     }
 }
