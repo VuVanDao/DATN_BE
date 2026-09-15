@@ -21,7 +21,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.ResetPassword
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == email && u.IsActive,cancellationToken) ?? throw new NotFoundException("Yêu cầu đặt lại mật khẩu không hợp lệ hoặc tài khoản không khả dụng");
             // 2. Tìm Token xác nhận
             var resetToken = await _context.PasswordResetTokens
-                .FirstOrDefaultAsync(prt => prt.Token == request.Token.Trim() && prt.UserId == user.Id, cancellationToken)
+                .FirstOrDefaultAsync(prt => prt.Token.ToLower() == request.Token.Trim().ToLower() && prt.UserId == user.Id, cancellationToken)
                 ?? throw new BadRequestException("Mã xác nhận không hợp lệ.");
             if (resetToken.IsUsed)
             {
