@@ -36,7 +36,9 @@ project.fragment.lock.json
 # Environment secrets / Local overrides
 appsettings.Local.json
 appsettings.Development.local.json
+**/appsettings.Development.json
 appsettings.Secrets.json
+
 *.env
 secrets.json
 
