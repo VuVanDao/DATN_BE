@@ -9,6 +9,10 @@ using DATN_BE.Shared.Application.Models;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
+using DATN_BE.Shared.Application.Exceptions;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
+
 namespace DATN_BE.Modules.Identity.Presentation.Controllers
 {
     [ApiController]
@@ -16,38 +20,97 @@ namespace DATN_BE.Modules.Identity.Presentation.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IMediator _mediator;
-        public AuthController(IMediator mediator)
+        private readonly IWebHostEnvironment _environment;
+
+        public AuthController(IMediator mediator, IWebHostEnvironment environment)
         {
             _mediator = mediator;
+            _environment = environment;
         }
+        // gửi một Refresh Token về trình duyệt của người dùng
+        // và lưu nó vào bên trong Cookie với các thiết lập bảo mật nghiêm ngặt
+        private void SetRefreshTokenCookie(string refreshToken, DateTimeOffset expires)
+        {
+            var isDevelopment = _environment.IsDevelopment();
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !isDevelopment,
+                SameSite = isDevelopment ? SameSiteMode.Lax : SameSiteMode.Strict,
+                Expires = expires.UtcDateTime,
+                Path = "/api/auth"
+            };
+
+            Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+        }
+
+        private void DeleteRefreshTokenCookie()
+        {
+            var isDevelopment = _environment.IsDevelopment();
+            Response.Cookies.Delete("refreshToken", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !isDevelopment,
+                SameSite = isDevelopment ? SameSiteMode.Lax : SameSiteMode.Strict,
+                Path = "/api/auth"
+            });
+        }
+
         [HttpPost("register")]
         public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Register([FromBody] RegisterUserCommand command)
         {
             var result = await _mediator.Send(command);
-            return Ok(ApiResponse<AuthResponseDto>.Ok(result,"Đăng kí tài khoản thành công"));
+            SetRefreshTokenCookie(result.RefreshToken, result.RefreshTokenExpiresAt);
+            result.RefreshToken = string.Empty;
+            return Ok(ApiResponse<AuthResponseDto>.Ok(result, "Đăng kí tài khoản thành công"));
         }
+
         [HttpPost("login")]
         public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Login([FromBody] LoginCommand command)
         {
             command.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
             command.UserAgent = Request.Headers["User-Agent"].ToString();
             var result = await _mediator.Send(command);
+            SetRefreshTokenCookie(result.RefreshToken, result.RefreshTokenExpiresAt);
+            result.RefreshToken = string.Empty;
             return Ok(ApiResponse<AuthResponseDto>.Ok(result, "Đăng nhập thành công"));
         }
 
         [HttpPost("refresh-token")]
-        public async Task<ActionResult<ApiResponse<AuthResponseDto>>> RefreshToken([FromBody] RefreshTokenCommand command)
+        public async Task<ActionResult<ApiResponse<AuthResponseDto>>> RefreshToken([FromBody] RefreshTokenCommand? command = null)
         {
-            command.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
-            var result = await _mediator.Send(command);
+            var refreshToken = Request.Cookies["refreshToken"] ?? command?.RefreshToken;
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                throw new BadRequestException("Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.");
+            }
+
+            var cmd = new RefreshTokenCommand
+            {
+                RefreshToken = refreshToken,
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
+            };
+
+            var result = await _mediator.Send(cmd);
+            SetRefreshTokenCookie(result.RefreshToken, result.RefreshTokenExpiresAt);
+            result.RefreshToken = string.Empty;
             return Ok(ApiResponse<AuthResponseDto>.Ok(result, "Cấp lại Token thành công."));
         }
 
         [HttpPost("revoke-token")]
-        public async Task<ActionResult<ApiResponse<bool>>> RevokeToken([FromBody] RevokeTokenCommand command)
+        public async Task<ActionResult<ApiResponse<bool>>> RevokeToken([FromBody] RevokeTokenCommand? command = null)
         {
-            command.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
-            await _mediator.Send(command);
+            var refreshToken = Request.Cookies["refreshToken"] ?? command?.RefreshToken;
+            if (!string.IsNullOrWhiteSpace(refreshToken))
+            {
+                await _mediator.Send(new RevokeTokenCommand
+                {
+                    RefreshToken = refreshToken,
+                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
+                });
+            }
+
+            DeleteRefreshTokenCookie();
             return Ok(ApiResponse<bool>.Ok(true, "Thu hồi Token (Đăng xuất) thành công."));
         }
         /// <summary>
