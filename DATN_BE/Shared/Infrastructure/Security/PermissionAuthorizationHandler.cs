@@ -1,4 +1,4 @@
-﻿using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -24,10 +24,9 @@ namespace DATN_BE.Shared.Infrastructure.Security
             // Tạo scope để lấy DbContext (vì AuthorizationHandler thường là Singleton/Scoped)
             using var scope = _serviceScopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
-            // Lấy danh sách tất cả các Permission Code của User thông qua các Role
+            // Lấy danh sách tất cả các Permission Code của User thông qua Role
             var userPermissions = await dbContext.Users
                 .Where(u => u.Id == userId && u.IsActive)
-                .SelectMany(u => u.UserRoles)
                 .Select(u => u.Role)
                 .SelectMany(r => r.RolePermissions)
                 .Select(rp => rp.Permission.Code)

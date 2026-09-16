@@ -51,18 +51,13 @@ namespace DATN_BE.Modules.Identity.Presentation.Controllers
         }
 
         /// <summary>
-        /// [Admin] Gán danh sách vai trò (Roles) cho một người dùng
+        /// [Admin] Gán vai trò (Role) cho một người dùng
         /// </summary>
-        [HttpPost("users/{id:guid}/roles")]
+        [HttpPost("users/{id:guid}/role")]
         [HasPermission("role:manage")]
-        public async Task<ActionResult<ApiResponse<bool>>> AssignRoles(Guid id, [FromBody] List<Guid> roleIds)
+        public async Task<ActionResult<ApiResponse<bool>>> AssignRole(Guid id, [FromBody] AssignUserRoleCommand command)
         {
-            var command = new AssignUserRolesCommand
-            {
-                UserId = id,
-                RoleIds = roleIds
-            };
-
+            command.UserId = id;
             await _mediator.Send(command);
             return Ok(ApiResponse<bool>.Ok(true, "Cập nhật vai trò cho người dùng thành công."));
         }

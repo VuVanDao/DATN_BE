@@ -11,7 +11,7 @@ namespace DATN_BE.Modules.Identity.Domain.Entities
         public bool IsSystemRole { get; set; } = false;
 
         // Navigation Properties
-        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+        public ICollection<User> Users { get; set; } = new List<User>();
         public ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
     }
 }

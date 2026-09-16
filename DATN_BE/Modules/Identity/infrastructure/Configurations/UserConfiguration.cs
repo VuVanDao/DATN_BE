@@ -18,6 +18,12 @@ namespace DATN_BE.Modules.Identity.infrastructure.Configurations
             // Partial Unique Indexes
             builder.HasIndex(u => u.Email).IsUnique().HasFilter("\"IsDeleted\" = false");
             builder.HasIndex(u => u.Username).IsUnique().HasFilter("\"IsDeleted\" = false");
+
+            // Role Relationship (1 Role - Many Users)
+            builder.HasOne(u => u.Role)
+                .WithMany(r => r.Users)
+                .HasForeignKey(u => u.RoleId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

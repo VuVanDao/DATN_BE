@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.Identity.Application.DTOs;
+using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Modules.Identity.Application.Interfaces;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -18,8 +18,8 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RefrehToken
         }
         public async Task<AuthResponseDto> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
         {
-            // 1. Tìm Refresh Token trong DB kèm thông tin User và Roles
-            var existingToken = await _context.RefreshTokens.Include(rf => rf.User).ThenInclude(u => u.UserRoles).ThenInclude(ur => ur.Role)
+            // 1. Tìm Refresh Token trong DB kèm thông tin User và Role
+            var existingToken = await _context.RefreshTokens.Include(rf => rf.User).ThenInclude(u => u.Role)
                 .FirstOrDefaultAsync(rf => rf.Token ==  request.RefreshToken,cancellationToken);
             if(existingToken == null)
             {
@@ -63,8 +63,8 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RefrehToken
             await _context.SaveChangesAsync(cancellationToken);
 
             // 5. Sinh JWT Access Token mới
-            var roles = existingToken.User.UserRoles.Select(ur => ur.Role.Name).ToList();
-            var newAccessToken = _jwtTokenGenerator.GenerateToken(existingToken.User, roles);
+            var role = existingToken.User.Role?.Name ?? "User";
+            var newAccessToken = _jwtTokenGenerator.GenerateToken(existingToken.User, role);
 
             return new AuthResponseDto
             {
@@ -75,7 +75,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RefrehToken
                 Token = newAccessToken,
                 RefreshToken = newRefreshToken.Token,
                 RefreshTokenExpiresAt = newRefreshToken.ExpiresAt,
-                Roles = roles
+                Role = role
             };
         }
     }

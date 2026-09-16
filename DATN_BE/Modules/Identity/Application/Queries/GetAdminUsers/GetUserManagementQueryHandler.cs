@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.Identity.Application.DTOs;
+using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Application.Models;
@@ -17,8 +17,7 @@ namespace DATN_BE.Modules.Identity.Application.Queries.GetAdminUsers
         public async Task<PagedResult<UserManagementDto>> Handle(GetUserManagementQuery request, CancellationToken cancellationToken)
         {
             var query = _context.Users
-                .Include(u => u.UserRoles)
-                    .ThenInclude(ur => ur.Role)
+                .Include(u => u.Role)
                 .AsNoTracking();
             // 1. Tìm kiếm theo Email hoặc Username
             if (!string.IsNullOrEmpty(request.Search))
@@ -50,7 +49,7 @@ namespace DATN_BE.Modules.Identity.Application.Queries.GetAdminUsers
                     IsActive = u.IsActive,
                     IsDeleted = u.IsDeleted,
                     CreatedAt = u.CreatedAt,
-                    Roles = u.UserRoles.Select(ur => ur.Role.Name).ToList()
+                    Role = u.Role != null ? u.Role.Name : "User"
                 }).ToListAsync(cancellationToken);
             return new PagedResult<UserManagementDto>(users, totalCount, pageIndex, pageSize);
         }

@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.Identity.Application.DTOs;
+using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Modules.Identity.Application.Interfaces;
 using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.Identity.infrastructure.Services;
@@ -34,14 +34,33 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RegisterUser
             }
             // 3. Băm mật khẩu bằng BCrypt
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-            // 4. Khởi tạo Entity User
+
+            // 4. Lấy vai trò mặc định "User" (Global)
+            var defaultRole = await _context.Roles
+                .FirstOrDefaultAsync(r => r.Name == "User", cancellationToken);
+            if (defaultRole == null)
+            {
+                defaultRole = new Role
+                {
+                    Name = "User",
+                    Scope = Domain.Enum.RoleScope.Global,
+                    Description = "Người dùng hệ thống",
+                    IsSystemRole = true
+                };
+                _context.Roles.Add(defaultRole);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            // 5. Khởi tạo Entity User
             var user = new User
             {
                 Email = request.Email.Trim().ToLower(),
                 Username = request.Username.Trim(),
                 PasswordHash = passwordHash,
                 Bio = request.Bio,
-                IsActive = true
+                IsActive = true,
+                RoleId = defaultRole.Id,
+                Role = defaultRole
             };
             _context.Users.Add(user);
 
@@ -51,8 +70,8 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RegisterUser
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            // 5. Sinh JWT Token
-            var token = _jwtTokenGenerator.GenerateToken(user, new List<string>());
+            // 6. Sinh JWT Token
+            var token = _jwtTokenGenerator.GenerateToken(user, defaultRole.Name);
 
             return new AuthResponseDto
             {
@@ -61,8 +80,9 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RegisterUser
                 Username = user.Username,
                 AvatarUrl = user.AvatarUrl,
                 Token = token,
-                Roles = new List<string>(),
-                RefreshToken  =refreshToken.Token,
+                Role = defaultRole.Name,
+                IsActive = user.IsActive,
+                RefreshToken = refreshToken.Token,
                 RefreshTokenExpiresAt = refreshToken.ExpiresAt
             };
         }

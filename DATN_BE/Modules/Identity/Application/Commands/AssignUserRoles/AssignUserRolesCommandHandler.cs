@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.Identity.Domain.Entities;
+using DATN_BE.Modules.Identity.Domain.Enum;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -6,36 +6,30 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DATN_BE.Modules.Identity.Application.Commands.AssignUserRoles
 {
-    public class AssignUserRolesCommandHandler : IRequestHandler<AssignUserRolesCommand, bool>
+    public class AssignUserRoleCommandHandler : IRequestHandler<AssignUserRoleCommand, bool>
     {
         private readonly IApplicationDbContext _context;
-        public AssignUserRolesCommandHandler(IApplicationDbContext context)
+        public AssignUserRoleCommandHandler(IApplicationDbContext context)
         {
             _context = context;
         }
-        public async Task<bool> Handle(AssignUserRolesCommand request, CancellationToken cancellationToken)
+        public async Task<bool> Handle(AssignUserRoleCommand request, CancellationToken cancellationToken)
         {
             var user = await _context.Users
-                .Include(u => u.UserRoles)
-                .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken) ?? throw new NotFoundException("Không tìm thấy user với id tương ứng");
-            // Xóa các vai trò cũ
-            _context.UserRoles.RemoveRange(user.UserRoles);
+                .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken) 
+                ?? throw new NotFoundException("Không tìm thấy người dùng với ID tương ứng.");
 
-            // Gán danh sách vai trò mới
-            var validRoleIds = await _context.Roles
-                .Where(r => request.RoleIds.Contains(r.Id))
-                .Select(r => r.Id)
-                .ToListAsync(cancellationToken);
+            var role = await _context.Roles
+                .FirstOrDefaultAsync(r => r.Id == request.RoleId, cancellationToken) 
+                ?? throw new NotFoundException("Không tìm thấy vai trò tương ứng.");
 
-            foreach (var roleId in validRoleIds)
+            // Chỉ cho phép gán vai trò có Scope Global ở cấp độ tài khoản hệ thống
+            if (role.Scope != RoleScope.Global)
             {
-                _context.UserRoles.Add(new UserRole
-                {
-                    UserId = user.Id,
-                    RoleId = roleId,
-                    AssignedAt = DateTimeOffset.UtcNow
-                });
+                throw new BadRequestException("Chỉ có thể gán các vai trò toàn cục (Global) cho tài khoản người dùng.");
             }
+
+            user.RoleId = role.Id;
             await _context.SaveChangesAsync(cancellationToken);
             return true;
         }

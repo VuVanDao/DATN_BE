@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.Identity.Application.DTOs;
+using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -20,7 +20,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.UpdateProfile
             // lấy userId trong token người dùng gửi lên
             var userId = _currentUserService.UserId ?? throw new UnauthorizedAccessException("Người dùng chưa đăng nhập, yêu cầu đăng nhập");
             // lấy user tương ứng với UserId
-            var user = await _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+            var user = await _context.Users.Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken) ?? throw new NotFoundException("Không tìm thấy user tương ứng");
             // kiểm tra trùng username nếu người dùng đổi username mới
             var newUsername = request.Username.Trim();
@@ -46,7 +46,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.UpdateProfile
                 Bio = user.Bio,
                 IsActive = user.IsActive,
                 CreatedAt = user.CreatedAt,
-                Roles = user.UserRoles.Select(ur => ur.Role.Name).ToList()
+                Role = user.Role?.Name ?? "User"
             };
         }
     }

@@ -1,10 +1,12 @@
-﻿using MediatR;
+using System.Text.Json.Serialization;
+using MediatR;
 
 namespace DATN_BE.Modules.Identity.Application.Commands.AssignUserRoles
 {
-    public class AssignUserRolesCommand : IRequest<bool>
+    public class AssignUserRoleCommand : IRequest<bool>
     {
+        [JsonIgnore]
         public Guid UserId { get; set; }
-        public List<Guid> RoleIds { get; set; } = new List<Guid>();
+        public Guid RoleId { get; set; }
     }
 }

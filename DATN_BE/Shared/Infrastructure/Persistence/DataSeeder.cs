@@ -1,4 +1,4 @@
-﻿
+
 using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.Identity.Domain.Enum;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +13,7 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
             var defaultRoles = new List<Role>
             {
                 new() { Name = "SystemAdmin", Scope = RoleScope.Global, Description = "Quản trị viên toàn hệ thống", IsSystemRole = true },
+                new() { Name = "User", Scope = RoleScope.Global, Description = "Người dùng hệ thống", IsSystemRole = true },
                 new() { Name = "WorkspaceOwner", Scope = RoleScope.Workspace, Description = "Quản trị viên Không gian làm việc", IsSystemRole = true },
                 new() { Name = "ProjectOwner", Scope = RoleScope.Project, Description = "Quản lý dự án", IsSystemRole = true },
                 new() { Name = "Developer", Scope = RoleScope.Workspace, Description = "Thành viên phát triển", IsSystemRole = true },

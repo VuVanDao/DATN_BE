@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.Identity.Application.Interfaces;
+using DATN_BE.Modules.Identity.Application.Interfaces;
 using DATN_BE.Modules.Identity.Domain.Entities;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -16,7 +16,7 @@ namespace DATN_BE.Modules.Identity.infrastructure.Services
             _configuration = configuration;
         }
 
-        public string GenerateToken(User user, IEnumerable<string> roles)
+        public string GenerateToken(User user, string role)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"];
@@ -27,13 +27,9 @@ namespace DATN_BE.Modules.Identity.infrastructure.Services
                 new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new(JwtRegisteredClaimNames.Email, user.Email),
                 new(JwtRegisteredClaimNames.UniqueName, user.Username),
-                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new(ClaimTypes.Role, role)
             };
-            // Nạp danh sách Role của User vào Token
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role,role));
-            }
             var expiryMinutes = int.Parse(jwtSettings["ExpiryMinutes"] ?? "1440");
             var token = new JwtSecurityToken(
                 issuer: jwtSettings["Issuer"],

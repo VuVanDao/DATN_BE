@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.Identity.Domain.Entities;
+using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.Notifications.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.Security.Domain.Entities;
@@ -13,7 +13,6 @@ namespace DATN_BE.Shared.Application.Interfaces
         DbSet<User> Users { get; }
         DbSet<Role> Roles { get; }
         DbSet<Permission> Permissions { get; }
-        DbSet<UserRole> UserRoles { get; }
         DbSet<RolePermission> RolePermissions { get; }
         DbSet<Workspace> Workspaces { get; }
         DbSet<WorkspaceMember> WorkspaceMembers { get; }

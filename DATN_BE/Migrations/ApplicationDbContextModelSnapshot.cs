@@ -232,6 +232,9 @@ namespace DATN_BE.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -246,29 +249,13 @@ namespace DATN_BE.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
+                    b.HasIndex("RoleId");
+
                     b.HasIndex("Username")
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("Users", (string)null);
-                });
-
-            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.UserRole", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("RoleId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("AssignedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("UserId", "RoleId");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("UserRoles", (string)null);
                 });
 
             modelBuilder.Entity("DATN_BE.Modules.Notifications.Domain.Entities.Notification", b =>
@@ -899,23 +886,15 @@ namespace DATN_BE.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.UserRole", b =>
+            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.User", b =>
                 {
                     b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.Role", "Role")
-                        .WithMany("UserRoles")
+                        .WithMany("Users")
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "User")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Role");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DATN_BE.Modules.Notifications.Domain.Entities.Notification", b =>
@@ -1172,7 +1151,7 @@ namespace DATN_BE.Migrations
                 {
                     b.Navigation("RolePermissions");
 
-                    b.Navigation("UserRoles");
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.User", b =>
@@ -1200,8 +1179,6 @@ namespace DATN_BE.Migrations
                     b.Navigation("UserBoardPreferences");
 
                     b.Navigation("UserCardComments");
-
-                    b.Navigation("UserRoles");
 
                     b.Navigation("WorkspaceMembers");
                 });

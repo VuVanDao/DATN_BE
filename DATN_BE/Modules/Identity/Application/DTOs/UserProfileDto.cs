@@ -1,4 +1,4 @@
-﻿namespace DATN_BE.Modules.Identity.Application.DTOs
+namespace DATN_BE.Modules.Identity.Application.DTOs
 {
     public class UserProfileDto
     {
@@ -9,6 +9,6 @@
         public string? Bio { get; set; }
         public bool IsActive { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
-        public List<string> Roles { get; set; } = new();
+        public string Role { get; set; } = string.Empty;
     }
 }

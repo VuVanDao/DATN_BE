@@ -18,7 +18,9 @@ namespace DATN_BE.Modules.Identity.Domain.Entities
         public bool IsDeleted { get; set; } = false;
         public DateTimeOffset? DeletedAt { get; set; }
 
-        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+        public Guid RoleId { get; set; }
+        public Role Role { get; set; } = null!;
+
         public ICollection<Workspace> OwnedWorkspaces { get; set; } = new List<Workspace>();
         public ICollection<WorkspaceMember> WorkspaceMembers { get; set; } = new List<WorkspaceMember>();
         public ICollection<Project> OwnedProjects { get; set; } = new List<Project>();

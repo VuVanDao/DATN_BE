@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.Identity.Application.DTOs;
+using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Modules.Identity.Application.Interfaces;
 using DATN_BE.Modules.Security.Domain.Entities;
 using DATN_BE.Shared.Application.Events;
@@ -22,8 +22,8 @@ namespace DATN_BE.Modules.Identity.Application.Commands.Login
         }   
         public async Task<AuthResponseDto> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
-            // 1. Tìm User theo Email kèm danh sách Roles
-            var user = await _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+            // 1. Tìm User theo Email kèm Role
+            var user = await _context.Users.Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower(), cancellationToken);
 
             // 2. Kiểm tra tài khoản và mật khẩu
@@ -43,11 +43,11 @@ namespace DATN_BE.Modules.Identity.Application.Commands.Login
                 throw new BadRequestException("Tài khoản của bạn hiện đang bị khóa. Vui lòng liên hệ quản trị viên.");
             }
 
-            // 4. Lấy danh sách tên Roles
-            var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
+            // 4. Lấy tên Role
+            var role = user.Role?.Name ?? "User";
 
             // 5. Sinh JWT Token
-            var token = _jwtTokenGenerator.GenerateToken(user, roles);
+            var token = _jwtTokenGenerator.GenerateToken(user, role);
 
             // Sinh Refresh Token và lưu vào DB
             var refreshToken = _jwtTokenGenerator.GenerateRefreshToken(user.Id);
@@ -67,7 +67,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.Login
                 Username = user.Username,
                 AvatarUrl = user.AvatarUrl,
                 Token = token,
-                Roles = roles,
+                Role = role,
                 IsActive = user.IsActive,
                 RefreshToken = refreshToken.Token,
                 RefreshTokenExpiresAt = refreshToken.ExpiresAt
