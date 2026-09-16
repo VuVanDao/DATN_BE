@@ -4,7 +4,7 @@ using MediatR;
 
 namespace DATN_BE.Modules.Identity.Application.Queries.GetAdminUsers
 {
-    public class GetAdminUsersQuery : IRequest<PagedResult<AdminUserDto>>
+    public class GetUserManagementQuery : IRequest<PagedResult<UserManagementDto>>
     {
         public string? Search { get; set; }
         public bool? IsActive { get; set; }

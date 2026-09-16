@@ -1,6 +1,6 @@
 ﻿namespace DATN_BE.Modules.Identity.Application.DTOs
 {
-    public class AdminUserDto
+    public class UserManagementDto
     {
         public Guid Id { get; set; }
         public string Email { get; set; } = string.Empty;

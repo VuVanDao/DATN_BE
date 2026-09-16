@@ -31,10 +31,10 @@ namespace DATN_BE.Modules.Identity.Presentation.Controllers
         /// </summary>
         [HttpGet("users")]
         [HasPermission("user:read")]
-        public async Task<ActionResult<ApiResponse<PagedResult<AdminUserDto>>>> GetUsers([FromQuery] GetAdminUsersQuery query)
+        public async Task<ActionResult<ApiResponse<PagedResult<UserManagementDto>>>> GetUsers([FromQuery] GetUserManagementQuery query)
         {
             var result = await _mediator.Send(query);
-            return Ok(ApiResponse<PagedResult<AdminUserDto>>.Ok(result, "Lấy danh sách người dùng thành công."));
+            return Ok(ApiResponse<PagedResult<UserManagementDto>>.Ok(result, "Lấy danh sách người dùng thành công."));
         }
 
         /// <summary>

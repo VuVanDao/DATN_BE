@@ -7,14 +7,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DATN_BE.Modules.Identity.Application.Queries.GetAdminUsers
 {
-    public class GetAdminUsersQueryHandler : IRequestHandler<GetAdminUsersQuery, PagedResult<AdminUserDto>>
+    public class GetUserManagementQueryHandler : IRequestHandler<GetUserManagementQuery, PagedResult<UserManagementDto>>
     {
         private readonly IApplicationDbContext _context;
-        public GetAdminUsersQueryHandler(IApplicationDbContext context)
+        public GetUserManagementQueryHandler(IApplicationDbContext context)
         {
             _context = context;
         }
-        public async Task<PagedResult<AdminUserDto>> Handle(GetAdminUsersQuery request, CancellationToken cancellationToken)
+        public async Task<PagedResult<UserManagementDto>> Handle(GetUserManagementQuery request, CancellationToken cancellationToken)
         {
             var query = _context.Users
                 .Include(u => u.UserRoles)
@@ -40,7 +40,7 @@ namespace DATN_BE.Modules.Identity.Application.Queries.GetAdminUsers
                 .OrderByDescending(u => u.CreatedAt)
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
-                .Select(u => new AdminUserDto
+                .Select(u => new UserManagementDto
                 {
                     Id = u.Id,
                     Email = u.Email,
@@ -52,7 +52,7 @@ namespace DATN_BE.Modules.Identity.Application.Queries.GetAdminUsers
                     CreatedAt = u.CreatedAt,
                     Roles = u.UserRoles.Select(ur => ur.Role.Name).ToList()
                 }).ToListAsync(cancellationToken);
-            return new PagedResult<AdminUserDto>(users, totalCount, pageIndex, pageSize);
+            return new PagedResult<UserManagementDto>(users, totalCount, pageIndex, pageSize);
         }
     }
 }
