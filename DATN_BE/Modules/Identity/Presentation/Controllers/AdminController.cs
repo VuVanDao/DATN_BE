@@ -1,3 +1,6 @@
+using DATN_BE.Modules.Identity.Application.Commands.AdminCreateUser;
+using DATN_BE.Modules.Identity.Application.Commands.AdminDeleteUser;
+using DATN_BE.Modules.Identity.Application.Commands.AdminUpdateUser;
 using DATN_BE.Modules.Identity.Application.Commands.AssignUserRoles;
 using DATN_BE.Modules.Identity.Application.Commands.UpdateUserStatus;
 using DATN_BE.Modules.Identity.Application.DTOs;
@@ -60,6 +63,40 @@ namespace DATN_BE.Modules.Identity.Presentation.Controllers
             command.UserId = id;
             await _mediator.Send(command);
             return Ok(ApiResponse<bool>.Ok(true, "Cập nhật vai trò cho người dùng thành công."));
+        }
+
+        /// <summary>
+        /// [Admin] Tạo mới một tài khoản người dùng (Role mặc định: User)
+        /// </summary>
+        [HttpPost("users")]
+        [HasPermission("user:manage")]
+        public async Task<ActionResult<ApiResponse<Guid>>> CreateUser([FromBody] AdminCreateUserCommand command)
+        {
+            var userId = await _mediator.Send(command);
+            return Ok(ApiResponse<Guid>.Ok(userId, "Tạo người dùng thành công."));
+        }
+
+        /// <summary>
+        /// [Admin] Cập nhật thông tin người dùng (Username, Bio)
+        /// </summary>
+        [HttpPut("users/{id:guid}")]
+        [HasPermission("user:manage")]
+        public async Task<ActionResult<ApiResponse<UserManagementDto>>> UpdateUser(Guid id, [FromBody] AdminUpdateUserCommand command)
+        {
+            command.UserId = id;
+            var result = await _mediator.Send(command);
+            return Ok(ApiResponse<UserManagementDto>.Ok(result, "Cập nhật thông tin người dùng thành công."));
+        }
+
+        /// <summary>
+        /// [Admin] Xóa mềm tài khoản người dùng (IsDeleted = true)
+        /// </summary>
+        [HttpDelete("users/{id:guid}")]
+        [HasPermission("user:manage")]
+        public async Task<ActionResult<ApiResponse<bool>>> DeleteUser(Guid id)
+        {
+            await _mediator.Send(new AdminDeleteUserCommand { UserId = id });
+            return Ok(ApiResponse<bool>.Ok(true, "Xóa người dùng thành công."));
         }
 
         #endregion
