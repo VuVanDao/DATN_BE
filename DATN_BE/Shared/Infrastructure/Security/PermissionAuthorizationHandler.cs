@@ -21,7 +21,8 @@ namespace DATN_BE.Shared.Infrastructure.Security
             {
                 return;
             }
-            // Tạo scope để lấy DbContext (vì AuthorizationHandler thường là Singleton/Scoped)
+            // Tạo scope để lấy DbContext (vì AuthorizationHandler thường là Singleton, mà DbContext thường là Scoped, nên thường khong inject 1 dịch vụ có
+            // vòng đời ngắn [Scoped] vào dịch vụ sống lâu [Singleleton]) nên inject IServiceScopeFactory để chủ động tạo scope tạm thời khi cần dùng DbContext
             using var scope = _serviceScopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
             // Lấy danh sách tất cả các Permission Code của User thông qua Role
