@@ -41,12 +41,12 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace
                 Name = request.Name.Trim(),
                 Slug = slug,
                 Description = request.Description,
-                LogoUrl = request.LogoUrl,
                 OwnerId = currentUserId
             };
             _context.Workspaces.Add(workspace);
             // 3. Tìm Role "WorkspaceOwner" để gán cho Người tạo
-            var OwnerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "WorkspaceOwner", cancellationToken) ?? throw new NotFoundException("Không tìm thấy vai trò WorkspaceOwner");
+            var OwnerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "WorkspaceOwner", cancellationToken) 
+                ?? throw new NotFoundException("Không tìm thấy vai trò WorkspaceOwner");
             // 4. Thêm người tạo vào danh sách WorkspaceMembers
             var member = new WorkspaceMember
             {
@@ -67,7 +67,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace
                 OwnerName = user.Username,
                 MembersCount = 1,
                 ProjectsCount = 0,
-                CurrentUserRole = "WorkspaceAdmin",
+                CurrentUserRole = OwnerRole != null? OwnerRole.Name : "WorkspaceOwner",
                 CreatedAt = workspace.CreatedAt
             };
         }
