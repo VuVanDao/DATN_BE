@@ -53,7 +53,7 @@ namespace DATN_BE.Shared.Infrastructure.Services
             return uploadResult.SecureUrl.ToString();
         }
 
-        public async Task<string> UploadWorkspaceImageAAsync(IFormFile file, string workspaceId, string imgType, CancellationToken cancellationToken = default)
+        public async Task<string> UploadWorkspaceImageAsync(IFormFile file, string workspaceId, string imgType, CancellationToken cancellationToken = default)
         {
             if (file == null || file.Length == 0)
             {
