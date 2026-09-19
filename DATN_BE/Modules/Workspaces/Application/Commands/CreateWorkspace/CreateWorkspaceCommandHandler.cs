@@ -63,6 +63,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace
                 Slug = workspace.Slug,
                 Description = workspace.Description,
                 LogoUrl = workspace.LogoUrl,
+                CoverImgUrl = workspace.CoverImgUrl,
                 OwnerId = workspace.OwnerId,
                 OwnerName = user.Username,
                 MembersCount = 1,

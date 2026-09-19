@@ -38,6 +38,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Queries.GetUserWorkspaces
                     Slug = w.Slug,
                     Description = w.Description,
                     LogoUrl = w.LogoUrl,
+                    CoverImgUrl = w.CoverImgUrl,
                     OwnerId = w.OwnerId,
                     OwnerName = w.Owner?.Username ?? string.Empty,
                     MembersCount = w.Members.Count,
