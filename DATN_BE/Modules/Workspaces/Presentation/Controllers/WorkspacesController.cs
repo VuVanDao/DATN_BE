@@ -1,5 +1,6 @@
 ﻿using DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember;
 using DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace;
+using DATN_BE.Modules.Workspaces.Application.Commands.UpdateWorkspace;
 using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Modules.Workspaces.Application.Queries.GetUserWorkspaces;
 using DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceBySlug;
@@ -56,6 +57,18 @@ namespace DATN_BE.Modules.Workspaces.Presentation.Controllers
         {
             var result = await _mediator.Send(new GetWorkspaceBySlugQuery { Slug = slug });
             return Ok(ApiResponse<WorkspaceDetailDto>.Ok(result, "Lấy chi tiết Workspace thành công."));
+        }
+        /// <summary>
+        /// Cập nhật thông tin Workspace (tên, mô tả, logo, ảnh bìa)
+        /// </summary>
+        [HttpPut("{id:guid}")]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ApiResponse<WorkspaceDetailDto>>> UpdateWorkspace(
+            Guid id, [FromForm] UpdateWorkspaceCommand command)
+        {
+            command.WorkspaceId = id;
+            var result = await _mediator.Send(command);
+            return Ok(ApiResponse<WorkspaceDetailDto>.Ok(result, "Cập nhật Workspace thành công."));
         }
     }
 }
