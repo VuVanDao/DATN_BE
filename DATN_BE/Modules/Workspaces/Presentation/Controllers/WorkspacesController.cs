@@ -2,6 +2,7 @@
 using DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace;
 using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Modules.Workspaces.Application.Queries.GetUserWorkspaces;
+using DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceBySlug;
 using DATN_BE.Shared.Application.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -46,6 +47,15 @@ namespace DATN_BE.Modules.Workspaces.Presentation.Controllers
             command.WorkspaceId = id;
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<WorkspaceMemberDto>.Ok(result, "Thêm thành viên vào Workspace thành công."));
+        }
+        /// <summary>
+        /// Lấy chi tiết Workspace theo Slug
+        /// </summary>
+        [HttpGet("{slug}")]
+        public async Task<ActionResult<ApiResponse<WorkspaceDetailDto>>> GetWorkspaceBySlug(string slug)
+        {
+            var result = await _mediator.Send(new GetWorkspaceBySlugQuery { Slug = slug });
+            return Ok(ApiResponse<WorkspaceDetailDto>.Ok(result, "Lấy chi tiết Workspace thành công."));
         }
     }
 }
