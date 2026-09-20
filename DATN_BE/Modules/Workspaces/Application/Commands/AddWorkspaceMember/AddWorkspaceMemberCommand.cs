@@ -3,10 +3,18 @@ using MediatR;
 
 namespace DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember
 {
-    public class AddWorkspaceMemberCommand : IRequest<WorkspaceMemberDto>
+    /// <summary>
+    /// Một mục trong danh sách thành viên cần thêm
+    /// </summary>
+    public class MemberEntry
     {
-        public Guid WorkspaceId { get; set; }
         public string Email { get; set; } = string.Empty;
-        public Guid? RoleId { get; set; } // Nếu null -> Mặc định là member
+        public Guid? RoleId { get; set; }
+    }
+    public class AddWorkspaceMemberCommand : IRequest<AddWorkspaceMembersResultDto>
+    {
+        
+        public Guid WorkspaceId { get; set; }
+        public List<MemberEntry> Members { get; set; } = new();
     }
 }
