@@ -4,6 +4,7 @@ using DATN_BE.Modules.Workspaces.Application.Commands.UpdateWorkspace;
 using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Modules.Workspaces.Application.Queries.GetUserWorkspaces;
 using DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceBySlug;
+using DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceRoles;
 using DATN_BE.Shared.Application.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -39,16 +40,33 @@ namespace DATN_BE.Modules.Workspaces.Presentation.Controllers
             var result = await _mediator.Send(new GetUserWorkspacesQuery());
             return Ok(ApiResponse<List<WorkspaceDto>>.Ok(result, "Lấy danh sách Workspace thành công."));
         }
+
         /// <summary>
-        /// Thêm thành viên vào Workspace
+        /// Lấy danh sách các vai trò khả dụng trong Workspace (cho dropdown mời thành viên)
+        /// </summary>
+        [HttpGet("roles")]
+        public async Task<ActionResult<ApiResponse<List<RoleDto>>>> GetWorkspaceRoles()
+        {
+            var result = await _mediator.Send(new GetWorkspaceRolesQuery());
+            return Ok(ApiResponse<List<RoleDto>>.Ok(result, "Lấy danh sách vai trò thành công."));
+        }
+
+        /// <summary>
+        /// Thêm nhiều thành viên vào Workspace 
         /// </summary>
         [HttpPost("{id:guid}/members")]
-        public async Task<ActionResult<ApiResponse<WorkspaceMemberDto>>> AddMember(Guid id, [FromBody] AddWorkspaceMemberCommand command)
+        public async Task<ActionResult<ApiResponse<AddWorkspaceMembersResultDto>>> AddMembers(
+            Guid id,
+            [FromBody] AddWorkspaceMemberCommand command)
         {
             command.WorkspaceId = id;
             var result = await _mediator.Send(command);
-            return Ok(ApiResponse<WorkspaceMemberDto>.Ok(result, "Thêm thành viên vào Workspace thành công."));
+            var message = result.TotalFailed == 0
+                ? $"Đã thêm thành công {result.TotalSuccess} thành viên."
+                : $"Thêm thành công {result.TotalSuccess}/{result.TotalRequested} thành viên.";
+            return Ok(ApiResponse<AddWorkspaceMembersResultDto>.Ok(result, message));
         }
+
         /// <summary>
         /// Lấy chi tiết Workspace theo Slug
         /// </summary>
