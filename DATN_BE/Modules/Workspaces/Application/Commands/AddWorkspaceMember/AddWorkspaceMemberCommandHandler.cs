@@ -1,4 +1,5 @@
-﻿using DATN_BE.Modules.Workspaces.Application.DTOs;
+﻿using DATN_BE.Modules.Identity.Domain.Enum;
+using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember
 {
-    public class AddWorkspaceMemberCommandHandler : IRequestHandler<AddWorkspaceMemberCommand, WorkspaceMemberDto>
+    public class AddWorkspaceMemberCommandHandler : IRequestHandler<AddWorkspaceMemberCommand, AddWorkspaceMembersResultDto>
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
@@ -16,67 +17,118 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember
             _context = context;
             _currentUserService = currentUserService;
         }
-        public async Task<WorkspaceMemberDto> Handle(AddWorkspaceMemberCommand request, CancellationToken cancellationToken)
+        public async Task<AddWorkspaceMembersResultDto> Handle(AddWorkspaceMemberCommand request, CancellationToken cancellationToken)
         {
-            Console.WriteLine("check vao ham");
-
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này.");
+                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");
+
             // 1. check workspace exist
             var workspace = await _context.Workspaces.Include(w => w.Members).Include(w => w.Owner)
                 .FirstOrDefaultAsync(w => w.Id == request.WorkspaceId && !w.IsDeleted, cancellationToken) ?? throw new NotFoundException("Workspace này không tồn tại");
+
             // 2. check role user who act add must be WorkspaceOwner
             var isOwner = workspace.Owner.Id == currentUserId;
             if (!isOwner)
             {
                 throw new ForbiddenException("Chỉ Người sở hữu mới có quyền thêm thành viên vào Workspace này.");
             }
-            // 3.find user who need to be add by email
-            var targetUser = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower() && !u.IsDeleted && u.IsActive == true, cancellationToken) 
-                    ?? throw new NotFoundException($"Không tìm thấy người dùng có email {request.Email}");
-            // 4. Kiểm tra xem người này đã là thành viên chưa
-            var checkUserIncluded = await _context.WorkspaceMembers.AnyAsync(wm => wm.WorkspaceId == request.WorkspaceId && wm.UserId == targetUser.Id, cancellationToken);
-            if (checkUserIncluded)
+            // 3. lay danh sach role thuoc scope workspace
+            var workspaceRoles = await _context.Roles
+                .Where(r => r.Scope == RoleScope.Workspace && r.Name != "WorkspaceOwner")
+                .ToListAsync(cancellationToken);
+            // lay role mac dinh la WorkspaceMember
+            var defaultRole = workspaceRoles
+                .FirstOrDefault(r => r.Name == "WorkspaceMember") 
+                    ?? throw new NotFoundException("Không tìm thấy vai trò WorkspaceMember trong hệ thống.");
+
+            // 4. lay danh sach cac member hien tai check trung lap
+            var existingUserIds = workspace.Members
+                .Select(m => m.UserId)
+                .ToHashSet();
+            // 5. xu ly tung thanh vien
+            var results = new List<MemberAddResult>();
+
+            foreach (var entry in request.Members)
             {
-                throw new BadRequestException("Người dùng này đã là thành viên trong Workspace rồi.");
+                var memberEmail = entry.Email.Trim();
+                var result = new MemberAddResult { Email = memberEmail };
+
+                try
+                {
+                    // tim user theo email
+                    var targetUser = await _context.Users.
+                        FirstOrDefaultAsync(u => u.Email.ToLower() == memberEmail.ToLower() && u.IsActive == true, cancellationToken);
+
+                    if(targetUser == null)
+                    {
+                        result.Success = false;
+                        result.Message = $"Không tìm thấy người dùng với email '{memberEmail}'";
+                        results.Add(result);
+                        continue;
+                    }
+                    // kiem tra user da la thanh vien cua workspace chua
+                    if (existingUserIds.Contains(targetUser.Id))
+                    {
+                        result.Success = false;
+                        result.Message = "Người dùng này đã là thành viên trong Workspace";
+                        results.Add(result );
+                        continue;
+                    }
+                    // xac dinh role
+                    var role = defaultRole;
+                    if (entry.RoleId.HasValue)
+                    {
+                        var targetRole = workspaceRoles.FirstOrDefault(r=>r.Id == entry.RoleId);
+                        if(targetRole == null)
+                        {
+                            result.Success = false;
+                            result.Message = "Vai trò không hợp lệ hoặc không thuộc phạm vi Workspace";
+                            results.Add(result);
+                            continue;
+                        }
+                        role = targetRole;
+                    }
+                    // tao workspaceMember, chap nhan thanh vien vao role
+                    var workspaceMember = new WorkspaceMember
+                    {
+                        WorkspaceId = workspace.Id,
+                        UserId = targetUser.Id,
+                        RoleId = role.Id
+                    };
+                    _context.WorkspaceMembers.Add(workspaceMember);
+                    existingUserIds.Add(targetUser.Id); // Đưa vào set để tránh trùng nếu trong cùng batch có 2 dòng cùng email
+
+                    result.Success = true;
+                    result.Message = "Thêm thành viên thành công";
+                    result.Member = new WorkspaceMemberDto
+                    {
+                        UserId = targetUser.Id,
+                        Username = targetUser.Username,
+                        Email = targetUser.Email,
+                        AvatarUrl = targetUser.AvatarUrl,
+                        RoleId = role.Id,
+                        RoleName = role.Name,
+                        JoinAt = workspaceMember.JoinAt
+                    };
+                }
+                catch (Exception)
+                {
+                    result.Success = false;
+                    result.Message = "Đã xảy ra lỗi khi xử lý thành viên này.";
+                }
+                results.Add(result);
             }
 
-            // 5. Xác định Role (nếu không truyền RoleId thì mặc định lấy Role Developer)
-            Guid roleId;
-            string roleName = "Developer";
-            if (request.RoleId.HasValue)
-            {
-                var targetRole = await _context.Roles.FirstOrDefaultAsync(r => r.Id == request.RoleId, cancellationToken) ?? throw new NotFoundException($"Không tìm thấy vai trò trong hệ thống");
-                roleId = targetRole.Id;
-                roleName = targetRole.Name;
-            }
-            else
-            {
-                var defaultRole = await _context.Roles
-                    .FirstOrDefaultAsync(r => r.Name == "Developer", cancellationToken) ?? throw new NotFoundException($"Không tìm thấy vai trò Developer trong hệ thống");
-                roleId = defaultRole.Id;
-                roleName = defaultRole.Name;
-            }
-            // 6. Thêm vào bảng WorkspaceMembers
-            var workspaceMember = new WorkspaceMember
-            {
-                WorkspaceId = workspace.Id,
-                UserId = targetUser.Id,
-                RoleId = roleId
-            };
-            _context.WorkspaceMembers.Add(workspaceMember);
+
+            // 6. Lưu toàn bộ các member hợp lệ vào Database
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new WorkspaceMemberDto
+            return new AddWorkspaceMembersResultDto
             {
-                UserId = targetUser.Id,
-                Username = targetUser.Username,
-                Email = targetUser.Email,
-                AvatarUrl = targetUser.AvatarUrl,
-                RoleId = roleId,
-                RoleName = roleName,
-                JoinAt = workspaceMember.JoinAt
+                TotalRequested = request.Members.Count,
+                TotalSuccess = results.Count(r => r.Success),
+                TotalFailed = results.Count(r => !r.Success),
+                Results = results
             };
         }
     }

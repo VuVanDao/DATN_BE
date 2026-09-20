@@ -12,6 +12,6 @@
         public string Email { get; set; } = string.Empty;
         public bool Success { get; set; }
         public string? Message { get; set; }
-        public WorkspaceMemberDto member { get; set; }
+        public WorkspaceMemberDto? Member { get; set; }// dung de gui ve cho FE update danh sach thanh vien
     }
 }

@@ -17,7 +17,7 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
                 new() { Name = "WorkspaceOwner", Scope = RoleScope.Workspace, Description = "Quản trị viên Không gian làm việc", IsSystemRole = true },
                 new() { Name = "ProjectOwner", Scope = RoleScope.Project, Description = "Quản lý dự án", IsSystemRole = true },
                 new() { Name = "Developer", Scope = RoleScope.Workspace, Description = "Thành viên phát triển", IsSystemRole = true },
-                new() { Name = "Observer", Scope = RoleScope.Workspace, Description = "Người xem / Khách", IsSystemRole = true }
+                new() { Name = "WorkspaceMember", Scope = RoleScope.Workspace, Description = "Người xem / Khách của workspace", IsSystemRole = true }
             };
             foreach (var role in defaultRoles)
             {
