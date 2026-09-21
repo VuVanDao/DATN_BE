@@ -33,7 +33,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceBySlug
                 throw new ForbiddenException("Bạn không có quyền truy cập vào Workspace này.");
             }
             var myMembership = workspace.Members.FirstOrDefault(mem => mem.UserId == currUserId);
-            var myRole = workspace.OwnerId == currUserId ? "WorkspaceOwner" : myMembership?.Role?.Name ?? "Member";
+            var myRole = workspace.OwnerId == currUserId ? "WorkspaceOwner" : myMembership?.Role?.Name ?? "WorkspaceMember";
 
             return new WorkspaceDetailDto
             {
