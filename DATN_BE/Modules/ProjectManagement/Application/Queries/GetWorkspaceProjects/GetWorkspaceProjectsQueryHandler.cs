@@ -34,7 +34,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetWorkspaceProj
                 CreatedByName = p.CreatedBy?.Username ?? string.Empty,
                 BoardsCount = p.Boards.Count,
                 MembersCount = p.ProjectMembers.Count,
-                SprintCOunt = p.Sprints.Count,
+                SprintCount = p.Sprints.Count,
                 CreatedAt = p.CreatedAt
             }).ToList();
         }

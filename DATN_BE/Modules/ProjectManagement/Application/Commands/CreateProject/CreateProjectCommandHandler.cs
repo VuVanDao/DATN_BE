@@ -30,11 +30,6 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
                 throw new ForbiddenException("Chỉ workspaceOwner mới được tạo project");
             }
 
-            var checkUserIncludedInWorkspace = targetWorkspace.Members.Any(wm => wm.UserId == currentUserId) || targetWorkspace.OwnerId == currentUserId;
-            if (!checkUserIncludedInWorkspace)
-            {
-                throw new BadRequestException("Bạn không phải thành viên của workspace này");
-            }
             // 2. Chuẩn hóa ProjectKey thành chữ IN HOA (vd: "datn" -> "DATN")
             var normalizedKey = request.ProjectKey.Trim().ToUpperInvariant();
             // 3. Kiểm tra xem ProjectKey đã tồn tại trong Workspace này chưa
@@ -45,6 +40,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
             }
             var userName = _currentUserService.Username
                 ?? throw new NotFoundException("Người dùng không tồn tại.");
+
             // 4. Tạo Project
             var newProject = new Project
             {
@@ -87,8 +83,24 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
             });
 
             _context.Boards.Add(defaultBoard);
+
+            var memberCount = 0;
+            if (request.IsAssignAsLeader)
+            {
+                var role = await _context.Roles
+                    .FirstOrDefaultAsync(r => r.Name.Trim() == "ProjectLeader", cancellationToken) 
+                        ?? throw new NotFoundException("Không tìm thấy vai trò 'ProjectLeader' trong hệ thống.");
+                var newProjectMember = new ProjectMember
+                {
+                    UserId = currentUserId,
+                    ProjectId = newProject.Id,
+                    RoleId = role.Id
+                };
+                _context.ProjectMembers.Add(newProjectMember);
+                memberCount += 1;
+            }
            
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             return new ProjectDto
             {
@@ -100,6 +112,8 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
                 CreatedById = newProject.CreatedById,
                 CreatedByName = userName,
                 BoardsCount = 1,
+                MembersCount = memberCount,
+                SprintCount = 0,
                 CreatedAt = newProject.CreatedAt
             };
         }
