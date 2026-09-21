@@ -407,6 +407,9 @@ namespace DATN_BE.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -421,9 +424,6 @@ namespace DATN_BE.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<Guid>("OwnerId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("ProjectKey")
                         .IsRequired()
                         .HasMaxLength(10)
@@ -437,7 +437,7 @@ namespace DATN_BE.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OwnerId");
+                    b.HasIndex("CreatedById");
 
                     b.HasIndex("WorkspaceId", "ProjectKey")
                         .IsUnique()
@@ -457,7 +457,7 @@ namespace DATN_BE.Migrations
                     b.Property<DateTimeOffset>("JoinedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("RoleId")
+                    b.Property<Guid>("RoleId")
                         .HasColumnType("uuid");
 
                     b.HasKey("ProjectId", "UserId");
@@ -943,9 +943,9 @@ namespace DATN_BE.Migrations
 
             modelBuilder.Entity("DATN_BE.Modules.ProjectManagement.Domain.Entities.Project", b =>
                 {
-                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "Owner")
-                        .WithMany("OwnedProjects")
-                        .HasForeignKey("OwnerId")
+                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "CreatedBy")
+                        .WithMany("ProjectCreated")
+                        .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -955,7 +955,7 @@ namespace DATN_BE.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Owner");
+                    b.Navigation("CreatedBy");
 
                     b.Navigation("Workspace");
                 });
@@ -971,7 +971,8 @@ namespace DATN_BE.Migrations
                     b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.Role", "Role")
                         .WithMany()
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.User", "User")
                         .WithMany("ProjectMembers")
@@ -1162,11 +1163,11 @@ namespace DATN_BE.Migrations
                 {
                     b.Navigation("AssignedCards");
 
-                    b.Navigation("OwnedProjects");
-
                     b.Navigation("OwnedWorkspaces");
 
                     b.Navigation("PasswordResetTokens");
+
+                    b.Navigation("ProjectCreated");
 
                     b.Navigation("ProjectMembers");
 

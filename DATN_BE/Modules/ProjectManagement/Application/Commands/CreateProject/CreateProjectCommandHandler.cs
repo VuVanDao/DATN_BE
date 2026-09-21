@@ -27,7 +27,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
             // 1.1. chi workspaceOwner moi duoc phep tao project
             if(targetWorkspace.OwnerId != currentUserId)
             {
-                throw new BadImageFormatException("Chỉ workspaceOwner mới được tạo project");
+                throw new ForbiddenException("Chỉ workspaceOwner mới được tạo project");
             }
 
             var checkUserIncludedInWorkspace = targetWorkspace.Members.Any(wm => wm.UserId == currentUserId) || targetWorkspace.OwnerId == currentUserId;
