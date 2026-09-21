@@ -14,10 +14,10 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
             {
                 new() { Name = "SystemAdmin", Scope = RoleScope.Global, Description = "Quản trị viên toàn hệ thống", IsSystemRole = true },
                 new() { Name = "User", Scope = RoleScope.Global, Description = "Người dùng hệ thống", IsSystemRole = true },
-                new() { Name = "WorkspaceOwner", Scope = RoleScope.Workspace, Description = "Quản trị viên Không gian làm việc", IsSystemRole = true },
-                new() { Name = "ProjectOwner", Scope = RoleScope.Project, Description = "Quản lý dự án", IsSystemRole = true },
-                new() { Name = "Developer", Scope = RoleScope.Workspace, Description = "Thành viên phát triển", IsSystemRole = true },
-                new() { Name = "WorkspaceMember", Scope = RoleScope.Workspace, Description = "Người xem / Khách của workspace", IsSystemRole = true }
+                new() { Name = "WorkspaceOwner", Scope = RoleScope.Workspace, Description = "Chủ sở hữu Không gian làm việc", IsSystemRole = true },
+                new() { Name = "WorkspaceMember", Scope = RoleScope.Workspace, Description = "Thành viên Không gian làm việc", IsSystemRole = true },
+                new() { Name = "ProjectLeader", Scope = RoleScope.Project, Description = "Người dẫn dắt dự án", IsSystemRole = true },
+                new() { Name = "ProjectMember", Scope = RoleScope.Project, Description = "Thành viên dự án", IsSystemRole = true }
             };
             foreach (var role in defaultRoles)
             {

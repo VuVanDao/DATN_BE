@@ -26,10 +26,10 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RefrehToken
                 throw new NotFoundException("Refresh token không hợp lệ");
             }
             // 2. PHÁT HIỆN DÙNG LẠI TOKEN CŨ (Reuse Detection):
-            // Nếu token đã bị thu hồi và đã có Token thay thế -> Dấu hiệu bị tấn công đánh cắp token!
+            // Nếu token đã bị thu hồi và đã có Token thay thế
             if (existingToken.IsRevoked)
             {
-                // Thu hồi TẤT CẢ các token của User này ngay lập tức để bảo vệ tài khoản
+                // Thu hồi tất cả các token
                 var allActiveTokens = await _context.RefreshTokens
                     .Where(rt => rt.UserId == existingToken.UserId && rt.RevokedAt == null)
                     .ToListAsync(cancellationToken);

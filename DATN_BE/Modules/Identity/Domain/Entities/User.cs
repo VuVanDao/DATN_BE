@@ -23,7 +23,7 @@ namespace DATN_BE.Modules.Identity.Domain.Entities
 
         public ICollection<Workspace> OwnedWorkspaces { get; set; } = new List<Workspace>();
         public ICollection<WorkspaceMember> WorkspaceMembers { get; set; } = new List<WorkspaceMember>();
-        public ICollection<Project> OwnedProjects { get; set; } = new List<Project>();
+        public ICollection<Project> ProjectCreated { get; set; } = new List<Project>();
         public ICollection<ProjectMember> ProjectMembers { get; set; } = new List<ProjectMember>();
         public ICollection<UserBoardPreference> UserBoardPreferences { get; set; } = new List<UserBoardPreference>();
         public ICollection<Card> AssignedCards { get; set; } = new List<Card>();
