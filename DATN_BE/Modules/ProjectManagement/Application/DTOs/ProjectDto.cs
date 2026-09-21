@@ -7,7 +7,7 @@
         public string ProjectKey { get; set; } = string.Empty;
         public string? Description { get; set; }
         public Guid WorkspaceId { get; set; }
-        public Guid CraetedById { get; set; }
+        public Guid CreatedById { get; set; }
         public string CreatedByName { get; set; } = string.Empty;
         public int BoardsCount { get; set; }
         public int MembersCount { get; set; }

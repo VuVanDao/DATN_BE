@@ -17,7 +17,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetWorkspaceProj
         {
             var workspaceProject = await _context.Projects.AsNoTracking()
                 .Where(p => p.WorkspaceId == request.WorkspaceId)
-                .Include(p => p.Owner)
+                .Include(p => p.CreatedBy)
                 .Include(p => p.Boards)
                 .Include(p => p.ProjectMembers)
                 .Include(p => p.Sprints)
@@ -30,8 +30,8 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetWorkspaceProj
                 ProjectKey = p.ProjectKey,
                 Description = p.Description,
                 WorkspaceId = p.WorkspaceId,
-                OwnerId = p.OwnerId,
-                OwnerName = p.Owner?.Username ?? string.Empty,
+                CreatedById = p.CreatedById,
+                CreatedByName = p.CreatedBy?.Username ?? string.Empty,
                 BoardsCount = p.Boards.Count,
                 MembersCount = p.ProjectMembers.Count,
                 SprintCOunt = p.Sprints.Count,

@@ -97,7 +97,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
                 ProjectKey = newProject.ProjectKey,
                 Description = newProject.Description,
                 WorkspaceId = newProject.WorkspaceId,
-                CraetedById = newProject.CreatedById,
+                CreatedById = newProject.CreatedById,
                 CreatedByName = userName,
                 BoardsCount = 1,
                 CreatedAt = newProject.CreatedAt
