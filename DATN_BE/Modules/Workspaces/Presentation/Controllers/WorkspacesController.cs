@@ -1,5 +1,6 @@
-﻿using DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember;
+using DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember;
 using DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace;
+using DATN_BE.Modules.Workspaces.Application.Commands.DeleteWorkspace;
 using DATN_BE.Modules.Workspaces.Application.Commands.UpdateWorkspace;
 using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Modules.Workspaces.Application.Queries.GetUserWorkspaces;
@@ -87,6 +88,16 @@ namespace DATN_BE.Modules.Workspaces.Presentation.Controllers
             command.WorkspaceId = id;
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<WorkspaceDetailDto>.Ok(result, "Cập nhật Workspace thành công."));
+        }
+
+        /// <summary>
+        /// Xóa Workspace (Chỉ SystemAdmin hoặc WorkspaceOwner)
+        /// </summary>
+        [HttpDelete("{id:guid}")]
+        public async Task<ActionResult<ApiResponse<bool>>> DeleteWorkspace(Guid id)
+        {
+            var result = await _mediator.Send(new DeleteWorkspaceCommand(id));
+            return Ok(ApiResponse<bool>.Ok(result, "Xóa Workspace thành công."));
         }
     }
 }
