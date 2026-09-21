@@ -24,10 +24,16 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
                 .Include(w => w.Members)
                 .Include(w => w.Projects)
                 .FirstOrDefaultAsync(w => w.Id == request.WorkspaceId) ?? throw new NotFoundException("Workspace không tồn tại");
-            var checkUserIncludedInWorkspace = targetWorkspace.Members.Any(m => m.UserId == currentUserId) || targetWorkspace.OwnerId == currentUserId;
+            // 1.1. chi workspaceOwner moi duoc phep tao project
+            if(targetWorkspace.OwnerId != currentUserId)
+            {
+                throw new BadImageFormatException("Chỉ workspaceOwner mới được tạo project");
+            }
+
+            var checkUserIncludedInWorkspace = targetWorkspace.Members.Any(wm => wm.UserId == currentUserId) || targetWorkspace.OwnerId == currentUserId;
             if (!checkUserIncludedInWorkspace)
             {
-                throw new BadRequestException("User không phải thành viên của workspace này");
+                throw new BadRequestException("Bạn không phải thành viên của workspace này");
             }
             // 2. Chuẩn hóa ProjectKey thành chữ IN HOA (vd: "datn" -> "DATN")
             var normalizedKey = request.ProjectKey.Trim().ToUpperInvariant();
@@ -46,7 +52,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
                 ProjectKey = normalizedKey,
                 Description = request.Description,
                 WorkspaceId = request.WorkspaceId,
-                OwnerId = currentUserId,
+                CreatedById = currentUserId,
             };
             _context.Projects.Add(newProject);
             // 5. Tự động tạo 1 Board Kanban mặc định cho Project
@@ -81,15 +87,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
             });
 
             _context.Boards.Add(defaultBoard);
-            // 7. Gán Người tạo vào ProjectMembers
-            var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "ProjectOwner",cancellationToken) ?? throw new NotFoundException("Không tìm thấy role mặc định khi tạo prject");
-            var newProjectMember = new ProjectMember
-            {
-                ProjectId = newProject.Id,
-                UserId = currentUserId,
-                RoleId = defaultRole.Id
-            };
-            _context.ProjectMembers.Add(newProjectMember);
+           
             await _context.SaveChangesAsync();
 
             return new ProjectDto
@@ -99,10 +97,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
                 ProjectKey = newProject.ProjectKey,
                 Description = newProject.Description,
                 WorkspaceId = newProject.WorkspaceId,
-                OwnerId = newProject.OwnerId,
-                OwnerName = userName,
+                CraetedById = newProject.CreatedById,
+                CreatedByName = userName,
                 BoardsCount = 1,
-                MembersCount = 1,
                 CreatedAt = newProject.CreatedAt
             };
         }
