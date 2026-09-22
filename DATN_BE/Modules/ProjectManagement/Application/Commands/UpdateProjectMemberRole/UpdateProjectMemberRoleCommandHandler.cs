@@ -51,11 +51,11 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectMe
             {
                 var defaultMemberRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "ProjectMember" && r.Scope == RoleScope.Project, cancellationToken)
                     ?? throw new NotFoundException("Không tìm thấy vai trò 'ProjectMember'");
-                var oldLeader = project.ProjectMembers.FirstOrDefault(pm => pm.Role.Name == "ProjectLeader" && pm.UserId != targetMember.UserId);
-                if (oldLeader != null)
-                {
-                    oldLeader.RoleId = defaultMemberRole.Id;
-                }
+                var oldLeader = project.ProjectMembers.FirstOrDefault(pm => pm.Role.Name == "ProjectLeader" && pm.UserId != targetMember.UserId)
+                    ?? throw new NotFoundException("Không tìm thấy cựu projectLeader");
+
+                oldLeader.RoleId = defaultMemberRole.Id;
+
             }
             targetMember.RoleId = newRole.Id;
             await _context.SaveChangesAsync(cancellationToken);
