@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DATN_BE.Modules.ProjectManagement.Application.Commands.RemoveMemberFromProject
 {
-    public class RemoveMemberFormProjectCommandHandler : IRequestHandler<RemoveMemberFormProjectCommand, bool>
+    public class RemoveMemberFormProjectCommandHandler : IRequestHandler<RemoveMemberFromProjectCommand, bool>
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
@@ -18,7 +18,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.RemoveMemberFro
             _context = context;
             _currentUserService = currentUserService;
         }
-        public async Task<bool> Handle(RemoveMemberFormProjectCommand request, CancellationToken cancellationToken)
+        public async Task<bool> Handle(RemoveMemberFromProjectCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
                 ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");
@@ -30,14 +30,14 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.RemoveMemberFro
                 ?? throw new NotFoundException("Project không tồn tại");
             var isWorkspaceOwner = project.Workspace.OwnerId == currentUserId;
             var isProjectLeader = project.ProjectMembers.Any(pm => pm.UserId == currentUserId && pm.Role.Name == "ProjectLeader");
-            var isSelfRemove = request.MerberId == currentUserId;
+            var isSelfRemove = request.MemberId == currentUserId;
 
             // Người thực hiện phải là WorkspaceOwner, ProjectLeader hoặc tự rời dự án
             if (!isWorkspaceOwner && !isProjectLeader && !isSelfRemove)
             {
                 throw new ForbiddenException("Bạn không có quyền xóa thành viên này khỏi dự án.");
             }
-            var targetMember = project.ProjectMembers.FirstOrDefault(u => u.UserId == request.MerberId)
+            var targetMember = project.ProjectMembers.FirstOrDefault(u => u.UserId == request.MemberId)
                 ?? throw new NotFoundException("Thành viên không tồn tại trong dự án này");
             if (targetMember.Role.Name == "ProjectLeader" && isSelfRemove && !isWorkspaceOwner)
             {
