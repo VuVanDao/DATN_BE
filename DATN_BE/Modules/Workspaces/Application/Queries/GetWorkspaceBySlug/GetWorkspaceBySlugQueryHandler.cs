@@ -18,65 +18,51 @@ namespace DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceBySlug
         public async Task<WorkspaceDetailDto> Handle(GetWorkspaceBySlugQuery request, CancellationToken cancellationToken)
         {
             var currUserId = _currentUserService.UserId ?? throw new ForbiddenException("Bạn cần đăng nhập để xem thông tin Workspace");
-            var workspace = await _context.Workspaces.AsNoTracking()
-                .Include(w => w.Owner)
-                .Include(w => w.Members).ThenInclude(mem => mem.User)
-                .Include(w => w.Members).ThenInclude(mem => mem.Role)
-                .Include(w => w.Projects).ThenInclude(proj => proj.ProjectMembers).ThenInclude(projMem => projMem.User)
-                .Include(w => w.Projects).ThenInclude(proj => proj.Boards).ThenInclude(b => b.Columns).ThenInclude(col => col.Cards)
-                .FirstOrDefaultAsync(w => w.Slug.ToLower().Trim() == request.Slug.ToLower().Trim(),cancellationToken) 
-                    ?? throw new NotFoundException($"Không tìm thấy Workspace với định danh '{request.Slug}'.");
-            // kiểm tra xem user có thuwojc workspace đó hay không (workspaceOwner or member)
-            var isMember = workspace.OwnerId == currUserId || workspace.Members.Any(mem =>  mem.UserId == currUserId);
-            if (!isMember)
-            {
-                throw new ForbiddenException("Bạn không có quyền truy cập vào Workspace này.");
-            }
-            var myMembership = workspace.Members.FirstOrDefault(mem => mem.UserId == currUserId);
-            var myRole = workspace.OwnerId == currUserId ? "WorkspaceOwner" : myMembership?.Role?.Name ?? "WorkspaceMember";
-
-            return new WorkspaceDetailDto
-            {
-                Id = workspace.Id,
-                Name = workspace.Name,
-                Slug = workspace.Slug,
-                Description = workspace.Description,
-                LogoUrl = workspace.LogoUrl,
-                CoverImageUrl = workspace.CoverImgUrl,
-                OwnerId = workspace.OwnerId,
-                OwnerName = workspace.Owner?.Username ?? string.Empty,
-                CurrentUserRole = myRole,
-                CreatedAt = workspace.CreatedAt,
-                Members = workspace.Members.Select(m => new WorkspaceMemberDto
-                {
-                    UserId = m.UserId,
-                    Username = m.User?.Username ?? string.Empty,
-                    Email = m.User?.Email ?? string.Empty,
-                    AvatarUrl = m.User?.AvatarUrl,
-                    RoleId = m.RoleId,
-                    RoleName = m.Role?.Name ?? string.Empty,
-                    JoinAt = m.JoinAt
-                }).ToList(),
-                Projects = workspace.Projects
-                  .Where(p => !p.IsDeleted)
-                  .OrderByDescending(p => p.CreatedAt)
-                  .Select(p => new WorkspaceProjectDto
-                  {
-                      Id = p.Id,
-                      Name = p.Name,
-                      ProjectKey = p.ProjectKey,
-                      Description = p.Description,
-                      MembersCount = p.ProjectMembers.Count,
-                      TasksCount = p.Boards.SelectMany(b => b.Columns).SelectMany(c => c.Cards).Count(c => !c.IsDeleted),
-                      Members = p.ProjectMembers.Select(pm => new ProjectMemberAvatarDto
-                      {
-                          UserId = pm.UserId,
-                          Username = pm.User?.Username ?? string.Empty,
-                          AvatarUrl = pm.User?.AvatarUrl
-                      }).ToList(),
-                      CreatedAt = p.CreatedAt
-                  }).ToList()
-            };
+            var slug = request.Slug.Trim().ToLower();
+            var dtoReturned = await _context.Workspaces
+                                .AsNoTracking()
+                                .Where(w => w.Slug == slug && w.IsDeleted == false && (w.OwnerId == currUserId || w.Members.Any(mem => mem.UserId == currUserId)))
+                                .Select(w => new WorkspaceDetailDto
+                                {
+                                    Id = w.Id,
+                                    Slug = w.Slug,
+                                    Description = w.Description,
+                                    Name = w.Name,
+                                    LogoUrl = w.LogoUrl,
+                                    CoverImageUrl = w.CoverImgUrl,
+                                    OwnerId = w.OwnerId,
+                                    OwnerName = w.Owner.Username ?? string.Empty,
+                                    CurrentUserRole = w.OwnerId == currUserId ? "WorkspaceOwner" : (w.Members.Where(mem => mem.UserId == currUserId).Select(mem => mem.Role.Name).FirstOrDefault() ?? "WorkspaceMember"),
+                                    CreatedAt = w.CreatedAt,
+                                    Members = w.Members.Select(mem => new WorkspaceMemberDto
+                                    {
+                                        UserId = mem.UserId,
+                                        Username = mem.User.Username ?? string.Empty,
+                                        Email = mem.User.Email ?? string.Empty,
+                                        AvatarUrl = mem.User.AvatarUrl,
+                                        RoleId = mem.RoleId,
+                                        RoleName = mem.Role.Name ?? string.Empty,
+                                        JoinAt = mem.JoinAt
+                                    }).ToList(),
+                                    Projects = w.Projects.Select(p => new WorkspaceProjectDto
+                                    {
+                                        Id = p.Id,
+                                        Name = p.Name,
+                                        ProjectKey = p.ProjectKey,
+                                        Description = p.Description,
+                                        MembersCount = p.ProjectMembers.Count,
+                                        TasksCount = p.Boards.SelectMany(b => b.Columns).SelectMany(col => col.Cards).Count(card => card.IsDeleted == false),
+                                        Members = p.ProjectMembers.Select(pm => new ProjectMemberAvatarDto
+                                        {
+                                            UserId = pm.UserId,
+                                            Username = pm.User.Username ?? string.Empty,
+                                            AvatarUrl = pm.User.AvatarUrl
+                                        }).ToList(),
+                                        CreatedAt = w.CreatedAt
+                                    }).ToList()
+                                }).FirstOrDefaultAsync(cancellationToken)
+                                ?? throw new NotFoundException($"Không tìm thấy Workspace với định danh '{request.Slug}'");
+            return dtoReturned;
         }
     }
 }
