@@ -1,6 +1,10 @@
-﻿using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn;
+﻿using DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProejct;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.RemoveMemberFromProject;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectLeader;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectMember;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetWorkspaceProjects;
 using DATN_BE.Shared.Application.Models;
 using MediatR;
@@ -26,7 +30,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         public async Task<ActionResult<ApiResponse<ProjectDto>>> CreateProject([FromBody] CreateProjectCommand command)
         {
             var result = await _mediator.Send(command);
-            return Ok(ApiResponse<ProjectDto>.Ok(result,"Tạo mới 1 project mới thành công"));
+            return Ok(ApiResponse<ProjectDto>.Ok(result, "Tạo mới 1 project mới thành công"));
         }
         /// <summary>
         /// Lấy danh sách Dự án trong Workspace
@@ -38,5 +42,49 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             return Ok(ApiResponse<List<ProjectDto>>.Ok(result, "Lấy danh sách Dự án thành công."));
         }
 
+        /// <summary>
+        /// Lấy danh sách thành viên trong Dự án
+        /// </summary>
+        [HttpGet("{projectId:guid}/members")]
+        public async Task<ActionResult<ApiResponse<List<ProjectMemberDto>>>> GetProjectMembers(Guid projectId)
+        {
+            var result = await _mediator.Send(new GetProjectMemberQuery(projectId));
+            return Ok(ApiResponse<List<ProjectMemberDto>>.Ok(result, "Lấy danh sách thành viên dự án thành công."));
+        }
+        /// <summary>
+        /// Thêm thành viên vào Dự án
+        /// </summary>
+        [HttpPost("{projectId:guid}/members")]
+        public async Task<ActionResult<ApiResponse<List<ProjectMemberDto>>>> AddProjectMembers(
+            Guid projectId,
+            [FromBody] AddMemberToProejctCommand command)
+        {
+            command.ProjectId = projectId;
+            var result = await _mediator.Send(command);
+            return Ok(ApiResponse<List<ProjectMemberDto>>.Ok(result, "Thêm thành viên vào dự án thành công."));
+        }
+        /// <summary>
+        /// Cập nhật vai trò thành viên trong Dự án (Chuyển giao Leader / Đổi role)
+        /// </summary>
+        [HttpPut("{projectId:guid}/members/{userId:guid}/role")]
+        public async Task<ActionResult<ApiResponse<ProjectMemberDto>>> UpdateProjectMemberRole(
+            Guid projectId,
+            Guid userId,
+            [FromBody] UpdateProjectMemberRoleCommand command)
+        {
+            command.ProjectId = projectId;
+            command.UserId = userId;
+            var result = await _mediator.Send(command);
+            return Ok(ApiResponse<ProjectMemberDto>.Ok(result, "Cập nhật vai trò thành viên thành công."));
+        }
+        /// <summary>
+        /// Xóa thành viên khỏi Dự án
+        /// </summary>
+        [HttpDelete("{projectId:guid}/members/{userId:guid}")]
+        public async Task<ActionResult<ApiResponse<bool>>> RemoveProjectMember(Guid projectId, Guid userId)
+        {
+            var result = await _mediator.Send(new RemoveMemberFromProjectCommand(projectId, userId));
+            return Ok(ApiResponse<bool>.Ok(result, "Xóa thành viên khỏi dự án thành công."));
+        }
     }
 }
