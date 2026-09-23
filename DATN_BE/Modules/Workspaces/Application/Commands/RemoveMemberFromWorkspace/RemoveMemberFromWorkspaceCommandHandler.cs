@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DATN_BE.Modules.Workspaces.Application.Commands.RemoveMemberFromProject
 {
-    public class RemoveMemberFromProjectCommandHandler : IRequestHandler<RemoveMemberFromProjectCommand, bool>
+    public class RemoveMemberFromProjectCommandHandler : IRequestHandler<RemoveMemberFromWorkspaceCommand, bool>
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
@@ -18,7 +18,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.RemoveMemberFromProjec
             _context = context;
             _currentUserService = currentUserService;
         }
-        public async Task<bool> Handle(RemoveMemberFromProjectCommand request, CancellationToken cancellationToken)
+        public async Task<bool> Handle(RemoveMemberFromWorkspaceCommand request, CancellationToken cancellationToken)
         {
             // 1. Xác thực người dùng hiện tại
             var currentUserId = _currentUserService.UserId

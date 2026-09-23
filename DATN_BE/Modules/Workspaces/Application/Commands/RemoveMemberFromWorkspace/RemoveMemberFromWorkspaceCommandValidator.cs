@@ -6,7 +6,7 @@ using FluentValidation;
 
 namespace DATN_BE.Modules.Workspaces.Application.Commands.RemoveMemberFromProject
 {
-    public class RemoveMemberFromProjectCommandValidator : AbstractValidator<RemoveMemberFromProjectCommand>
+    public class RemoveMemberFromProjectCommandValidator : AbstractValidator<RemoveMemberFromWorkspaceCommand>
     {
         public RemoveMemberFromProjectCommandValidator()
         {

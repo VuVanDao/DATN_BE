@@ -1,8 +1,10 @@
 using DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember;
 using DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace;
 using DATN_BE.Modules.Workspaces.Application.Commands.DeleteWorkspace;
+using DATN_BE.Modules.Workspaces.Application.Commands.RemoveMemberFromProject;
 using DATN_BE.Modules.Workspaces.Application.Commands.UpdateWorkspace;
 using DATN_BE.Modules.Workspaces.Application.DTOs;
+using DATN_BE.Modules.Workspaces.Application.Queries.GetMemberRemovalImpact;
 using DATN_BE.Modules.Workspaces.Application.Queries.GetUserWorkspaces;
 using DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceBySlug;
 using DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceRoles;
@@ -98,6 +100,29 @@ namespace DATN_BE.Modules.Workspaces.Presentation.Controllers
         {
             var result = await _mediator.Send(new DeleteWorkspaceCommand(id));
             return Ok(ApiResponse<bool>.Ok(result, "Xóa Workspace thành công."));
+        }
+        /// <summary>
+        /// Xem ảnh hưởng trước khi xoá thành viên khỏi Workspace (đang làm Trưởng dự án nào, đang được gán bao nhiêu card)
+        /// </summary>
+        [HttpGet("{id:guid}/members/{userId:guid}/removal-impact")]
+        public async Task<ActionResult<ApiResponse<MemberRemovalImpactDto>>> GetMemberRemovalImpact(Guid id, Guid userId)
+        {
+            var result = await _mediator.Send(new GetMemberRemovalImpactQuery
+            {
+                WorkspaceId = id,
+                MemberId = userId
+            });
+            return Ok(ApiResponse<MemberRemovalImpactDto>.Ok(result, "Lấy thông tin ảnh hưởng thành công."));
+        }
+
+        /// <summary>
+        /// Xoá thành viên khỏi Workspace (Owner, SystemAdmin hoặc tự rời)
+        /// </summary>
+        [HttpDelete("{workspaceId:guid}/members/{userId:guid}")]
+        public async Task<ActionResult<ApiResponse<bool>>> RemoveMember(Guid workspaceId, Guid userId)
+        {
+            var result = await _mediator.Send(new RemoveMemberFromWorkspaceCommand(workspaceId, userId));
+            return Ok(ApiResponse<bool>.Ok(result, "Xoá thành viên khỏi Workspace thành công."));
         }
     }
 }
