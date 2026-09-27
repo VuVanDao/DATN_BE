@@ -14,7 +14,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectMe
 {
     public class UpdateProjectMemberRoleCommandHandler : IRequestHandler<UpdateProjectMemberRoleCommand, ProjectMemberDto>
     {
-         private readonly IApplicationDbContext _context;
+        private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
         public UpdateProjectMemberRoleCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
         {

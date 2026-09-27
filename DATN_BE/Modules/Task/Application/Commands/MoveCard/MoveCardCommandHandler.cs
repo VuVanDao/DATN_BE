@@ -8,20 +8,29 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
     public class MoveCardCommandHandler : IRequestHandler<MoveCardCommand, bool>
     {
         private readonly IApplicationDbContext _context;
+        private readonly IProjectAuthorizationService _authorizationService;
 
-        public MoveCardCommandHandler(IApplicationDbContext context)
+        public MoveCardCommandHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService)
         {
             _context = context;
+            _authorizationService = authorizationService;
         }
 
         public async Task<bool> Handle(MoveCardCommand request, CancellationToken cancellationToken)
         {
-            // 1. Tìm Card và Cột đích
-            var targetCard = await _context.Cards.FirstOrDefaultAsync(c => c.Id == request.CardId, cancellationToken)
+            var targetCard = await _context.Cards
+                .Include(c => c.Column).ThenInclude(c => c.Board)
+                .FirstOrDefaultAsync(c => c.Id == request.CardId, cancellationToken)
                 ?? throw new NotFoundException("Card", request.CardId);
+            await _authorizationService.EnsureCanModifyProjectAsync(targetCard.Column.Board.ProjectId, cancellationToken);
 
-            var targetColumn = await _context.Columns.FirstOrDefaultAsync(c => c.Id == request.TargetColumnId, cancellationToken)
+            var targetColumn = await _context.Columns.Include(c => c.Board)
+                .FirstOrDefaultAsync(c => c.Id == request.TargetColumnId, cancellationToken)
                 ?? throw new NotFoundException("Column", request.TargetColumnId);
+            if (targetCard.Column.Board.ProjectId != targetColumn.Board.ProjectId)
+            {
+                throw new BadRequestException("Card và cột đích phải thuộc cùng một Project.");
+            }
             // id của cột gốc của card đang được kéo thả
             var sourceColumnId = targetCard.ColumnId;
 
