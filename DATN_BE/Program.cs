@@ -44,6 +44,7 @@ namespace DATN_BE
                 => provider.GetRequiredService<ApplicationDbContext>());
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+            builder.Services.AddScoped<IProjectAuthorizationService, ProjectAuthorizationService>();
             builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
             builder.Services.AddScoped<IEmailService, GmailSmtpEmailService>();
 
