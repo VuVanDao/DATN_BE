@@ -12,21 +12,22 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
-        public CreateCardCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
+        private readonly IProjectAuthorizationService _authorizationService;
+        public CreateCardCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService, IProjectAuthorizationService authorizationService)
         {
             _context = context;
             _currentUserService = currentUserService;
+            _authorizationService = authorizationService;
         }
         public async Task<CardDto> Handle(CreateCardCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
                 ?? throw new ForbiddenException("Bạn cần đăng nhập để tạo Thẻ công việc.");
             // Kiểm tra xem cột có tồn tại không
-            var columnExists = await _context.Columns.AnyAsync(c => c.Id == request.ColumnId, cancellationToken);
-            if (!columnExists)
-            {
-                throw new NotFoundException("Cột không tồn tại.");
-            }
+            var targetColumn = await _context.Columns.Include(c => c.Board)
+                .FirstOrDefaultAsync(c => c.Id == request.ColumnId, cancellationToken)
+                ?? throw new NotFoundException("Cột không tồn tại.");
+            await _authorizationService.EnsureCanModifyProjectAsync(targetColumn.Board.ProjectId, cancellationToken);
             // Kiểm tra xem người dùng hiện tại có tồn tại không
             var reporter = await _context.Users.FirstOrDefaultAsync(u => u.Id == currentUserId, cancellationToken)
                 ?? throw new NotFoundException("Người dùng không tồn tại.");

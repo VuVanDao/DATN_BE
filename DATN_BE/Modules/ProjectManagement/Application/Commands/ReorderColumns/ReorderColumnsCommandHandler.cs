@@ -8,10 +8,12 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.ReorderColumns
     public class ReorderColumnsCommandHandler : IRequestHandler<ReorderColumnsCommand, bool>
     {
         private readonly IApplicationDbContext _context;
+        private readonly IProjectAuthorizationService _authorizationService;
 
-        public ReorderColumnsCommandHandler(IApplicationDbContext context)
+        public ReorderColumnsCommandHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService)
         {
             _context = context;
+            _authorizationService = authorizationService;
         }
 
         public async Task<bool> Handle(ReorderColumnsCommand request, CancellationToken cancellationToken)
@@ -21,6 +23,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.ReorderColumns
                 return false;
             }
             // tìm kiếm tất cả các cột trong bảng với BoardId tương ứng
+            var board = await _context.Boards.FirstOrDefaultAsync(b => b.Id == request.BoardId, cancellationToken)
+                ?? throw new NotFoundException("Không tìm thấy board.");
+            await _authorizationService.EnsureCanModifyProjectAsync(board.ProjectId, cancellationToken);
             var columns = await _context.Columns
                 .Where(c => c.BoardId == request.BoardId)
                 .ToListAsync(cancellationToken);

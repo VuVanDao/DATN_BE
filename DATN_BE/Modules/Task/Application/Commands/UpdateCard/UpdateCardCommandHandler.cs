@@ -9,15 +9,20 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
     public class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, CardDto>
     {
         private readonly IApplicationDbContext _context;
-        public UpdateCardCommandHandler(IApplicationDbContext context)
+        private readonly IProjectAuthorizationService _authorizationService;
+        public UpdateCardCommandHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService)
         {
             _context = context;
+            _authorizationService = authorizationService;
         }
         public async Task<CardDto> Handle(UpdateCardCommand request, CancellationToken cancellationToken)
         {
-            // tim card theo id
             var targetCard = await _context.Cards.Include(c => c.Assignee).Include(c => c.Reporter)
-                .FirstOrDefaultAsync(c => c.Id == request.CardId, cancellationToken) ?? throw new NotFoundException($"Không tìm thấy card với id {request.CardId}");
+                .Include(c => c.Column)
+                .ThenInclude(c => c.Board)
+                .FirstOrDefaultAsync(c => c.Id == request.CardId, cancellationToken)
+                ?? throw new NotFoundException($"Không tìm thấy card với id {request.CardId}");
+            await _authorizationService.EnsureCanModifyProjectAsync(targetCard.Column.Board.ProjectId, cancellationToken);
             
             targetCard.Title = request.Title.Trim();
             targetCard.Description = request.Description;

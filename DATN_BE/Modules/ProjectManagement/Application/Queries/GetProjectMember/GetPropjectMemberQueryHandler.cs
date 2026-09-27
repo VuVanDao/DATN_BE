@@ -13,29 +13,22 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectMember
     public class GetPropjectMemberQueryHandler : IRequestHandler<GetProjectMemberQuery, List<ProjectMemberDto>>
     {
         private readonly IApplicationDbContext _context;
-        private readonly ICurrentUserService _currenUserService;
-        public GetPropjectMemberQueryHandler(IApplicationDbContext context,ICurrentUserService service)
+        private readonly IProjectAuthorizationService _authorizationService;
+        public GetPropjectMemberQueryHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService)
         {
             _context = context;
-            _currenUserService = service;
-
+            _authorizationService = authorizationService;
         }
         public async Task<List<ProjectMemberDto>> Handle(GetProjectMemberQuery request, CancellationToken cancellationToken)
         {
-            var currUserId = _currenUserService.UserId ?? throw new ForbiddenException("Bạn cần đăng nhập để xem thông tin");
             // check project exist
             var currProject = await _context.Projects
                 .Where(p => p.Id == request.projectId)
-                .Select(p => new { p.Id, p.WorkspaceId, OwnerId = p.Workspace.OwnerId })
+                .Select(p => new { p.Id })
                 .FirstOrDefaultAsync(cancellationToken)
                     ?? throw new NotFoundException("Dự án không tồn tại");
 
-            // user must be workspaceOwner or workspaceMember to see project
-            var hasAccess = currProject.OwnerId == currUserId || await _context.WorkspaceMembers.AnyAsync(wm => wm.UserId == currUserId, cancellationToken);
-            if(hasAccess == false)
-            {
-                throw new ForbiddenException("Bạn không có quyền xem thành viên của dự án này");
-            }
+            await _authorizationService.EnsureCanViewProjectAsync(currProject.Id, cancellationToken);
             // get list project member
             return await _context.ProjectMembers
                 .AsNoTracking()

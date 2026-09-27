@@ -11,21 +11,22 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardComment
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
-        public AddCardCommentCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
+        private readonly IProjectAuthorizationService _authorizationService;
+        public AddCardCommentCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService, IProjectAuthorizationService authorizationService)
         {
             _context = context;
             _currentUserService = currentUserService;
+            _authorizationService = authorizationService;
         }
 
         public async Task<CardCommentDto> Handle(AddCardCommentCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
                 ?? throw new ForbiddenException("Bạn cần đăng nhập để bình luận.");
-            var cardExists = await _context.Cards.AnyAsync(c => c.Id == request.CardId, cancellationToken);
-            if (!cardExists)
-            {
-                throw new NotFoundException($"Không tìm thấy card với id {request.CardId}");
-            }
+            var card = await _context.Cards.Include(c => c.Column).ThenInclude(c => c.Board)
+                .FirstOrDefaultAsync(c => c.Id == request.CardId, cancellationToken)
+                ?? throw new NotFoundException($"Không tìm thấy card với id {request.CardId}");
+            await _authorizationService.EnsureCanModifyProjectAsync(card.Column.Board.ProjectId, cancellationToken);
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == currentUserId, cancellationToken)
                 ?? throw new NotFoundException("Người dùng không tồn tại.");
             var comment = new CardComment

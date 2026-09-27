@@ -9,16 +9,20 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
     public class GetBoardDetailQueryHandler : IRequestHandler<GetBoardDetailQuery, BoardDetailDto>
     {
         private readonly IApplicationDbContext _context;
-        public GetBoardDetailQueryHandler(IApplicationDbContext context)
+        private readonly IProjectAuthorizationService _authorizationService;
+        public GetBoardDetailQueryHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService)
         {
             _context = context;
+            _authorizationService = authorizationService;
         }
         public async Task<BoardDetailDto> Handle(GetBoardDetailQuery request, CancellationToken cancellationToken)
         {
             var board = await _context.Boards.AsNoTracking()
                 .Include(b => b.Project)
                 .Include(b => b.Columns)
-                .FirstOrDefaultAsync(b => b.Id == request.BoardId, cancellationToken) ?? throw new NotFoundException("Board", request.BoardId);
+                .FirstOrDefaultAsync(b => b.Id == request.BoardId, cancellationToken)
+                ?? throw new NotFoundException("Board", request.BoardId);
+            await _authorizationService.EnsureCanViewProjectAsync(board.ProjectId, cancellationToken);
 
             return new BoardDetailDto
             {

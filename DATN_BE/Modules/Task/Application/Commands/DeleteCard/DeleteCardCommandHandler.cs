@@ -8,14 +8,19 @@ namespace DATN_BE.Modules.Task.Application.Commands.DeleteCard
     public class DeleteCardCommandHandler : IRequestHandler<DeleteCardCommand, bool>
     {
         private readonly IApplicationDbContext _context;
-        public DeleteCardCommandHandler(IApplicationDbContext context)
+        private readonly IProjectAuthorizationService _authorizationService;
+        public DeleteCardCommandHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService)
         {
             this._context = context;
+            _authorizationService = authorizationService;
         }
         public async Task<bool> Handle(DeleteCardCommand request, CancellationToken cancellationToken)
         {
             var targetedCard = await _context.Cards
-                .FirstOrDefaultAsync(card => card.Id == request.CardId, cancellationToken) ?? throw new NotFoundException("Card", request.CardId);
+                .Include(card => card.Column).ThenInclude(column => column.Board)
+                .FirstOrDefaultAsync(card => card.Id == request.CardId, cancellationToken)
+                ?? throw new NotFoundException("Card", request.CardId);
+            await _authorizationService.EnsureCanModifyProjectAsync(targetedCard.Column.Board.ProjectId, cancellationToken);
             _context.Cards.Remove(targetedCard);
             await _context.SaveChangesAsync(cancellationToken);
             return true;
