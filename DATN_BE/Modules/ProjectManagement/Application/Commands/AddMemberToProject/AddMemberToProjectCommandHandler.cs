@@ -48,6 +48,10 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProe
             // get leader role    
             var leaderRole = projectRoles.FirstOrDefault(r => r.Name == "ProjectLeader")
                 ?? throw new NotFoundException("Không tìm thấy vai trò 'ProjectLeader' trong hệ thống");
+            if (request.Members.Count(m => m.RoleId == leaderRole.Id) > 1)
+            {
+                throw new BadRequestException("Mỗi lần thêm thành viên chỉ được chỉ định một Trưởng dự án");
+            }
             // list valid userId in workspace
             var validWorkspaceUserIds = await _context.WorkspaceMembers
                                                 .Where(wm => wm.WorkspaceId == project.WorkspaceId)
@@ -82,13 +86,12 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProe
                     targetRoleId = selectedRole.Id;
                 }
                 // if role is leader
+                // make oleProjectLeader down to member
                 if (targetRoleId == leaderRole.Id)
                 {
-                    // find currnet leader
-                    var currentLeader = project.ProjectMembers.FirstOrDefault(pm => pm.RoleId == leaderRole.Id);
-                    if (currentLeader != null)
+                    foreach (var currentLeader in project.ProjectMembers.Where(pm => pm.RoleId == leaderRole.Id))
                     {
-                        currentLeader.RoleId = defaultMemberRole.Id; // Hạ xuống ProjectMember
+                        currentLeader.RoleId = defaultMemberRole.Id;
                     }
                 }
                 var newMember = new ProjectMember

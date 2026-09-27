@@ -46,16 +46,15 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectMe
             var newRole = await _context.Roles.FirstOrDefaultAsync(r => r.Id == request.NewRoleId && r.Scope == RoleScope.Project, cancellationToken)
                 ?? throw new BadRequestException("Vai trò được chỉ định không hợp lệ cho phạm vi");
 
-            // Nếu đổi thành ProjectLeader -> chuyển leader cũ thành ProjectMember
             if (newRole.Name == "ProjectLeader")
             {
                 var defaultMemberRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "ProjectMember" && r.Scope == RoleScope.Project, cancellationToken)
                     ?? throw new NotFoundException("Không tìm thấy vai trò 'ProjectMember'");
-                var oldLeader = project.ProjectMembers.FirstOrDefault(pm => pm.Role.Name == "ProjectLeader" && pm.UserId != targetMember.UserId)
-                    ?? throw new NotFoundException("Không tìm thấy cựu projectLeader");
-
-                oldLeader.RoleId = defaultMemberRole.Id;
-
+                // make oleProjectLeader down to member
+                foreach (var oldLeader in project.ProjectMembers.Where(pm => pm.Role.Name == "ProjectLeader" && pm.UserId != targetMember.UserId))
+                {
+                    oldLeader.RoleId = defaultMemberRole.Id;
+                }
             }
             targetMember.RoleId = newRole.Id;
             await _context.SaveChangesAsync(cancellationToken);
