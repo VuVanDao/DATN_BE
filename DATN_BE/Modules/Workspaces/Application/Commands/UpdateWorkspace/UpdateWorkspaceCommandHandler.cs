@@ -1,4 +1,5 @@
 ﻿using DATN_BE.Modules.Workspaces.Application.DTOs;
+using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Utils;
@@ -21,107 +22,90 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.UpdateWorkspace
         public async Task<WorkspaceDetailDto> Handle(UpdateWorkspaceCommand request, CancellationToken cancellationToken)
         {
             var currUserId = _currentUserService.UserId ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");
-
-            var workspace = await _context.Workspaces
-                .Include(w => w.Owner)
-                .Include(w => w.Members).ThenInclude(mem => mem.User)
-                .Include(w => w.Members).ThenInclude(mem => mem.Role)
-                .Include(w => w.Projects).ThenInclude(proj => proj.ProjectMembers).ThenInclude(pm => pm.User)
-                .Include(w => w.Projects).ThenInclude(proj => proj.Boards).ThenInclude(b => b.Columns).ThenInclude(col => col.Cards)
-                .FirstOrDefaultAsync(w => w.Id == request.WorkspaceId, cancellationToken) ?? throw new NotFoundException("Workspace không tồn tại");
-            // check user co phai workspaceOwner ko
-            var isWorkspaceOwner = workspace.OwnerId == currUserId;
-            if(isWorkspaceOwner == false)
+            var workspaceToUpdate = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == request.WorkspaceId, cancellationToken) ?? throw new NotFoundException("Không tìm thấy workspace cần cập nhật");
+            if (currUserId != workspaceToUpdate.OwnerId)
             {
-                throw new ForbiddenException("Chỉ người sở hữu mới có quyền thay đổi thông tin Workspace");
+                throw new ForbiddenException("Người dùng không có quyền thực hiện hành động này");
             }
-            // doi ten workspace = generate lai slug va choon trung slug
-            if(!string.IsNullOrWhiteSpace(request.Name) && request.Name.Trim() != workspace.Name)
-            {
-                workspace.Name = request.Name.Trim();
-                var baseSlug = SlugHelper.GenerateSlug(workspace.Name);
-                var existSlug = await _context.Workspaces
-                    .Where(w => w.Id != workspace.Id && w.Slug.StartsWith(baseSlug))
-                    .Select(w => w.Slug)
-                    .ToListAsync(cancellationToken);
-                var slugSet = new HashSet<string>(existSlug);
-                var slug = baseSlug;
-                int counter = 1;
-                while (slugSet.Contains(slug))
-                {
-                    slug = $"{baseSlug}-{counter}";
-                    counter++;
-                }
-                workspace.Slug = slug;
-            }
-            // update description
-            if (request.Description != null)
-            {
-                workspace.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
-            }
-            // upload logo
-            if(request.Logo != null && request.Logo.Length > 0)
-            {
-                var logoUrl = await _cloudinaryService.UploadWorkspaceImageAsync(request.Logo, workspace.Id.ToString(), "logo", cancellationToken);
-                workspace.LogoUrl = logoUrl;
-            }
-            //upload cover img
-            if (request.CoverImage != null && request.CoverImage.Length > 0)
-            {
-                var coverUrl = await _cloudinaryService.UploadWorkspaceImageAsync(
-                    request.CoverImage,
-                    workspace.Id.ToString(),
-                    "cover",
-                    cancellationToken);
-                workspace.CoverImgUrl = coverUrl;
-            }
+            workspaceToUpdate.Description = request.Description?.Trim();
+            await GenerateNewUniqueSlugtoUpdate(workspaceToUpdate, request.Name, cancellationToken);
+            await UploadImagesAsync(workspaceToUpdate, request, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
-
-            var myMembership = workspace.Members.FirstOrDefault(m => m.UserId == currUserId);
-            var myRole = workspace.OwnerId == currUserId ? "WorkspaceOwner" : myMembership?.Role?.Name ?? "Member";
-
-            return new WorkspaceDetailDto
+            var res = await _context.Workspaces.AsNoTracking().Select(w => new WorkspaceDetailDto
             {
-                Id = workspace.Id,
-                Name = workspace.Name,
-                Slug = workspace.Slug,
-                Description = workspace.Description,
-                LogoUrl = workspace.LogoUrl,
-                CoverImageUrl = workspace.CoverImgUrl,
-                OwnerId = workspace.OwnerId,
-                OwnerName = workspace.Owner?.Username ?? string.Empty,
-                CurrentUserRole = myRole,
-                CreatedAt = workspace.CreatedAt,
-                Members = workspace.Members.Select(m => new WorkspaceMemberDto
+                Name = w.Name,
+                Id = w.Id,
+                Slug = w.Slug,
+                OwnerId = w.OwnerId,
+                OwnerName = w.Owner.Username,
+                LogoUrl = w.LogoUrl,
+                CoverImageUrl = w.CoverImgUrl,
+                Description = w.Description,
+                CreatedAt = w.CreatedAt,
+                CurrentUserRole = w.OwnerId == currUserId ? "WorkspaceOwner":"WorkspaceMember",
+                Members = w.Members.Select(m => new WorkspaceMemberDto
                 {
+                    Email = m.User.Email,
                     UserId = m.UserId,
-                    Username = m.User?.Username ?? string.Empty,
-                    Email = m.User?.Email ?? string.Empty,
-                    AvatarUrl = m.User?.AvatarUrl,
+                    Username = m.User.Username,
+                    AvatarUrl = m.User.AvatarUrl,
                     RoleId = m.RoleId,
-                    RoleName = m.Role?.Name ?? string.Empty,
-                    JoinAt = m.JoinAt
+                    RoleName = m.Role.Name ?? "WorkspaceMember",
+                    JoinAt = m.JoinAt,
                 }).ToList(),
-                Projects = workspace.Projects
-                  .Where(p => !p.IsDeleted)
-                  .OrderByDescending(p => p.CreatedAt)
-                  .Select(p => new WorkspaceProjectDto
-                  {
-                      Id = p.Id,
-                      Name = p.Name,
-                      ProjectKey = p.ProjectKey,
-                      Description = p.Description,
-                      MembersCount = p.ProjectMembers.Count,
-                      TasksCount = p.Boards.SelectMany(b => b.Columns).SelectMany(c => c.Cards).Count(c => !c.IsDeleted),
-                      Members = p.ProjectMembers.Select(pm => new ProjectMemberAvatarDto
-                      {
-                          UserId = pm.UserId,
-                          Username = pm.User?.Username ?? string.Empty,
-                          AvatarUrl = pm.User?.AvatarUrl
-                      }).ToList(),
-                      CreatedAt = p.CreatedAt
-                  }).ToList()
-            };
+                Projects = w.Projects.Select(p => new WorkspaceProjectDto
+                {
+                    Id = p.Id,
+                    Description = p.Description,
+                    Name = p.Name,
+                    CreatedAt = p.CreatedAt,
+                    MembersCount = p.ProjectMembers.Count,
+                    Members = p.ProjectMembers.Select(pm => new ProjectMemberAvatarDto
+                    {
+                        UserId = pm.UserId,
+                        Username = pm.User.Username,
+                        AvatarUrl = pm.User.AvatarUrl,
+                    }).ToList(),
+                    ProjectKey = p.ProjectKey,
+                    TasksCount = p.Boards.SelectMany(b => b.Columns).SelectMany(col => col.Cards).Count(ca => !ca.IsDeleted),
+                }).OrderByDescending(p => p.CreatedAt).ToList()
+            }).FirstOrDefaultAsync(w => w.Id == request.WorkspaceId,cancellationToken) ?? throw new NotFoundException("Workspace không tồn tại");
+            return res ;
+        }
+        private async System.Threading.Tasks.Task GenerateNewUniqueSlugtoUpdate(Workspace workspace, string? requestedname, CancellationToken cancellationToken)
+        {
+            if (!string.IsNullOrWhiteSpace(requestedname) &&!string.Equals(workspace.Name,requestedname,StringComparison.OrdinalIgnoreCase))
+            {
+                var normalizeName = requestedname.Trim();
+                var baseSlug = SlugHelper.GenerateSlug(normalizeName);
+                var newSlug = baseSlug;
+                var existingSlug = await _context.Workspaces
+                    .Where(w => (w.Slug.StartsWith(baseSlug + "-") || w.Slug == baseSlug) && w.Id != workspace.Id)
+                    .Select(w => w.Slug)
+                    .ToHashSetAsync(cancellationToken);
+                var count = 1;
+                while (existingSlug.Contains(newSlug))
+                {
+                    newSlug = $"{baseSlug}-{count}";
+                    count++;
+                }
+                workspace.Name = normalizeName;
+                workspace.Slug = newSlug;
+            }
+        }
+        private async System.Threading.Tasks.Task UploadImagesAsync(Workspace workspace, UpdateWorkspaceCommand request,CancellationToken cancellationToken)
+        {
+            if (request.Logo is { Length: > 0 })
+            {
+                workspace.LogoUrl =
+                    await _cloudinaryService.UploadWorkspaceImageAsync(request.Logo,request.WorkspaceId.ToString(),"logo",cancellationToken);
+            }
+
+            if (request.CoverImage is { Length: > 0 })
+            {
+                workspace.CoverImgUrl =
+                    await _cloudinaryService.UploadWorkspaceImageAsync(request.CoverImage,request.WorkspaceId.ToString(),"cover",cancellationToken);
+            }
         }
     }
 }
