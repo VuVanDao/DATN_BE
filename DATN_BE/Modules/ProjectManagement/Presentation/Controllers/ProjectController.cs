@@ -35,6 +35,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         /// <summary>
         /// Lấy danh sách Dự án trong Workspace
         /// </summary>
+        /// bên FE chưua dùng
         [HttpGet("workspace-project/{workspaceId:guid}")]
         public async Task<ActionResult<ApiResponse<ProjectDto>>> GetWorkspaceProjects(Guid workspaceId)
         {

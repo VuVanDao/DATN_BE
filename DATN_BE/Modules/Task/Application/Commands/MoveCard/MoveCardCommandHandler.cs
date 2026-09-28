@@ -27,9 +27,9 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
             var targetColumn = await _context.Columns.Include(c => c.Board)
                 .FirstOrDefaultAsync(c => c.Id == request.TargetColumnId, cancellationToken)
                 ?? throw new NotFoundException("Column", request.TargetColumnId);
-            if (targetCard.Column.Board.ProjectId != targetColumn.Board.ProjectId)
+            if (targetCard.Column.BoardId != targetColumn.BoardId)
             {
-                throw new BadRequestException("Card và cột đích phải thuộc cùng một Project.");
+                throw new BadRequestException("Card và cột đích phải thuộc cùng một Board.");
             }
             // id của cột gốc của card đang được kéo thả
             var sourceColumnId = targetCard.ColumnId;

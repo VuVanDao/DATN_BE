@@ -20,12 +20,12 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.ReorderColumns
         {
             if (request.OrderedColumnIds == null || !request.OrderedColumnIds.Any())
             {
-                return false;
+                throw new BadRequestException("Danh sách column cần sắp xếp không được để trống.");
             }
-            // tìm kiếm tất cả các cột trong bảng với BoardId tương ứng
             var board = await _context.Boards.FirstOrDefaultAsync(b => b.Id == request.BoardId, cancellationToken)
                 ?? throw new NotFoundException("Không tìm thấy board.");
             await _authorizationService.EnsureCanModifyProjectAsync(board.ProjectId, cancellationToken);
+            // tìm kiếm tất cả các cột với BoardId tương ứng
             var columns = await _context.Columns
                 .Where(c => c.BoardId == request.BoardId)
                 .ToListAsync(cancellationToken);
@@ -34,14 +34,19 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.ReorderColumns
             {
                 throw new NotFoundException("Không tìm thấy cột nào trong Bảng này.");
             }
-            // sau khi lấy được danh sách col trong database, ta sẽ duyệt qua danh sách OrderedColumnIds và cập nhật lại position của từng cột theo thứ tự mới
+
+            var requestedColumnIds = request.OrderedColumnIds.ToHashSet();
+            var boardColumnIds = columns.Select(column => column.Id).ToHashSet();
+            if (requestedColumnIds.Count != request.OrderedColumnIds.Count ||
+                !requestedColumnIds.SetEquals(boardColumnIds))
+            {
+                throw new BadRequestException("Danh sách column phải chứa đúng một lần tất cả column thuộc Board.");
+            }
+
             for (int i = 0; i < request.OrderedColumnIds.Count; i++)
             {
-                var col = columns.FirstOrDefault(c => c.Id == request.OrderedColumnIds[i]);
-                if (col != null)
-                {
-                    col.Position = i;
-                }
+                var col = columns.First(column => column.Id == request.OrderedColumnIds[i]);
+                col.Position = i;
             }
 
             await _context.SaveChangesAsync(cancellationToken);
