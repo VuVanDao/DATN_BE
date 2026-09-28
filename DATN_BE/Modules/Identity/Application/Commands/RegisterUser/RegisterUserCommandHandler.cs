@@ -35,7 +35,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RegisterUser
             // 3. Băm mật khẩu bằng BCrypt
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-            // 4. Lấy vai trò mặc định "User" (Global)
+            // 4. Lấy vai trò mặc định "User"
             var defaultRole = await _context.Roles
                 .FirstOrDefaultAsync(r => r.Name == "User", cancellationToken);
             if (defaultRole == null)

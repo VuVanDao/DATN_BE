@@ -16,11 +16,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RevokeToken
         public async Task<bool> Handle(RevokeTokenCommand request, CancellationToken cancellationToken)
         {
             var token = await _context.RefreshTokens
-                .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken, cancellationToken);
-            if (token == null)
-            {
-                throw new NotFoundException("Refresh token không tồn tại.");
-            }
+                .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken, cancellationToken) ?? throw new NotFoundException("Refresh token không tồn tại.");
             if (!token.IsActive)
             {
                 throw new BadRequestException("Refresh token không còn hiệu lực.");
