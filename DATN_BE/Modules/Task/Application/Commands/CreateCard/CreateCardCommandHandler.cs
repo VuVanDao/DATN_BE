@@ -31,6 +31,16 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
             // Kiểm tra xem người dùng hiện tại có tồn tại không
             var reporter = await _context.Users.FirstOrDefaultAsync(u => u.Id == currentUserId, cancellationToken)
                 ?? throw new NotFoundException("Người dùng không tồn tại.");
+
+            User? assignee = null;
+            if (request.AssigneeId.HasValue)
+            {
+                assignee = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Id == request.AssigneeId.Value &&
+                        u.ProjectMembers.Any(pm => pm.ProjectId == targetColumn.Board.ProjectId), cancellationToken)
+                    ?? throw new BadRequestException("Người được gán thẻ không tồn tại hoặc không thuộc Project này.");
+            }
+
             // 1. Tự động tính Position của card tiếp theo trong Cột đó
             var maxPosition = await _context.Cards.Where(c => c.ColumnId == request.ColumnId)
                 .MaxAsync(c => (int?)c.Position, cancellationToken) ?? -1;
@@ -52,12 +62,6 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
             };
             _context.Cards.Add(newCard);
             await _context.SaveChangesAsync(cancellationToken);
-            // Lấy thông tin người được gán thẻ (Assignee) nếu có
-            User? assignee = null;
-            if (request.AssigneeId.HasValue)
-            {
-                assignee = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.AssigneeId.Value, cancellationToken) ?? throw new NotFoundException("Người được gán thẻ (Assignee) không tồn tại.");
-            }
              return new CardDto
             {
                 Id = newCard.Id,
