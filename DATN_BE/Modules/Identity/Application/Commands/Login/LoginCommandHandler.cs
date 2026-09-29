@@ -24,7 +24,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.Login
         {
             // 1. Tìm User theo Email kèm Role
             var user = await _context.Users.Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Email.Equals(request.Email, StringComparison.CurrentCultureIgnoreCase), cancellationToken);
+                .FirstOrDefaultAsync(u => u.Email == request.Email.ToLower(), cancellationToken);
 
             // 2. Kiểm tra tài khoản và mật khẩu
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))

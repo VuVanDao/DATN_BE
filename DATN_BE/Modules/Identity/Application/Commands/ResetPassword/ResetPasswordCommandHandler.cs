@@ -18,10 +18,10 @@ namespace DATN_BE.Modules.Identity.Application.Commands.ResetPassword
             var email = request.Email.Trim().ToLower();
             // 1. Tìm User theo Email
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email.Equals(email, StringComparison.CurrentCultureIgnoreCase) && u.IsActive,cancellationToken) ?? throw new NotFoundException("Yêu cầu đặt lại mật khẩu không hợp lệ hoặc tài khoản không khả dụng");
+                .FirstOrDefaultAsync(u => u.Email == request.Email.ToLower() && u.IsActive,cancellationToken) ?? throw new NotFoundException("Yêu cầu đặt lại mật khẩu không hợp lệ hoặc tài khoản không khả dụng");
             // 2. Tìm Token xác nhận
             var resetToken = await _context.PasswordResetTokens
-                .FirstOrDefaultAsync(prt => prt.Token.Equals(request.Token.Trim(), StringComparison.CurrentCultureIgnoreCase) && prt.UserId == user.Id, cancellationToken)
+                .FirstOrDefaultAsync(prt => prt.Token == request.Token && prt.UserId == user.Id, cancellationToken)
                 ?? throw new BadRequestException("Mã xác nhận không hợp lệ.");
             if (resetToken.IsUsed)
             {
