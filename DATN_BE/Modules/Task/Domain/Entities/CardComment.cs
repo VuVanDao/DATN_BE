@@ -13,6 +13,7 @@ namespace DATN_BE.Modules.Task.Domain.Entities
         public Guid UserId { get; set; }
         public User User { get; set; } = null!;
         // Soft Delete
+        public bool IsUserAccountDeleted { get; set; } = false;
         public bool IsDeleted { get; set; } = false;
         public DateTimeOffset? DeletedAt { get; set; }
     }
