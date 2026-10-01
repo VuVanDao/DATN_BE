@@ -1,0 +1,1317 @@
+{
+  "info": {
+    "_postman_id": "a6c8e3f9-71db-47b8-89fa-9877b0b8c521",
+    "name": "DATN - Task Management & AI Collaboration API",
+    "description": "Bộ sưu tập Postman chứa toàn bộ 44 API Endpoints hiện tại của hệ thống Backend (DATN_BE - .NET 8 Web API).\n\n### 🚀 Hướng dẫn sử dụng:\n1. Chọn Collection và kiểm tra biến `baseUrl` (Mặc định: `http://localhost:5025`).\n2. Chạy endpoint `POST /api/auth/login` hoặc `POST /api/auth/register`.\n3. Script kiểm thử (Tests) sẽ **tự động lưu `accessToken`** vào Collection Variables, các endpoint cần xác thực (Bearer Token) sẽ tự động sử dụng token này mà không cần copy paste thủ công!\n4. Điền các ID tương ứng (`workspaceId`, `projectId`, `cardId`, `boardId`, `columnId`, `userId`) vào biến hoặc trực tiếp trên request URL.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5025",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "workspaceId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "workspaceSlug",
+      "value": "my-workspace",
+      "type": "string"
+    },
+    {
+      "key": "projectId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "projectKey",
+      "value": "DATN",
+      "type": "string"
+    },
+    {
+      "key": "boardId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "columnId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "cardId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Authentication & Identity",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@datn.vn\",\n  \"username\": \"nguyenvana\",\n  \"password\": \"Password123@\",\n  \"bio\": \"Software Engineer tại ĐATN\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Đăng ký tài khoản người dùng mới vào hệ thống."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var res = pm.response.json();",
+                  "    if (res.data && res.data.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                  "        if (pm.environment) { pm.environment.set('accessToken', res.data.accessToken); }",
+                  "        console.log('Tự động lưu accessToken sau khi đăng ký thành công');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"superadmin@datn.vn\",\n  \"password\": \"Password123@\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Đăng nhập hệ thống (nhận AccessToken và RefreshToken dạng HttpOnly Cookie)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var res = pm.response.json();",
+                  "    if (res.data && res.data.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                  "        if (pm.environment) { pm.environment.set('accessToken', res.data.accessToken); }",
+                  "        console.log('Tự động lưu accessToken sau khi đăng nhập thành công');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"YOUR_REFRESH_TOKEN_HERE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh-token"
+              ]
+            },
+            "description": "Cấp lại Access Token mới bằng Refresh Token (qua Cookie hoặc Body)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var res = pm.response.json();",
+                  "    if (res.data && res.data.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                  "        if (pm.environment) { pm.environment.set('accessToken', res.data.accessToken); }",
+                  "        console.log('Tự động cập nhật accessToken mới');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Revoke Token (Logout)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"YOUR_REFRESH_TOKEN_HERE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/revoke-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "revoke-token"
+              ]
+            },
+            "description": "Thu hồi Token và đăng xuất khỏi hệ thống."
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@datn.vn\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Gửi email yêu cầu đặt lại mật khẩu với mã token xác nhận."
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@datn.vn\",\n  \"token\": \"RESET_TOKEN_RECEIVED_FROM_EMAIL\",\n  \"newPassword\": \"NewPassword123@\",\n  \"confirmNewPassword\": \"NewPassword123@\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Xác nhận mã Token từ email và cập nhật mật khẩu mới."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. User Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            },
+            "description": "Lấy thông tin tài khoản cá nhân của người dùng đang đăng nhập."
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"nguyenvana_updated\",\n  \"bio\": \"Fullstack Developer & AI Engineer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            },
+            "description": "Cập nhật thông tin cá nhân (Username, Bio)."
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Password123@\",\n  \"newPassword\": \"NewPassword456@\",\n  \"confirmNewPassword\": \"NewPassword456@\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "change-password"
+              ]
+            },
+            "description": "Đổi mật khẩu người dùng hiện tại."
+          }
+        },
+        {
+          "name": "Upload Avatar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "File",
+                  "type": "file",
+                  "src": "",
+                  "description": "File ảnh đại diện (png, jpg, jpeg, webp)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "avatar"
+              ]
+            },
+            "description": "Tải ảnh đại diện lên Cloudinary và cập nhật URL vào hồ sơ người dùng."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Admin Management",
+      "item": [
+        {
+          "name": "Get Users List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users?search=&isActive=true&pageIndex=1&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Tìm kiếm theo username, email"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Lọc theo trạng thái hoạt động"
+                },
+                {
+                  "key": "pageIndex",
+                  "value": "1",
+                  "description": "Trang hiện tại (bắt đầu từ 1)"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10",
+                  "description": "Số lượng trên mỗi trang"
+                }
+              ]
+            },
+            "description": "[Yêu cầu quyền user:read] Lấy danh sách người dùng toàn hệ thống có phân trang và lọc."
+          }
+        },
+        {
+          "name": "Create User (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"member@datn.vn\",\n  \"username\": \"member1\",\n  \"password\": \"Password123@\",\n  \"bio\": \"Thành viên dự án\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ]
+            },
+            "description": "[Yêu cầu quyền user:manage] Quản trị viên tạo trực tiếp tài khoản người dùng."
+          }
+        },
+        {
+          "name": "Update User (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"member1_edited\",\n  \"bio\": \"Trưởng nhóm phụ trách Frontend\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": "[Yêu cầu quyền user:manage] Quản trị viên cập nhật thông tin người dùng theo Id."
+          }
+        },
+        {
+          "name": "Update User Status (Lock/Unlock)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false,\n  \"reason\": \"Tài khoản vi phạm quy định chính sách bảo mật.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{userId}}",
+                "status"
+              ]
+            },
+            "description": "[Yêu cầu quyền user:manage] Khóa hoặc mở khóa tài khoản người dùng."
+          }
+        },
+        {
+          "name": "Assign Role to User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"00000000-0000-0000-0000-000000000000\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{userId}}",
+                "role"
+              ]
+            },
+            "description": "[Yêu cầu quyền role:manage] Gán quyền / vai trò (SystemAdmin / User) cho tài khoản."
+          }
+        },
+        {
+          "name": "Delete User (Soft Delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": "[Yêu cầu quyền user:manage] Xóa mềm tài khoản người dùng (IsDeleted = true)."
+          }
+        },
+        {
+          "name": "Get All Roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "roles"
+              ]
+            },
+            "description": "[Yêu cầu quyền role:manage] Lấy danh sách tất cả các Role kèm Permissions của Role."
+          }
+        },
+        {
+          "name": "Get All Permissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "permissions"
+              ]
+            },
+            "description": "[Yêu cầu quyền role:manage] Lấy toàn bộ danh mục Permission có trong hệ thống."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Security & Audit",
+      "item": [
+        {
+          "name": "Get My Login History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/security/me/login-history?limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "security",
+                "me",
+                "login-history"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Số lượng bản ghi lịch sử đăng nhập gần nhất"
+                }
+              ]
+            },
+            "description": "Xem nhật ký đăng nhập cá nhân (IP Address, User Agent, Thiết bị, Thời gian)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Workspaces",
+      "item": [
+        {
+          "name": "Get My Workspaces",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces"
+              ]
+            },
+            "description": "Lấy danh sách các Không gian làm việc (Workspace) mà người dùng tham gia."
+          }
+        },
+        {
+          "name": "Create Workspace",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Không Gian Đồ Án Tốt Nghiệp\",\n  \"description\": \"Workspace nghiên cứu và phát triển hệ thống Task Management AI\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces"
+              ]
+            },
+            "description": "Tạo Không gian làm việc mới. Người tạo mặc định là WorkspaceOwner."
+          }
+        },
+        {
+          "name": "Get Workspace Roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "roles"
+              ]
+            },
+            "description": "Lấy danh sách các vai trò khả dụng trong Workspace (phục vụ chọn role khi mời thành viên)."
+          }
+        },
+        {
+          "name": "Get Workspace By Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceSlug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceSlug}}"
+              ]
+            },
+            "description": "Lấy thông tin chi tiết Workspace theo slug định danh."
+          }
+        },
+        {
+          "name": "Update Workspace",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "Name",
+                  "value": "Không Gian Đồ Án Tốt Nghiệp (Updated)",
+                  "type": "text"
+                },
+                {
+                  "key": "Description",
+                  "value": "Cập nhật mô tả không gian làm việc",
+                  "type": "text"
+                },
+                {
+                  "key": "Logo",
+                  "type": "file",
+                  "src": "",
+                  "description": "File ảnh logo (tùy chọn)"
+                },
+                {
+                  "key": "CoverImage",
+                  "type": "file",
+                  "src": "",
+                  "description": "File ảnh bìa (tùy chọn)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}"
+              ]
+            },
+            "description": "Cập nhật thông tin Workspace (tên, mô tả, ảnh logo, ảnh bìa qua form-data)."
+          }
+        },
+        {
+          "name": "Add Members to Workspace",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"members\": [\n    {\n      \"email\": \"member1@datn.vn\",\n      \"roleId\": null\n    },\n    {\n      \"email\": \"member2@datn.vn\",\n      \"roleId\": null\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}",
+                "members"
+              ]
+            },
+            "description": "Thêm danh sách thành viên vào Workspace qua email (roleId null sẽ mặc định WorkspaceMember)."
+          }
+        },
+        {
+          "name": "Get Member Removal Impact",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members/{{userId}}/removal-impact",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}",
+                "members",
+                "{{userId}}",
+                "removal-impact"
+              ]
+            },
+            "description": "Kiểm tra các tác động trước khi xóa thành viên (đang làm ProjectLeader dự án nào, đang được gán bao nhiêu thẻ)."
+          }
+        },
+        {
+          "name": "Remove Member From Workspace",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}",
+                "members",
+                "{{userId}}"
+              ]
+            },
+            "description": "Xóa thành viên khỏi Workspace (hoặc thành viên tự rời)."
+          }
+        },
+        {
+          "name": "Delete Workspace",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}"
+              ]
+            },
+            "description": "Xóa Workspace (chỉ dành cho SystemAdmin hoặc WorkspaceOwner)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Projects",
+      "item": [
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"name\": \"Hệ thống Quản lý Dự án DATN\",\n  \"projectKey\": \"DATN\",\n  \"description\": \"Dự án quản lý và cộng tác nhóm tích hợp AI\",\n  \"isAssignAsLeader\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/project",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project"
+              ]
+            },
+            "description": "Tạo Dự án mới trong Workspace. Tự động tạo Bảng Kanban mặc định với 3 cột (To Do, In Progress, Done)."
+          }
+        },
+        {
+          "name": "Get Project Detail By Key",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectKey}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectKey}}"
+              ]
+            },
+            "description": "Lấy chi tiết một Dự án theo Project Key (ví dụ: 'DATN')."
+          }
+        },
+        {
+          "name": "Get Workspace Projects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/workspace-project/{{workspaceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "workspace-project",
+                "{{workspaceId}}"
+              ]
+            },
+            "description": "Lấy danh sách toàn bộ các Dự án thuộc một Workspace."
+          }
+        },
+        {
+          "name": "Get Project Members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}",
+                "members"
+              ]
+            },
+            "description": "Lấy danh sách các thành viên trong Dự án."
+          }
+        },
+        {
+          "name": "Add Members to Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"members\": [\n    {\n      \"userId\": \"{{userId}}\",\n      \"roleId\": null\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}",
+                "members"
+              ]
+            },
+            "description": "Thêm thành viên vào Dự án (roleId null sẽ mặc định ProjectMember)."
+          }
+        },
+        {
+          "name": "Update Project Member Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newRoleId\": \"00000000-0000-0000-0000-000000000000\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}/members/{{userId}}/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}",
+                "members",
+                "{{userId}}",
+                "role"
+              ]
+            },
+            "description": "Cập nhật vai trò của thành viên trong Dự án (ví dụ chuyển đổi Leader / Member)."
+          }
+        },
+        {
+          "name": "Remove Member From Project",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}/members/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}",
+                "members",
+                "{{userId}}"
+              ]
+            },
+            "description": "Xóa thành viên khỏi Dự án."
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Kanban Boards & Columns",
+      "item": [
+        {
+          "name": "Get Board Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "{{boardId}}"
+              ]
+            },
+            "description": "Lấy chi tiết Bảng Kanban kèm danh sách Cột và Thẻ công việc được sắp xếp theo vị trí Position."
+          }
+        },
+        {
+          "name": "Create Column",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Testing / Kiểm Thử\",\n  \"isDoneColumn\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardId}}/columns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "{{boardId}}",
+                "columns"
+              ]
+            },
+            "description": "Tạo Cột mới trong Bảng Kanban."
+          }
+        },
+        {
+          "name": "Reorder Columns",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderedColumnIds\": [\n    \"00000000-0000-0000-0000-000000000001\",\n    \"00000000-0000-0000-0000-000000000002\",\n    \"00000000-0000-0000-0000-000000000003\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardId}}/columns/reorder",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "{{boardId}}",
+                "columns",
+                "reorder"
+              ]
+            },
+            "description": "Sắp xếp lại thứ tự các Cột trong Bảng Kanban khi người dùng kéo thả."
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Cards & Comments",
+      "item": [
+        {
+          "name": "Create Card",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"columnId\": \"{{columnId}}\",\n  \"title\": \"Thiết kế giao diện Kanban Board\",\n  \"description\": \"Sử dụng Angular CDK Drag & Drop kết hợp Tailwind CSS v4\",\n  \"type\": \"Task\",\n  \"priority\": \"High\",\n  \"assigneeId\": null,\n  \"startDate\": \"2026-10-01T08:00:00Z\",\n  \"dueDate\": \"2026-10-10T17:00:00Z\",\n  \"storyPoints\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards"
+              ]
+            },
+            "description": "Tạo Thẻ công việc (Card) mới trong một Cột. Hỗ trợ CardType: Task, Bug, Story, Epic. CardPriority: Low, Medium, High, Urgent."
+          }
+        },
+        {
+          "name": "Get Card Detail By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}"
+              ]
+            },
+            "description": "Lấy chi tiết Thẻ công việc kèm danh sách bình luận (Comments) và thông tin liên quan."
+          }
+        },
+        {
+          "name": "Update Card",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Thiết kế giao diện Kanban Board (Hoàn thiện)\",\n  \"description\": \"Đã tích hợp xong hiệu ứng kéo thả mượt mà và preview card\",\n  \"coverUrl\": null,\n  \"type\": \"Story\",\n  \"priority\": \"Urgent\",\n  \"assigneeId\": null,\n  \"startDate\": \"2026-10-01T08:00:00Z\",\n  \"dueDate\": \"2026-10-10T17:00:00Z\",\n  \"storyPoints\": 8,\n  \"progressPercentage\": 85\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}"
+              ]
+            },
+            "description": "Cập nhật thông tin chi tiết của Thẻ công việc (Title, Description, Type, Priority, DueDate, StoryPoints, ProgressPercentage,...)."
+          }
+        },
+        {
+          "name": "Move Card (Drag & Drop)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetColumnId\": \"{{columnId}}\",\n  \"newPosition\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}/move",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}",
+                "move"
+              ]
+            },
+            "description": "Kéo thả Thẻ công việc: Chuyển sang cột khác hoặc thay đổi vị trí thứ tự trong cột hiện tại. Tự động re-index vị trí các thẻ khác."
+          }
+        },
+        {
+          "name": "Add Comment to Card",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contentText\": \"Đã hoàn thành kiểm thử giao diện trên Chrome và Edge, hoạt động rất tốt!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}",
+                "comments"
+              ]
+            },
+            "description": "Thêm bình luận mới vào Thẻ công việc."
+          }
+        },
+        {
+          "name": "Delete Card (Soft Delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}"
+              ]
+            },
+            "description": "Xóa Thẻ công việc (Soft delete - IsDeleted = true)."
+          }
+        }
+      ]
+    }
+  ]
+}
