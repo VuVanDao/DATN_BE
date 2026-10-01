@@ -1,6 +1,7 @@
 
 using DATN_BE.Modules.Identity.Application.Interfaces;
 using DATN_BE.Modules.Identity.infrastructure.Services;
+using DATN_BE.Modules.Identity.Presentation.BackgroundJob;
 using DATN_BE.Shared.Application.Behaviors;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Infrastructure.Persistence;
@@ -47,6 +48,7 @@ namespace DATN_BE
             builder.Services.AddScoped<IProjectAuthorizationService, ProjectAuthorizationService>();
             builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
             builder.Services.AddScoped<IEmailService, GmailSmtpEmailService>();
+            builder.Services.AddHostedService<SendPasswordResetTokenByEmailWorker>();
 
             // 3. Register Identity Services
             builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();

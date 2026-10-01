@@ -1,4 +1,5 @@
 using DATN_BE.Modules.Identity.Domain.Entities;
+using DATN_BE.Modules.Identity.Domain.Job;
 using DATN_BE.Modules.Notifications.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.Security.Domain.Entities;
@@ -30,6 +31,7 @@ namespace DATN_BE.Shared.Application.Interfaces
         DbSet<RefreshToken> RefreshTokens { get; }
         DbSet<PasswordResetToken> PasswordResetTokens { get; }
         DbSet<LoginHistory> LoginHistories { get; }
+        DbSet <PasswordResetSendBytEmailJob> PasswordResetEmailJob { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

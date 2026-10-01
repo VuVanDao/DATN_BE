@@ -1,4 +1,6 @@
 ﻿using DATN_BE.Modules.Identity.Domain.Entities;
+using DATN_BE.Modules.Identity.Domain.Enum;
+using DATN_BE.Modules.Identity.Domain.Job;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -45,15 +47,24 @@ namespace DATN_BE.Modules.Identity.Application.Commands.ForgotPassword
                 UserId = user.Id,
                 ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5),
                 IsUsed = false,
-                Token = resetTokenString,          
+                Token = resetTokenString,  
+                Id = Guid.NewGuid()
             };
+            var PasswordResetSendByEmailJobObj = new PasswordResetSendBytEmailJob
+            {
+                PasswordResetTokenId = resetToken.Id,
+                ToEmail = user.Email,
+            };
+
+            _context.PasswordResetEmailJob.Add(PasswordResetSendByEmailJobObj);
             _context.PasswordResetTokens.Add(resetToken);
+
             await _context.SaveChangesAsync(cancellationToken);
 
             // 4. GỬI EMAIL QUA RESEND ĐẾN NGƯỜI DÙNG
-            await _emailService.SendForgotPasswordEmailAsync(email,user.Username,resetToken.Token,cancellationToken);
+            //await _emailService.SendForgotPasswordEmailAsync(email,user.Username,resetToken.Token,cancellationToken);
 
-            return "Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư";
+            return "Yêu cầu đặt lại mật khẩu đã được tiếp nhận. Vui lòng kiểm tra email";
         }
     }
 }

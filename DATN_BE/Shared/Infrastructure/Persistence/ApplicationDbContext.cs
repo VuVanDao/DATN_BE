@@ -1,4 +1,5 @@
 using DATN_BE.Modules.Identity.Domain.Entities;
+using DATN_BE.Modules.Identity.Domain.Job;
 using DATN_BE.Modules.Notifications.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.Security.Domain.Entities;
@@ -37,6 +38,7 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
         public DbSet<LoginHistory> LoginHistories => Set<LoginHistory>();
+        public DbSet<PasswordResetSendBytEmailJob> PasswordResetEmailJob => Set<PasswordResetSendBytEmailJob>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

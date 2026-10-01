@@ -258,6 +258,54 @@ namespace DATN_BE.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Job.PasswordResetSendBytEmailJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastError")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PasswordResetTokenId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ToEmail")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PasswordResetTokenId");
+
+                    b.HasIndex("Status", "NextAttemptAt");
+
+                    b.ToTable("PasswordResetSendBytEmailJob", (string)null);
+                });
+
             modelBuilder.Entity("DATN_BE.Modules.Notifications.Domain.Entities.Notification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -902,6 +950,15 @@ namespace DATN_BE.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Job.PasswordResetSendBytEmailJob", b =>
+                {
+                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.PasswordResetToken", null)
+                        .WithMany()
+                        .HasForeignKey("PasswordResetTokenId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("DATN_BE.Modules.Notifications.Domain.Entities.Notification", b =>
