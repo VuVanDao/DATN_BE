@@ -25,18 +25,18 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectDetail
         {
             var projectExists = await _context.Projects
                 .AsNoTracking()
-                .AnyAsync(project => project.Id == request.ProjectId, cancellationToken);
+                .Where(p => p.ProjectKey == request.projectKey)
+                .Select(p => new
+                {
+                    projectId = p.Id
+                })
+                .FirstOrDefaultAsync(cancellationToken) ?? throw new NotFoundException("Project", request.projectKey);
 
-            if (!projectExists)
-            {
-                throw new NotFoundException("Project", request.ProjectId);
-            }
-
-            await _authorizationService.EnsureCanViewProjectAsync(request.ProjectId, cancellationToken);
+            await _authorizationService.EnsureCanViewProjectAsync(projectExists.projectId, cancellationToken);
 
             return await _context.Projects
                 .AsNoTracking()
-                .Where(project => project.Id == request.ProjectId)
+                .Where(project => project.ProjectKey == request.projectKey)
                 .Select(project => new ProjectDto
                 {
                     Id = project.Id,
