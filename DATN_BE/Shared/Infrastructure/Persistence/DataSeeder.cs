@@ -9,6 +9,9 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
     {
         public static async Task SeedAsync(ApplicationDbContext context)
         {
+            // 0. Tự động áp dụng Migration nếu database chưa cập nhật
+            await context.Database.MigrateAsync();
+
             // 1. Seed Roles nếu chưa có (Duyệt từng Role)
             var defaultRoles = new List<Role>
             {
@@ -19,6 +22,7 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
                 new() { Name = "ProjectLeader", Scope = RoleScope.Project, Description = "Người dẫn dắt dự án", IsSystemRole = true },
                 new() { Name = "ProjectMember", Scope = RoleScope.Project, Description = "Thành viên dự án", IsSystemRole = true }
             };
+
             foreach (var role in defaultRoles)
             {
                 if (!await context.Roles.AnyAsync(r => r.Name == role.Name))
@@ -45,6 +49,7 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
                 new() { Code = "card:delete", Name = "Xóa Thẻ công việc", Module = "Card" },
                 new() { Code = "sprint:manage", Name = "Quản lý Sprint", Module = "Sprint" }
             };
+
             foreach (var perm in defaultPermissions)
             {
                 if (!await context.Permissions.AnyAsync(p => p.Code == perm.Code))
@@ -54,7 +59,7 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
             }
             await context.SaveChangesAsync();
 
-            // 3. Gán TOÀN BỘ Permission cho SystemAdmin Role (Chạy độc lập)
+            // 3. Gán TOÀN BỘ Permission cho SystemAdmin Role
             var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "SystemAdmin");
             if (adminRole != null)
             {
@@ -65,6 +70,7 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
                     .Where(rp => rp.RoleId == adminRole.Id)
                     .Select(rp => rp.PermissionId)
                     .ToListAsync();
+
                 // Lọc ra các Permission mà SystemAdmin chưa có
                 var newRolePerms = allPermissions
                     .Where(p => !existingRolePermIds.Contains(p.Id))
@@ -74,13 +80,45 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
                         PermissionId = p.Id
                     })
                     .ToList();
+
                 if (newRolePerms.Any())
                 {
                     await context.RolePermissions.AddRangeAsync(newRolePerms);
                     await context.SaveChangesAsync();
                 }
-            }
 
+                // 4. Seed tài khoản Admin mặc định nếu chưa tồn tại
+                var existingAdmin = await context.Users
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(u => u.Email == "admin@gmail.com" || u.Username == "admin");
+
+                if (existingAdmin == null)
+                {
+                    var systemAdminAccount = new User
+                    {
+                        Username = "admin",
+                        Email = "admin@gmail.com",
+                        IsActive = true,
+                        AvatarUrl = "",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Dao11082004@"),
+                        Bio = "System Administrator",
+                        RoleId = adminRole.Id
+                    };
+                    await context.Users.AddAsync(systemAdminAccount);
+                    await context.SaveChangesAsync();
+                }
+                else
+                {
+                    // Nếu tài khoản Admin đã có nhưng mật khẩu đang là plaintext chưa hash BCrypt
+                    if (!existingAdmin.PasswordHash.StartsWith("$2"))
+                    {
+                        existingAdmin.PasswordHash = BCrypt.Net.BCrypt.HashPassword("Dao11082004@");
+                        existingAdmin.RoleId = adminRole.Id;
+                        existingAdmin.IsActive = true;
+                        await context.SaveChangesAsync();
+                    }
+                }
+            }
         }
     }
 }
