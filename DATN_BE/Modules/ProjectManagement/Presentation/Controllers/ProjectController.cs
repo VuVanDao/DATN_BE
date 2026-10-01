@@ -5,6 +5,7 @@ using DATN_BE.Modules.ProjectManagement.Application.Commands.RemoveMemberFromPro
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectLeader;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectMember;
+using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectDetail;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetWorkspaceProjects;
 using DATN_BE.Shared.Application.Models;
 using MediatR;
@@ -32,6 +33,17 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<ProjectDto>.Ok(result, "Tạo mới 1 project mới thành công"));
         }
+
+        /// <summary>
+        /// Lấy chi tiết một Dự án theo id.
+        /// </summary>
+        [HttpGet("{projectId:guid}")]
+        public async Task<ActionResult<ApiResponse<ProjectDto>>> GetProjectDetail(Guid projectId)
+        {
+            var result = await _mediator.Send(new GetProjectDetailQuery(projectId));
+            return Ok(ApiResponse<ProjectDto>.Ok(result, "Lấy thông tin Dự án thành công."));
+        }
+
         /// <summary>
         /// Lấy danh sách Dự án trong Workspace
         /// </summary>
