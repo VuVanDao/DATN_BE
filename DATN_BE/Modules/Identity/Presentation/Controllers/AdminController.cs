@@ -4,9 +4,9 @@ using DATN_BE.Modules.Identity.Application.Commands.AdminUpdateUser;
 using DATN_BE.Modules.Identity.Application.Commands.AssignUserRoles;
 using DATN_BE.Modules.Identity.Application.Commands.UpdateUserStatus;
 using DATN_BE.Modules.Identity.Application.DTOs;
-using DATN_BE.Modules.Identity.Application.Queries.GetAdminUsers;
 using DATN_BE.Modules.Identity.Application.Queries.GetPermissions;
 using DATN_BE.Modules.Identity.Application.Queries.GetRoles;
+using DATN_BE.Modules.Identity.Application.Queries.GetUsers;
 using DATN_BE.Shared.Application.Models;
 using DATN_BE.Shared.Infrastructure.Security;
 using MediatR;
@@ -34,7 +34,7 @@ namespace DATN_BE.Modules.Identity.Presentation.Controllers
         /// </summary>
         [HttpGet("users")]
         [HasPermission("user:read")]
-        public async Task<ActionResult<ApiResponse<PagedResult<UserManagementDto>>>> GetUsers([FromQuery] GetUserManagementQuery query)
+        public async Task<ActionResult<ApiResponse<PagedResult<UserManagementDto>>>> GetUsers([FromQuery] GetUsersQuery query)
         {
             var result = await _mediator.Send(query);
             return Ok(ApiResponse<PagedResult<UserManagementDto>>.Ok(result, "Lấy danh sách người dùng thành công."));

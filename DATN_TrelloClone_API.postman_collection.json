@@ -108,9 +108,10 @@
                 "exec": [
                   "if (pm.response.code === 200) {",
                   "    var res = pm.response.json();",
-                  "    if (res.data && res.data.accessToken) {",
-                  "        pm.collectionVariables.set('accessToken', res.data.accessToken);",
-                  "        if (pm.environment) { pm.environment.set('accessToken', res.data.accessToken); }",
+                  "    var jwtToken = res.data ? (res.data.token || res.data.accessToken) : null;",
+                  "    if (jwtToken) {",
+                  "        pm.collectionVariables.set('accessToken', jwtToken);",
+                  "        if (pm.environment) { pm.environment.set('accessToken', jwtToken); }",
                   "        console.log('Tự động lưu accessToken sau khi đăng ký thành công');",
                   "    }",
                   "}"
@@ -157,9 +158,10 @@
                 "exec": [
                   "if (pm.response.code === 200) {",
                   "    var res = pm.response.json();",
-                  "    if (res.data && res.data.accessToken) {",
-                  "        pm.collectionVariables.set('accessToken', res.data.accessToken);",
-                  "        if (pm.environment) { pm.environment.set('accessToken', res.data.accessToken); }",
+                  "    var jwtToken = res.data ? (res.data.token || res.data.accessToken) : null;",
+                  "    if (jwtToken) {",
+                  "        pm.collectionVariables.set('accessToken', jwtToken);",
+                  "        if (pm.environment) { pm.environment.set('accessToken', jwtToken); }",
                   "        console.log('Tự động lưu accessToken sau khi đăng nhập thành công');",
                   "    }",
                   "}"
@@ -206,9 +208,10 @@
                 "exec": [
                   "if (pm.response.code === 200) {",
                   "    var res = pm.response.json();",
-                  "    if (res.data && res.data.accessToken) {",
-                  "        pm.collectionVariables.set('accessToken', res.data.accessToken);",
-                  "        if (pm.environment) { pm.environment.set('accessToken', res.data.accessToken); }",
+                  "    var jwtToken = res.data ? (res.data.token || res.data.accessToken) : null;",
+                  "    if (jwtToken) {",
+                  "        pm.collectionVariables.set('accessToken', jwtToken);",
+                  "        if (pm.environment) { pm.environment.set('accessToken', jwtToken); }",
                   "        console.log('Tự động cập nhật accessToken mới');",
                   "    }",
                   "}"
