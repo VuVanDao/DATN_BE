@@ -30,7 +30,7 @@ namespace DATN_BE.Modules.Identity.Presentation.BackgroundJob
                 {
                     _logger.LogError(ex, "Lỗi xử lý hàng đợi email đặt lại mật khẩu");
                 }
-                await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+                await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
         }
         private async System.Threading.Tasks.Task ProcessOneAsync(CancellationToken stoppingToken)
