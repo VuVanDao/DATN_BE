@@ -8,16 +8,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember
 {
-    public class AddWorkspaceMemberCommandHandler : IRequestHandler<AddWorkspaceMemberCommand, AddWorkspaceMembersResultDto>
+    public class AddMemberToWorkspaceCommandHandler : IRequestHandler<AddMemberToWorkspaceCommand, AddWorkspaceMembersResultDto>
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
-        public AddWorkspaceMemberCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
+        public AddMemberToWorkspaceCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
             _currentUserService = currentUserService;
         }
-        public async Task<AddWorkspaceMembersResultDto> Handle(AddWorkspaceMemberCommand request, CancellationToken cancellationToken)
+        public async Task<AddWorkspaceMembersResultDto> Handle(AddMemberToWorkspaceCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
                 ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");

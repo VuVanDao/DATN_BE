@@ -11,7 +11,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember
         public string Email { get; set; } = string.Empty;
         public Guid? RoleId { get; set; }
     }
-    public class AddWorkspaceMemberCommand : IRequest<AddWorkspaceMembersResultDto>
+    public class AddMemberToWorkspaceCommand : IRequest<AddWorkspaceMembersResultDto>
     {
         
         public Guid WorkspaceId { get; set; }

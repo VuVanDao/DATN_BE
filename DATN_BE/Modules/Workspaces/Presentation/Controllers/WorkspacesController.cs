@@ -60,7 +60,7 @@ namespace DATN_BE.Modules.Workspaces.Presentation.Controllers
         [HttpPost("{id:guid}/members")]
         public async Task<ActionResult<ApiResponse<AddWorkspaceMembersResultDto>>> AddMembers(
             Guid id,
-            [FromBody] AddWorkspaceMemberCommand command)
+            [FromBody] AddMemberToWorkspaceCommand command)
         {
             command.WorkspaceId = id;
             var result = await _mediator.Send(command);

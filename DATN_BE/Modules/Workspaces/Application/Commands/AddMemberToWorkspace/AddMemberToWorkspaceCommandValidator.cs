@@ -2,9 +2,9 @@
 
 namespace DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember
 {
-    public class AddWorkspaceMemberCommandValidator : AbstractValidator<AddWorkspaceMemberCommand>
+    public class AddMemberToWorkspaceCommandValidator : AbstractValidator<AddMemberToWorkspaceCommand>
     {
-        public AddWorkspaceMemberCommandValidator()
+        public AddMemberToWorkspaceCommandValidator()
         {
             RuleFor(x => x.WorkspaceId)
                 .NotEmpty().WithMessage("Mã Workspace không được để trống");
