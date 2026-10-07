@@ -25,28 +25,41 @@ namespace DATN_BE.Modules.Workspaces.Application.Queries.GetMemberRemovalImpact
         {
             var currentUserId = _currentUserService.UserId
                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");
+
+            // tìm workspace mà:
+            // w.OwnerId == currentUserId: case workspaceOwner xoá thành viên
+            // w.Members.Any(m => m.UserId == currentUserId): case thành viên tự out, check thành viên có thuộc wokrspace đó không
             var workspace = await _context.Workspaces
-               .FirstOrDefaultAsync(w => w.Id == request.WorkspaceId, cancellationToken)
-               ?? throw new NotFoundException("Workspace này không tồn tại.");
-            
+                   .AsNoTracking()
+                   .Where(w => w.Id == request.WorkspaceId
+                            && (w.OwnerId == currentUserId || w.Members.Any(m => m.UserId == currentUserId)))
+                   .Select(w => new { w.Id, w.OwnerId })
+                   .FirstOrDefaultAsync(cancellationToken)
+                   ?? throw new NotFoundException("Không tìm thấy Workspace hoặc bạn không có quyền truy cập.");
+
             var isOwner = workspace.OwnerId == currentUserId;
             var isSelfLeave = request.MemberId == currentUserId;
-            var isSystemAdmin = false;
+
             if (!isOwner && !isSelfLeave)
-            {
-                isSystemAdmin = await _context.Users
-                    .AnyAsync(u => u.Id == currentUserId && !u.IsDeleted && u.Role.Name == "SystemAdmin", cancellationToken);
-            }
-            if (!isOwner && !isSelfLeave && !isSystemAdmin)
             {
                 throw new ForbiddenException("Bạn không có quyền xem thông tin ảnh hưởng của thành viên này.");
             }
-            var isExistingInWorkspace = await _context.WorkspaceMembers.AnyAsync(wm => wm.UserId == request.MemberId, cancellationToken);
-            if (!isExistingInWorkspace)
+
+            if (request.MemberId == workspace.OwnerId)
             {
-                throw new BadRequestException("Thành viên này không có trong workpsace");
+                throw new BadRequestException("Người sở hữu Workspace không thể xoá chính bản thân ra khỏi danh sách thành viên");
             }
+
+            var isMemberInWorkspace = await _context.WorkspaceMembers.AnyAsync(
+                wm => wm.WorkspaceId == workspace.Id && wm.UserId == request.MemberId, cancellationToken);
+
+            if (!isMemberInWorkspace)
+            {
+                throw new NotFoundException("Thành viên này không có trong workspace");
+            }
+
             var leaderProjects = await _context.ProjectMembers
+                .AsNoTracking()
                 .Where(pm => pm.UserId == request.MemberId && pm.Role.Name == "ProjectLeader" && pm.Project.WorkspaceId == workspace.Id)
                 .Select(pm => new LeaderProjectDto
                 {
@@ -55,7 +68,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Queries.GetMemberRemovalImpact
                 })
                 .ToListAsync(cancellationToken);
             var assignedCardsCount = await _context.Cards
-                .CountAsync(c => c.Column.Board.Project.WorkspaceId == request.WorkspaceId && c.AssigneeId == request.MemberId, cancellationToken);
+                .CountAsync(c => c.Column.Board.Project.WorkspaceId == workspace.Id && c.AssigneeId == request.MemberId, cancellationToken);
 
             return new MemberRemovalImpactDto
             {
