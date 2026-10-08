@@ -26,7 +26,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
             // 1. Kiểm tra Workspace có tồn tại và User có phải thành viên không
             var targetWorkspace = await _context.Workspaces
                 .AsNoTracking()
-                .FirstOrDefaultAsync(w => w.OwnerId == currentUserId, cancellationToken) 
+                .FirstOrDefaultAsync(w => w.Id == request.WorkspaceId, cancellationToken) 
                 ?? throw new NotFoundException("Workspace không tồn tại hoặc đã bị xoá");
 
             // 1.1. chi workspaceOwner moi duoc phep tao project
@@ -39,7 +39,6 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
             var normalizedKey = request.ProjectKey.Trim().ToUpperInvariant();
 
             // 3. Kiểm tra xem ProjectKey đã tồn tại trong Workspace này chưa
-            //var existProjectKey = targetWorkspace.Projects.Any(p => p.ProjectKey == normalizedKey);
             var existProjectKey = await _context.Projects
                     .AsNoTracking()
                     .AnyAsync(p => p.WorkspaceId == targetWorkspace.Id && p.ProjectKey == normalizedKey,cancellationToken);
