@@ -116,13 +116,13 @@ namespace DATN_BE.Modules.Workspaces.Presentation.Controllers
         }
 
         /// <summary>
-        /// Xoá thành viên khỏi Workspace (Owner, SystemAdmin hoặc tự rời)
+        /// Xoá thành viên khỏi Workspace (Owner hoặc tự rời)
         /// </summary>
         [HttpDelete("{workspaceId:guid}/members/{userId:guid}")]
-        public async Task<ActionResult<ApiResponse<bool>>> RemoveMember(Guid workspaceId, Guid userId)
+        public async Task<ActionResult<ApiResponse<string>>> RemoveMember(Guid workspaceId, Guid userId)
         {
             var result = await _mediator.Send(new RemoveMemberFromWorkspaceCommand(workspaceId, userId));
-            return Ok(ApiResponse<bool>.Ok(result, "Xoá thành viên khỏi Workspace thành công."));
+            return Ok(ApiResponse<string>.Ok(result));
         }
     }
 }

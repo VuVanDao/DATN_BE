@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DATN_BE.Modules.Workspaces.Application.Commands.RemoveMemberFromProject
 {
-    public class RemoveMemberFromProjectCommandHandler : IRequestHandler<RemoveMemberFromWorkspaceCommand, bool>
+    public class RemoveMemberFromProjectCommandHandler : IRequestHandler<RemoveMemberFromWorkspaceCommand, string>
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
@@ -18,7 +18,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.RemoveMemberFromProjec
             _context = context;
             _currentUserService = currentUserService;
         }
-        public async Task<bool> Handle(RemoveMemberFromWorkspaceCommand request, CancellationToken cancellationToken)
+        public async Task<string> Handle(RemoveMemberFromWorkspaceCommand request, CancellationToken cancellationToken)
         {
             // 1. Xác thực người dùng hiện tại
             var currentUserId = _currentUserService.UserId
@@ -26,19 +26,14 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.RemoveMemberFromProjec
 
             // 2. Tìm Workspace
             var workspace = await _context.Workspaces
-                .FirstOrDefaultAsync(w => w.Id == request.WorkspaceId, cancellationToken)
-                ?? throw new NotFoundException("Workspace này không tồn tại");
+                .Where(w => w.Id == request.WorkspaceId && (w.OwnerId == currentUserId || w.Members.Any(m => m.UserId == currentUserId)))
+                .FirstOrDefaultAsync( cancellationToken)
+                ?? throw new NotFoundException("Workspace này không tồn tại hoặc bạn không có quyền truy cập");
 
-            // 3. Phân quyền: Owner / tự rời / SystemAdmin
             var isOwner = workspace.OwnerId == currentUserId;
             var isSelfLeave = request.MemberId == currentUserId;
-            var isSystemAdmin = false;
-            if (!isOwner && !isSelfLeave)
-            {
-                isSystemAdmin = await _context.Users
-                    .AnyAsync(u => u.Id == currentUserId && u.Role.Name == "SystemAdmin", cancellationToken);
-            }
-            if (!isOwner && !isSelfLeave && !isSystemAdmin)
+
+            if (!isOwner && !isSelfLeave )
             {
                 throw new ForbiddenException("Bạn không có quyền xoá thành viên khỏi Workspace này");
             }
@@ -70,10 +65,10 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.RemoveMemberFromProjec
             }
 
             // 7. Gỡ thành viên khỏi mọi Project trong Workspace này
-            var projectMemberships = await _context.ProjectMembers
+            var ListOfParticipatingMemberProjects = await _context.ProjectMembers
                 .Where(pm => pm.UserId == request.MemberId && pm.Project.WorkspaceId == request.WorkspaceId)
                 .ToListAsync(cancellationToken);
-            _context.ProjectMembers.RemoveRange(projectMemberships);
+            _context.ProjectMembers.RemoveRange(ListOfParticipatingMemberProjects);
 
             // 8. Bỏ gán thành viên khỏi mọi Card thuộc Workspace này (CHỈ trong Workspace này)
             var cardsAssignedToMember = await _context.Cards
@@ -90,7 +85,10 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.RemoveMemberFromProjec
 
             // 10. Một SaveChanges duy nhất => mọi thay đổi trên nằm trong cùng 1 transaction
             await _context.SaveChangesAsync(cancellationToken);
-            return true;
+
+            return isOwner
+                ? "Xoá thành viên khỏi Workspace thành công."
+                : "Rời khỏi workspace thành công";
         }
     }
 }

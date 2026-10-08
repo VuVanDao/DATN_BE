@@ -6,7 +6,7 @@ using MediatR;
 
 namespace DATN_BE.Modules.Workspaces.Application.Commands.RemoveMemberFromProject
 {
-    public class RemoveMemberFromWorkspaceCommand : IRequest<bool>
+    public class RemoveMemberFromWorkspaceCommand : IRequest<string>
     {
         public Guid WorkspaceId { get; set; }
         public Guid MemberId { get; set; }
