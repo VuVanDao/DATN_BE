@@ -28,7 +28,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectMember
                 .FirstOrDefaultAsync(cancellationToken)
                     ?? throw new NotFoundException("Dự án không tồn tại");
 
+            // check user co quyn xem thong tin thanh vien cua project hay khong
             await _authorizationService.EnsureCanViewProjectAsync(currProject.Id, cancellationToken);
+
             // get list project member
             return await _context.ProjectMembers
                 .AsNoTracking()

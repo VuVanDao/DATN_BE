@@ -25,7 +25,7 @@ namespace DATN_BE.Shared.Infrastructure.Services
                     project.Id == projectId &&
                     (project.Workspace.OwnerId == currentUserId ||
                      project.Workspace.Members.Any(member => member.UserId == currentUserId)), cancellationToken),
-                "Bạn không thuộc Workspace của Project này.");
+                "Bạn không phải thành viên của workspace của project này nên không thể xem thông tin này");
         }
 
         public Task EnsureCanModifyProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
