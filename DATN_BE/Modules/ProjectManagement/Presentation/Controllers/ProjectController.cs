@@ -52,7 +52,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         public async Task<ActionResult<ApiResponse<ProjectDto>>> GetWorkspaceProjects(Guid workspaceId)
         {
             var result = await _mediator.Send(new GetWorkspaceProjectsQuery(workspaceId));
-            return Ok(ApiResponse<List<ProjectDto>>.Ok(result, "Lấy danh sách Dự án thành công."));
+            return Ok(ApiResponse<List<ProjectDto>>.Ok(result, "Lấy danh sách dự án của workspace thành công"));
         }
 
         /// <summary>
