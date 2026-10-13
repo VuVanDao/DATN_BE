@@ -9,11 +9,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DATN_BE.Modules.Workspaces.Application.Commands.RemoveMemberFromProject
 {
-    public class RemoveMemberFromProjectCommandHandler : IRequestHandler<RemoveMemberFromWorkspaceCommand, string>
+    public class RemoveMemberFromWorkspaceCommandHandler : IRequestHandler<RemoveMemberFromWorkspaceCommand, string>
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
-        public RemoveMemberFromProjectCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
+        public RemoveMemberFromWorkspaceCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
             _currentUserService = currentUserService;

@@ -97,7 +97,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         public async Task<ActionResult<ApiResponse<bool>>> RemoveProjectMember(Guid projectId, Guid userId)
         {
             var result = await _mediator.Send(new RemoveMemberFromProjectCommand(projectId, userId));
-            return Ok(ApiResponse<bool>.Ok(result, "Xóa thành viên khỏi dự án thành công."));
+            return Ok(ApiResponse<bool>.Ok(result, "Thành viên đã không còn trong dự án"));
         }
     }
 }
