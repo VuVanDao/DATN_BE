@@ -37,10 +37,10 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         /// <summary>
         /// Lấy chi tiết một Dự án theo projectKey.
         /// </summary>
-        [HttpGet("{projectKey}")]
-        public async Task<ActionResult<ApiResponse<ProjectDto>>> GetProjectDetail(string projectKey)
+        [HttpGet("{projectKey}/workspace/{workspaceId}")]
+        public async Task<ActionResult<ApiResponse<ProjectDto>>> GetProjectDetail(string projectKey, Guid workspaceId)
         {
-            var result = await _mediator.Send(new GetProjectDetailQuery(projectKey));
+            var result = await _mediator.Send(new GetProjectDetailQuery(projectKey, workspaceId));
             return Ok(ApiResponse<ProjectDto>.Ok(result, "Lấy thông tin Dự án thành công."));
         }
 

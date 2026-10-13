@@ -25,7 +25,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectDetail
         {
             var projectExists = await _context.Projects
                 .AsNoTracking()
-                .Where(p => p.ProjectKey == request.projectKey)
+                .Where(p => p.ProjectKey == request.projectKey && p.WorkspaceId == request.workspaceId)
                 .Select(p => new
                 {
                     projectId = p.Id
