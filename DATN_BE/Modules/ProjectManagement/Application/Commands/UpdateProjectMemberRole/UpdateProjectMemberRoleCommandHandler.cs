@@ -7,6 +7,7 @@ using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectLeader
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,7 +35,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectMe
                 ?? throw new NotFoundException("Project không tồn tại");
             // Chỉ WorkspaceOwner hoặc ProjectLeader mới có quyền đổi vai trò
             var isWorkspaceOwner = project.Workspace.OwnerId == currentUserId;
-            var isProjectLeader = project.ProjectMembers.Any(pm => pm.UserId == currentUserId && pm.Role.Name == "ProjectLeader");
+            var isProjectLeader = project.ProjectMembers.Any(pm => pm.UserId == currentUserId && pm.Role.Name == RoleConstants.ProjectLeader);
             if (!isWorkspaceOwner && !isProjectLeader)
             {
                 throw new ForbiddenException("Bạn không có quyền cập nhật vai trò thành viên trong dự án này");
@@ -46,12 +47,12 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectMe
             var newRole = await _context.Roles.FirstOrDefaultAsync(r => r.Id == request.NewRoleId && r.Scope == RoleScope.Project, cancellationToken)
                 ?? throw new BadRequestException("Vai trò được chỉ định không hợp lệ cho phạm vi");
 
-            if (newRole.Name == "ProjectLeader")
+            if (newRole.Name == RoleConstants.ProjectLeader)
             {
-                var defaultMemberRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "ProjectMember" && r.Scope == RoleScope.Project, cancellationToken)
+                var defaultMemberRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == RoleConstants.ProjectMember && r.Scope == RoleScope.Project, cancellationToken)
                     ?? throw new NotFoundException("Không tìm thấy vai trò 'ProjectMember'");
                 // make oleProjectLeader down to member
-                foreach (var oldLeader in project.ProjectMembers.Where(pm => pm.Role.Name == "ProjectLeader" && pm.UserId != targetMember.UserId))
+                foreach (var oldLeader in project.ProjectMembers.Where(pm => pm.Role.Name == RoleConstants.ProjectLeader && pm.UserId != targetMember.UserId))
                 {
                     oldLeader.RoleId = defaultMemberRole.Id;
                 }

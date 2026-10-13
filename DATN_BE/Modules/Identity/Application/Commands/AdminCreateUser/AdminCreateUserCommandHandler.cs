@@ -1,6 +1,7 @@
 using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,8 +39,8 @@ namespace DATN_BE.Modules.Identity.Application.Commands.AdminCreateUser
 
             // 4. Lấy vai trò mặc định "User" (Global)
             var defaultRole = await _context.Roles
-                .FirstOrDefaultAsync(r => r.Name == "User", cancellationToken)
-                ?? throw new NotFoundException("Không tìm thấy vai trò mặc định 'User' trong hệ thống.");
+                .FirstOrDefaultAsync(r => r.Name == RoleConstants.User, cancellationToken)
+                ?? throw new NotFoundException($"Không tìm thấy vai trò mặc định {RoleConstants.User} trong hệ thống.");
 
             // 5. Khởi tạo Entity User
             var user = new User

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,7 +55,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.RemoveMemberFromProjec
             var leaderProjectNames = await _context.ProjectMembers
                 .Where(pm => pm.UserId == request.MemberId
                           && pm.Project.WorkspaceId == request.WorkspaceId
-                          && pm.Role.Name == "ProjectLeader")
+                          && pm.Role.Name == RoleConstants.ProjectLeader)
                 .Select(pm => pm.Project.Name)
                 .ToListAsync(cancellationToken);
             if (leaderProjectNames.Count > 0)

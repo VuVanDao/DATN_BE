@@ -1,6 +1,7 @@
 
 using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.Identity.Domain.Enum;
+using DATN_BE.Shared.Domain.Constants;
 using Microsoft.EntityFrameworkCore;
 
 namespace DATN_BE.Shared.Infrastructure.Persistence
@@ -15,12 +16,12 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
             // 1. Seed Roles nếu chưa có (Duyệt từng Role)
             var defaultRoles = new List<Role>
             {
-                new() { Name = "SystemAdmin", Scope = RoleScope.Global, Description = "Quản trị viên toàn hệ thống", IsSystemRole = true },
-                new() { Name = "User", Scope = RoleScope.Global, Description = "Người dùng hệ thống", IsSystemRole = true },
-                new() { Name = "WorkspaceOwner", Scope = RoleScope.Workspace, Description = "Chủ sở hữu Không gian làm việc", IsSystemRole = true },
-                new() { Name = "WorkspaceMember", Scope = RoleScope.Workspace, Description = "Thành viên Không gian làm việc", IsSystemRole = true },
-                new() { Name = "ProjectLeader", Scope = RoleScope.Project, Description = "Người dẫn dắt dự án", IsSystemRole = true },
-                new() { Name = "ProjectMember", Scope = RoleScope.Project, Description = "Thành viên dự án", IsSystemRole = true }
+                new() { Name = RoleConstants.SystemAdmin, Scope = RoleScope.Global, Description = "Quản trị viên toàn hệ thống", IsSystemRole = true },
+                new() { Name = RoleConstants.User, Scope = RoleScope.Global, Description = "Người dùng hệ thống", IsSystemRole = true },
+                new() { Name = RoleConstants.WorkspaceOwner, Scope = RoleScope.Workspace, Description = "Chủ sở hữu Không gian làm việc", IsSystemRole = true },
+                new() { Name = RoleConstants.WorkspaceMember, Scope = RoleScope.Workspace, Description = "Thành viên Không gian làm việc", IsSystemRole = true },
+                new() { Name = RoleConstants.ProjectLeader, Scope = RoleScope.Project, Description = "Người dẫn dắt dự án", IsSystemRole = true },
+                new() { Name = RoleConstants.ProjectMember, Scope = RoleScope.Project, Description = "Thành viên dự án", IsSystemRole = true }
             };
 
             foreach (var role in defaultRoles)
@@ -60,7 +61,7 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
             await context.SaveChangesAsync();
 
             // 3. Gán TOÀN BỘ Permission cho SystemAdmin Role
-            var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "SystemAdmin");
+            var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == RoleConstants.SystemAdmin);
             if (adminRole != null)
             {
                 // Lấy tất cả các Permission hiện có trong hệ thống

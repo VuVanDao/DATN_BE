@@ -2,6 +2,7 @@
 using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using DATN_BE.Shared.Utils;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -42,7 +43,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.UpdateWorkspace
                 CoverImageUrl = w.CoverImgUrl,
                 Description = w.Description,
                 CreatedAt = w.CreatedAt,
-                CurrentUserRole = w.OwnerId == currUserId ? "WorkspaceOwner":"WorkspaceMember",
+                CurrentUserRole = w.OwnerId == currUserId ? RoleConstants.WorkspaceOwner:RoleConstants.WorkspaceMember,
                 Members = w.Members.Select(m => new WorkspaceMemberDto
                 {
                     Email = m.User.Email,
@@ -50,7 +51,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.UpdateWorkspace
                     Username = m.User.Username,
                     AvatarUrl = m.User.AvatarUrl,
                     RoleId = m.RoleId,
-                    RoleName = m.Role.Name ?? "WorkspaceMember",
+                    RoleName = m.Role.Name ?? RoleConstants.WorkspaceMember,
                     JoinAt = m.JoinAt,
                 }).ToList(),
                 Projects = w.Projects.Select(p => new WorkspaceProjectDto

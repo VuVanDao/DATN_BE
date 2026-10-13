@@ -1,6 +1,7 @@
 ﻿using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,7 +30,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Queries.GetUserWorkspaces
             return workspace.Select(w =>
             {
                 var myMembership = w.Members.FirstOrDefault(m => m.UserId == currentUserId);
-                var myRole = w.OwnerId == currentUserId ? "WorkspaceOwner" : myMembership?.Role?.Name ?? "Member";
+                var myRole = w.OwnerId == currentUserId ? RoleConstants.WorkspaceOwner : myMembership?.Role?.Name ?? RoleConstants.WorkspaceMember;
 
                 return new WorkspaceDto
                 {

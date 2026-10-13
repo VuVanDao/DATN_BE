@@ -4,6 +4,7 @@ using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.Identity.infrastructure.Services;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,12 +38,12 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RegisterUser
 
             // 4. Lấy vai trò mặc định "User"
             var defaultRole = await _context.Roles
-                .FirstOrDefaultAsync(r => r.Name == "User", cancellationToken);
+                .FirstOrDefaultAsync(r => r.Name == RoleConstants.User, cancellationToken);
             if (defaultRole == null)
             {
                 defaultRole = new Role
                 {
-                    Name = "User",
+                    Name = RoleConstants.User,
                     Scope = Domain.Enum.RoleScope.Global,
                     Description = "Người dùng hệ thống",
                     IsSystemRole = true

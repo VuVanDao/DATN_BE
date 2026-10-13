@@ -1,6 +1,7 @@
 ﻿using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,7 +33,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceBySlug
                                     CoverImageUrl = w.CoverImgUrl,
                                     OwnerId = w.OwnerId,
                                     OwnerName = w.Owner.Username ?? string.Empty,
-                                    CurrentUserRole = w.OwnerId == currUserId ? "WorkspaceOwner" : (w.Members.Where(mem => mem.UserId == currUserId).Select(mem => mem.Role.Name).FirstOrDefault() ?? "WorkspaceMember"),
+                                    CurrentUserRole = w.OwnerId == currUserId ? RoleConstants.WorkspaceOwner : (w.Members.Where(mem => mem.UserId == currUserId).Select(mem => mem.Role.Name).FirstOrDefault() ?? RoleConstants.WorkspaceMember),
                                     CreatedAt = w.CreatedAt,
                                     Members = w.Members.Select(mem => new WorkspaceMemberDto
                                     {

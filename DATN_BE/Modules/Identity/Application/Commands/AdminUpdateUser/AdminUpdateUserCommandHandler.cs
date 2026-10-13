@@ -1,6 +1,7 @@
 using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,7 +53,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.AdminUpdateUser
                 IsActive = user.IsActive,
                 IsDeleted = user.IsDeleted,
                 CreatedAt = user.CreatedAt,
-                Role = user.Role?.Name ?? "User"
+                Role = user.Role?.Name ?? RoleConstants.User
             };
         }
     }

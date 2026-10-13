@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -60,7 +61,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Queries.GetMemberRemovalImpact
 
             var leaderProjects = await _context.ProjectMembers
                 .AsNoTracking()
-                .Where(pm => pm.UserId == request.MemberId && pm.Role.Name == "ProjectLeader" && pm.Project.WorkspaceId == workspace.Id)
+                .Where(pm => pm.UserId == request.MemberId && pm.Role.Name == RoleConstants.ProjectLeader && pm.Project.WorkspaceId == workspace.Id)
                 .Select(pm => new LeaderProjectDto
                 {
                     ProjectId = pm.ProjectId,

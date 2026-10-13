@@ -2,6 +2,7 @@
 using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using DATN_BE.Shared.Utils;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -45,7 +46,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace
             };
             _context.Workspaces.Add(workspace);
             // 3. Tìm Role "WorkspaceOwner" để gán cho Người tạo
-            var OwnerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "WorkspaceOwner", cancellationToken) 
+            var OwnerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == RoleConstants.WorkspaceOwner, cancellationToken) 
                 ?? throw new NotFoundException("Không tìm thấy vai trò WorkspaceOwner");
             // 4. Thêm người tạo vào danh sách WorkspaceMembers
             var member = new WorkspaceMember
@@ -68,7 +69,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace
                 OwnerName = user.Username,
                 MembersCount = 1,
                 ProjectsCount = 0,
-                CurrentUserRole = OwnerRole != null? OwnerRole.Name : "WorkspaceOwner",
+                CurrentUserRole = OwnerRole != null? OwnerRole.Name : RoleConstants.WorkspaceOwner,
                 CreatedAt = workspace.CreatedAt
             };
         }

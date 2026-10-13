@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,7 +36,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectMember
             return await _context.ProjectMembers
                 .AsNoTracking()
                 .Where(pm => pm.ProjectId == request.projectId)
-                .OrderByDescending(pm => pm.Role.Name == "ProjectLeader")
+                .OrderByDescending(pm => pm.Role.Name == RoleConstants.ProjectLeader)
                 .ThenBy(pm => pm.JoinedAt)
                 .Select(pm => new ProjectMemberDto
                 {

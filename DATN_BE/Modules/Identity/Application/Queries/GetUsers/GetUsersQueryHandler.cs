@@ -2,6 +2,7 @@ using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Application.Models;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -56,7 +57,7 @@ namespace DATN_BE.Modules.Identity.Application.Queries.GetUsers
                     IsActive = u.IsActive,
                     IsDeleted = u.IsDeleted,
                     CreatedAt = u.CreatedAt,
-                    Role = u.Role != null ? u.Role.Name : "User"
+                    Role = u.Role != null ? u.Role.Name : RoleConstants.User
                 }).ToListAsync(cancellationToken);
 
             return new PagedResult<UserManagementDto>(users, totalCount, pageIndex, pageSize);

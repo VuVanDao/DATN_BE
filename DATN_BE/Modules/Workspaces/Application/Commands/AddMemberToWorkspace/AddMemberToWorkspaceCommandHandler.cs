@@ -3,6 +3,7 @@ using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,11 +35,11 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember
             }
             // 3. lay danh sach role thuoc scope workspace
             var workspaceRoles = await _context.Roles
-                .Where(r => r.Scope == RoleScope.Workspace && r.Name != "WorkspaceOwner")
+                .Where(r => r.Scope == RoleScope.Workspace && r.Name != RoleConstants.WorkspaceOwner)
                 .ToListAsync(cancellationToken);
             // lay role mac dinh la WorkspaceMember
             var defaultRole = workspaceRoles
-                .FirstOrDefault(r => r.Name == "WorkspaceMember") 
+                .FirstOrDefault(r => r.Name == RoleConstants.WorkspaceMember) 
                     ?? throw new NotFoundException("Không tìm thấy vai trò WorkspaceMember trong hệ thống.");
 
             // 4. lay danh sach cac member hien tai check trung lap

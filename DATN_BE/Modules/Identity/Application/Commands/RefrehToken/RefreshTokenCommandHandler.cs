@@ -2,6 +2,7 @@ using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Modules.Identity.Application.Interfaces;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -63,7 +64,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.RefrehToken
             await _context.SaveChangesAsync(cancellationToken);
 
             // 5. Sinh JWT Access Token mới
-            var role = existingToken.User.Role?.Name ?? "User";
+            var role = existingToken.User.Role?.Name ?? RoleConstants.User;
             var newAccessToken = _jwtTokenGenerator.GenerateToken(existingToken.User, role);
 
             return new AuthResponseDto

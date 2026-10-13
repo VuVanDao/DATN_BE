@@ -4,6 +4,7 @@ using DATN_BE.Modules.Security.Domain.Entities;
 using DATN_BE.Shared.Application.Events;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,7 +44,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.Login
             }
 
             // 5. Sinh JWT Token
-            var token = _jwtTokenGenerator.GenerateToken(user, user.Role?.Name ?? "User");
+            var token = _jwtTokenGenerator.GenerateToken(user, user.Role?.Name ?? RoleConstants.User);
 
             // Sinh Refresh Token và lưu vào DB
             var refreshToken = _jwtTokenGenerator.GenerateRefreshToken(user.Id);
@@ -63,7 +64,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.Login
                 Username = user.Username,
                 AvatarUrl = user.AvatarUrl,
                 Token = token,
-                Role = user.Role?.Name ?? "User",
+                Role = user.Role?.Name ?? RoleConstants.User,
                 IsActive = user.IsActive,
                 RefreshToken = refreshToken.Token,
                 RefreshTokenExpiresAt = refreshToken.ExpiresAt

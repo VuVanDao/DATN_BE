@@ -1,6 +1,7 @@
 using DATN_BE.Modules.Identity.Domain.Enum;
 using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +20,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceRoles
         {
             // Lấy các role có scope = Workspace, LOẠI TRỪ WorkspaceOwner
             return await _context.Roles
-                .Where(r => r.Scope == RoleScope.Workspace && r.Name != "WorkspaceOwner")
+                .Where(r => r.Scope == RoleScope.Workspace && r.Name != RoleConstants.WorkspaceOwner)
                 .Select(r => new RoleDto
                 {
                     Id = r.Id,
