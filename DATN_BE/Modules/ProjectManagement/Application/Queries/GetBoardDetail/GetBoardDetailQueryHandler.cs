@@ -20,8 +20,8 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
             var board = await _context.Boards.AsNoTracking()
                 .Include(b => b.Project)
                 .Include(b => b.Columns)
-                .FirstOrDefaultAsync(b => b.Id == request.BoardId, cancellationToken)
-                ?? throw new NotFoundException("Board", request.BoardId);
+                .FirstOrDefaultAsync(b => b.Slug == request.BoardSlug && b.ProjectId == request.ProjectId, cancellationToken)
+                ?? throw new NotFoundException("Board", request.BoardSlug);
             await _authorizationService.EnsureCanViewProjectAsync(board.ProjectId, cancellationToken);
 
             return new BoardDetailDto

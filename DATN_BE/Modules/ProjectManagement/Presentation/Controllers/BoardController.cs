@@ -32,10 +32,10 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         /// <summary>
         /// Lấy chi tiết Bảng kèm danh sách Cột theo thứ tự
         /// </summary>
-        [HttpGet("{id:guid}")]
-        public async Task<ActionResult<ApiResponse<BoardDetailDto>>> GetBoardDetail(Guid id)
+        [HttpGet("{slug}/project/{projectId:guid}")]
+        public async Task<ActionResult<ApiResponse<BoardDetailDto>>> GetBoardDetail(string slug, Guid projectId)
         {
-            var result = await _mediator.Send(new GetBoardDetailQuery(id));
+            var result = await _mediator.Send(new GetBoardDetailQuery(slug,projectId));
             return Ok(ApiResponse<BoardDetailDto>.Ok(result, "Lấy thông tin Bảng thành công."));
         }
         /// <summary>

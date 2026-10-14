@@ -5,10 +5,13 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
 {
     public class GetBoardDetailQuery : IRequest<BoardDetailDto>
     {
-        public Guid BoardId { get; set; }
-        public GetBoardDetailQuery(Guid boardId)
+        public string BoardSlug { get; set; }
+        public Guid ProjectId { get; set; }
+        public GetBoardDetailQuery(string boardSlug, Guid projectId)
         {
-            BoardId = boardId;
+            BoardSlug = boardSlug;
+            ProjectId = projectId;
         }
+       
     }
 }
