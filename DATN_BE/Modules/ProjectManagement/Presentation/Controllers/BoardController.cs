@@ -1,4 +1,5 @@
-﻿using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn;
+﻿using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateBoard;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.ReorderColumns;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail;
@@ -18,6 +19,15 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         public BoardController(IMediator mediator)
         {
             _mediator = mediator;
+        }
+        /// <summary>
+        /// Tạo mới Bảng trong một Dự án. Chỉ Trưởng dự án được phép thực hiện.
+        /// </summary>
+        [HttpPost]
+        public async Task<ActionResult<ApiResponse<BoardDto>>> CreateBoard([FromBody] CreateBoardCommand command)
+        {
+            var result = await _mediator.Send(command);
+            return Ok(ApiResponse<BoardDto>.Ok(result, "Tạo mới Bảng thành công."));
         }
         /// <summary>
         /// Lấy chi tiết Bảng kèm danh sách Cột theo thứ tự
