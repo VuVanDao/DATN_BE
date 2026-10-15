@@ -25,7 +25,7 @@ namespace DATN_BE.Shared.Infrastructure.Services
                     project.Id == projectId &&
                     (project.Workspace.OwnerId == currentUserId ||
                      project.Workspace.Members.Any(member => member.UserId == currentUserId)), cancellationToken),
-                "Bạn không phải thành viên của workspace của project này nên không thể xem thông tin này");
+                "Bạn không phải thành viên của workspace của dự án này nên không thể xem thông tin này");
         }
 
         public Task EnsureCanModifyProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
@@ -35,7 +35,7 @@ namespace DATN_BE.Shared.Infrastructure.Services
                 _context.Projects.AnyAsync(project =>
                     project.Id == projectId &&
                     project.ProjectMembers.Any(member => member.UserId == currentUserId), cancellationToken),
-                "Bạn chưa tham gia Project này nên không thể thay đổi dữ liệu.");
+                "Bạn chưa tham gia dự án này nên không thể thay đổi dữ liệu.");
         }
 
         private Guid GetCurrentUserId()

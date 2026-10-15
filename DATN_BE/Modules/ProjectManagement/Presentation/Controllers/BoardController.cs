@@ -1,5 +1,6 @@
 ﻿using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateBoard;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteBoard;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.ReorderColumns;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoard;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
@@ -39,6 +40,15 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             command.BoardId = id;
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<BoardDto>.Ok(result, "Cập nhật Bảng thành công."));
+        }
+        /// <summary>
+        /// Xoá mềm Bảng và toàn bộ Cột, Thẻ thuộc Bảng. Chỉ Trưởng dự án được phép thực hiện.
+        /// </summary>
+        [HttpDelete("{id:guid}")]
+        public async Task<ActionResult<ApiResponse<bool>>> DeleteBoard(Guid id)
+        {
+            var result = await _mediator.Send(new DeleteBoardCommand { BoardId = id });
+            return Ok(ApiResponse<bool>.Ok(result, "Đã xoá Bảng và các dữ liệu trực thuộc."));
         }
         /// <summary>
         /// Lấy chi tiết Bảng kèm danh sách Cột theo thứ tự
