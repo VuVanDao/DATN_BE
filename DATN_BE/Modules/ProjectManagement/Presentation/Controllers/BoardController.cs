@@ -5,6 +5,7 @@ using DATN_BE.Modules.ProjectManagement.Application.Commands.ReorderColumns;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoard;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail;
+using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBoards;
 using DATN_BE.Shared.Application.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -49,6 +50,15 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         {
             var result = await _mediator.Send(new DeleteBoardCommand { BoardId = id });
             return Ok(ApiResponse<bool>.Ok(result, "Đã xoá Bảng và các dữ liệu trực thuộc."));
+        }
+        /// <summary>
+        /// Lấy danh sách Bảng trong Dự án. Chỉ thành viên của Dự án được phép xem.
+        /// </summary>
+        [HttpGet("project/{projectId:guid}")]
+        public async Task<ActionResult<ApiResponse<List<BoardDto>>>> GetProjectBoards(Guid projectId)
+        {
+            var result = await _mediator.Send(new GetProjectBoardsQuery(projectId));
+            return Ok(ApiResponse<List<BoardDto>>.Ok(result, "Lấy danh sách Bảng thành công."));
         }
         /// <summary>
         /// Lấy chi tiết Bảng kèm danh sách Cột theo thứ tự

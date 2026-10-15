@@ -1147,6 +1147,26 @@
           }
         },
         {
+          "name": "Get Project Boards",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/project/{{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "project",
+                "{{projectId}}"
+              ]
+            },
+            "description": "Lấy danh sách Board của Project. Chỉ thành viên của Project được phép gọi."
+          }
+        },
+        {
           "name": "Create Column",
           "request": {
             "method": "POST",
