@@ -1,6 +1,7 @@
 ﻿using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateBoard;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.ReorderColumns;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoard;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail;
 using DATN_BE.Shared.Application.Models;
@@ -28,6 +29,16 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         {
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<BoardDto>.Ok(result, "Tạo mới Bảng thành công."));
+        }
+        /// <summary>
+        /// Cập nhật tiêu đề, slug và loại Bảng. Chỉ Trưởng dự án được phép thực hiện.
+        /// </summary>
+        [HttpPut("{id:guid}")]
+        public async Task<ActionResult<ApiResponse<BoardDto>>> UpdateBoard(Guid id, [FromBody] UpdateBoardCommand command)
+        {
+            command.BoardId = id;
+            var result = await _mediator.Send(command);
+            return Ok(ApiResponse<BoardDto>.Ok(result, "Cập nhật Bảng thành công."));
         }
         /// <summary>
         /// Lấy chi tiết Bảng kèm danh sách Cột theo thứ tự

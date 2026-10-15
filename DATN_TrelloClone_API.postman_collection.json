@@ -1100,6 +1100,34 @@
           }
         },
         {
+          "name": "Update Board",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Sprint Board\",\n  \"slug\": \"sprint-board\",\n  \"type\": \"Kanban\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "{{boardId}}"
+              ]
+            },
+            "description": "Cập nhật title, slug và type của Bảng. Chỉ ProjectLeader được phép thực hiện."
+          }
+        },
+        {
           "name": "Create Column",
           "request": {
             "method": "POST",
