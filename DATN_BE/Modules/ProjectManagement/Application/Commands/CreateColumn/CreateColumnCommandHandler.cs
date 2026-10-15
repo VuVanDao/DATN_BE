@@ -18,17 +18,25 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn
         }
         public async Task<ColumnDto> Handle(CreateColumnCommand request, CancellationToken cancellationToken)
         {
-            var targetBoard = await _context.Boards.FirstOrDefaultAsync(b => b.Id == request.BoardId, cancellationToken)
-                ?? throw new NotFoundException("Không tìm thấy board");
+            var targetBoard = await _context.Boards
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == request.BoardId, cancellationToken)
+                ?? throw new NotFoundException("Board", request.BoardId);
+
             await _authorizationService.EnsureCanModifyProjectAsync(targetBoard.ProjectId, cancellationToken);
+
             // Tự động tính vị trí Position tiếp theo (max + 1)
-            var maxPosotion = await _context.Columns.Where(c => c.BoardId == request.BoardId).Select(c => (int?)c.Position).MaxAsync(cancellationToken) ?? -1;
+            var maxPosition = await _context.Columns
+                .Where(c => c.BoardId == request.BoardId)
+                .Select(c => (int?)c.Position)
+                .MaxAsync(cancellationToken) ?? -1;
+
             var newColumn = new Column
             {
                 Title = request.Title,
                 BoardId = request.BoardId,
                 IsDoneColumn = request.IsDoneColumn,
-                Position = maxPosotion +1
+                Position = maxPosition +1
             };
 
             _context.Columns.Add(newColumn);
