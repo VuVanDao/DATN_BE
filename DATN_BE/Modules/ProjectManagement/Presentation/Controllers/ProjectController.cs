@@ -4,6 +4,7 @@ using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.RemoveMemberFromProject;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectLeader;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+using DATN_BE.Modules.ProjectManagement.Application.Queries.GetMyProjects;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectMember;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectDetail;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetWorkspaceProjects;
@@ -53,6 +54,22 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         {
             var result = await _mediator.Send(new GetWorkspaceProjectsQuery(workspaceId));
             return Ok(ApiResponse<List<ProjectDto>>.Ok(result, "Lấy danh sách dự án của workspace thành công"));
+        }
+
+        /// <summary>
+        /// Lấy các dự án người dùng hiện tại đã tham gia, nhóm theo Workspace.
+        /// </summary>
+        /// <remarks>
+        /// workspaceId là bộ lọc tùy chọn. Khi truyền, kết quả có tối đa một nhóm Workspace.
+        /// Không có dự án phù hợp trả về danh sách rỗng. Chỉ tính thành viên trực tiếp của dự án.
+        /// </remarks>
+        [HttpGet("my-projects")]
+        public async Task<ActionResult<ApiResponse<List<MyProjectsWorkspaceDto>>>> GetMyProjects(
+            [FromQuery] Guid? workspaceId,
+            CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(new GetMyProjectsQuery(workspaceId), cancellationToken);
+            return Ok(ApiResponse<List<MyProjectsWorkspaceDto>>.Ok(result, "Lấy danh sách dự án đã tham gia thành công."));
         }
 
         /// <summary>

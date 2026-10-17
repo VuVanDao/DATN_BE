@@ -975,6 +975,104 @@
           }
         },
         {
+          "name": "Get My Projects Grouped By Workspace",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Returns joined projects grouped by workspace', function () {",
+                "  pm.response.to.have.status(200);",
+                "  const body = pm.response.json();",
+                "  pm.expect(body.success).to.eql(true);",
+                "  pm.expect(body.data).to.be.an('array');",
+                "  const workspaceIds = body.data.map(g => g.workspaceId);",
+                "  pm.expect(new Set(workspaceIds).size).to.eql(workspaceIds.length);",
+                "  const projectIds = body.data.flatMap(g => g.projects.map(p => p.id));",
+                "  pm.expect(new Set(projectIds).size).to.eql(projectIds.length);",
+                "  body.data.forEach(g => {",
+                "    pm.expect(g.workspaceName).to.be.a('string');",
+                "    pm.expect(g.workspaceSlug).to.be.a('string');",
+                "    pm.expect(g.projects).to.be.an('array').that.is.not.empty;",
+                "    g.projects.forEach(p => pm.expect(p.workspaceId).to.eql(g.workspaceId));",
+                "  });",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/my-projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project", "my-projects"]
+            },
+            "description": "Requires the inherited Bearer accessToken. Returns only projects with a ProjectMembers entry for the authenticated user, grouped as {workspaceId, workspaceName, workspaceSlug, projects: ProjectDto[]}. Workspace ownership or membership alone does not qualify. Deleted projects/workspaces are excluded. Groups are ordered by workspace name then ID; projects by CreatedAt descending then ID. Empty results return data: []. No pagination. Missing authentication returns 401."
+          }
+        },
+        {
+          "name": "Get My Projects In Workspace",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Returns only joined projects in the selected workspace', function () {",
+                "  pm.response.to.have.status(200);",
+                "  const body = pm.response.json();",
+                "  pm.expect(body.success).to.eql(true);",
+                "  pm.expect(body.data).to.be.an('array');",
+                "  pm.expect(body.data.length).to.be.at.most(1);",
+                "  const workspaceId = pm.variables.get('workspaceId').toLowerCase();",
+                "  body.data.forEach(g => {",
+                "    pm.expect(g.workspaceId).to.eql(workspaceId);",
+                "    pm.expect(g.projects).to.be.an('array').that.is.not.empty;",
+                "    g.projects.forEach(p => pm.expect(p.workspaceId).to.eql(workspaceId));",
+                "  });",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/my-projects?workspaceId={{workspaceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project", "my-projects"],
+              "query": [{"key": "workspaceId", "value": "{{workspaceId}}"}]
+            },
+            "description": "Set workspaceId to a non-empty GUID. Uses the same grouped response as the unfiltered request, with at most one workspace group. Unknown workspace or no joined projects returns 200 with data: []; the filter never grants access to other projects. Invalid GUID or Guid.Empty returns 400."
+          }
+        },
+        {
+          "name": "Get My Projects Reject Empty Workspace Id",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Rejects Guid.Empty', function () {",
+                "  pm.response.to.have.status(400);",
+                "  pm.expect(pm.response.json().success).to.eql(false);",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/my-projects?workspaceId=00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project", "my-projects"],
+              "query": [{"key": "workspaceId", "value": "00000000-0000-0000-0000-000000000000"}]
+            },
+            "description": "Authenticated validation check: Guid.Empty is not a valid workspace filter and returns 400."
+          }
+        },
+        {
           "name": "Get Project Members",
           "request": {
             "method": "GET",
