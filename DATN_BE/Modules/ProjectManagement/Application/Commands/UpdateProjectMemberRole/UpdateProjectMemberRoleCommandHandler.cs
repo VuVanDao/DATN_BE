@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using DATN_BE.Modules.Identity.Domain.Enum;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectLeader;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
@@ -17,54 +13,83 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectMe
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
-        public UpdateProjectMemberRoleCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
+        public UpdateProjectMemberRoleCommandHandler(
+            IApplicationDbContext context,
+            ICurrentUserService currentUserService)
         {
             _context = context;
             _currentUserService = currentUserService;
         }
-        public async Task<ProjectMemberDto> Handle(UpdateProjectMemberRoleCommand request, CancellationToken cancellationToken)
+
+        public async Task<ProjectMemberDto> Handle(
+            UpdateProjectMemberRoleCommand request,
+            CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
                 ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");
+
             var project = await _context.Projects
-                .Include(p => p.Workspace)
-                .Include(p => p.ProjectMembers)
-                    .ThenInclude(pm => pm.Role)
-                    .ThenInclude(p => p.Users)
-                .FirstOrDefaultAsync(p => p.Id == request.ProjectId && !p.IsDeleted, cancellationToken)
+                .Where(p => p.Id == request.ProjectId)
+                .Select(p => new
+                {
+                    WorkspaceOwnerId = p.Workspace.OwnerId,
+                    IsCurrentUserProjectLeader = p.ProjectMembers.Any(pm =>
+                        pm.UserId == currentUserId &&
+                        pm.Role.Name == RoleConstants.ProjectLeader)
+                })
+                .FirstOrDefaultAsync(cancellationToken)
                 ?? throw new NotFoundException("Project không tồn tại");
-            // Chỉ WorkspaceOwner hoặc ProjectLeader mới có quyền đổi vai trò
-            var isWorkspaceOwner = project.Workspace.OwnerId == currentUserId;
-            var isProjectLeader = project.ProjectMembers.Any(pm => pm.UserId == currentUserId && pm.Role.Name == RoleConstants.ProjectLeader);
-            if (!isWorkspaceOwner && !isProjectLeader)
+
+            // check quyền: chỉ có WorkspaceOwner hoặc ProjectLeader mới có quyền cập nhật vai trò thành viên
+            if (project.WorkspaceOwnerId != currentUserId && !project.IsCurrentUserProjectLeader)
             {
                 throw new ForbiddenException("Bạn không có quyền cập nhật vai trò thành viên trong dự án này");
             }
-            // Tìm thành viên cần đổi vai trò
-            var targetMember = project.ProjectMembers.FirstOrDefault(pm => pm.UserId == request.UserId)
+            
+            // tìm và check member có thuộc project
+            var targetMember = await _context.ProjectMembers
+                .Include(pm => pm.User)
+                .FirstOrDefaultAsync(pm =>
+                    pm.ProjectId == request.ProjectId &&
+                    pm.UserId == request.UserId,
+                    cancellationToken)
                 ?? throw new NotFoundException("Thành viên không thuộc dự án này");
-            // Kiểm tra Role mới có thuộc scope Project không
-            var newRole = await _context.Roles.FirstOrDefaultAsync(r => r.Id == request.NewRoleId && r.Scope == RoleScope.Project, cancellationToken)
+
+            var projectRoles = await _context.Roles
+                .Where(role =>
+                    role.Scope == RoleScope.Project &&
+                    (role.Id == request.NewRoleId || role.Name == RoleConstants.ProjectMember))
+                .ToListAsync(cancellationToken);
+
+            var newRole = projectRoles.FirstOrDefault(role => role.Id == request.NewRoleId)
                 ?? throw new BadRequestException("Vai trò được chỉ định không hợp lệ cho phạm vi");
 
             if (newRole.Name == RoleConstants.ProjectLeader)
             {
-                var defaultMemberRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == RoleConstants.ProjectMember && r.Scope == RoleScope.Project, cancellationToken)
+                var memberRole = projectRoles.FirstOrDefault(role => role.Name == RoleConstants.ProjectMember)
                     ?? throw new NotFoundException("Không tìm thấy vai trò 'ProjectMember'");
-                // make oleProjectLeader down to member
-                foreach (var oldLeader in project.ProjectMembers.Where(pm => pm.Role.Name == RoleConstants.ProjectLeader && pm.UserId != targetMember.UserId))
+
+                var oldLeaders = await _context.ProjectMembers
+                    .Where(pm =>
+                        pm.ProjectId == request.ProjectId &&
+                        pm.RoleId == newRole.Id &&
+                        pm.UserId != request.UserId)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var oldLeader in oldLeaders)
                 {
-                    oldLeader.RoleId = defaultMemberRole.Id;
+                    oldLeader.RoleId = memberRole.Id;
                 }
             }
+
             targetMember.RoleId = newRole.Id;
             await _context.SaveChangesAsync(cancellationToken);
 
             return new ProjectMemberDto
             {
                 UserId = targetMember.UserId,
-                Username = targetMember.User?.Username ?? "",
-                Email = targetMember.User?.Email ?? "",
+                Username = targetMember.User?.Username ?? string.Empty,
+                Email = targetMember.User?.Email ?? string.Empty,
                 AvatarUrl = targetMember.User?.AvatarUrl,
                 RoleId = newRole.Id,
                 RoleName = newRole.Name,
