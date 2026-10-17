@@ -2,6 +2,7 @@
 using DATN_BE.Modules.Identity.Application.Interfaces;
 using DATN_BE.Modules.Identity.infrastructure.Services;
 using DATN_BE.Modules.Identity.Presentation.BackgroundJob;
+using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 using DATN_BE.Shared.Application.Behaviors;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Infrastructure.Persistence;
@@ -27,6 +28,7 @@ namespace DATN_BE
 
             // 1. Add Controllers
             builder.Services.AddControllers();
+            builder.Services.AddSignalR();
             var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() 
                                  ?? new[] { "http://localhost:4200" };
             builder.Services.AddCors(options => options.AddPolicy("AllowAngularApp", policy =>
@@ -85,6 +87,22 @@ namespace DATN_BE
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
                         ClockSkew = TimeSpan.Zero
                     };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var accessToken = context.Request.Query["access_token"];
+
+                            if (!string.IsNullOrEmpty(accessToken) &&
+                                context.HttpContext.Request.Path.StartsWithSegments(BoardHub.Route))
+                            {
+                                context.Token = accessToken;
+                            }
+
+                            return Task.CompletedTask;
+                        }
+                    };
                 });
             // Cấu hình Custom Permission RBAC Authorization
             builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
@@ -117,6 +135,7 @@ namespace DATN_BE
 
             app.UseAuthorization();
 
+            app.MapHub<BoardHub>(BoardHub.Route);
             app.MapControllers();
 
             await app.RunAsync();
