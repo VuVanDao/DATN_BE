@@ -1,5 +1,7 @@
+using DATN_BE.Modules.Identity.Domain.Enum;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using Microsoft.EntityFrameworkCore;
 
 namespace DATN_BE.Shared.Infrastructure.Services
@@ -36,6 +38,20 @@ namespace DATN_BE.Shared.Infrastructure.Services
                     project.Id == projectId &&
                     project.ProjectMembers.Any(member => member.UserId == currentUserId), cancellationToken),
                 "Bạn chưa tham gia dự án này nên không thể thay đổi dữ liệu.");
+        }
+
+        public Task EnsureCanManageProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+        {
+            var currentUserId = GetCurrentUserId();
+            return EnsureAsync(
+                _context.Projects.AnyAsync(project =>
+                    project.Id == projectId &&
+                    (project.Workspace.OwnerId == currentUserId ||
+                     project.ProjectMembers.Any(member =>
+                         member.UserId == currentUserId &&
+                         member.Role.Name == RoleConstants.ProjectLeader &&
+                         member.Role.Scope == RoleScope.Project)), cancellationToken),
+                "Chỉ chủ sở hữu Workspace hoặc Trưởng dự án mới được cập nhật dự án.");
         }
 
         private Guid GetCurrentUserId()

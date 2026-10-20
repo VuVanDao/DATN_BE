@@ -2,6 +2,7 @@
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.RemoveMemberFromProject;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProject;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectLeader;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetMyProjects;
@@ -33,6 +34,20 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         {
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<ProjectDto>.Ok(result, "Tạo mới 1 project mới thành công"));
+        }
+
+        /// <summary>
+        /// Cập nhật tên, mã viết tắt và mô tả dự án (WorkspaceOwner hoặc ProjectLeader).
+        /// </summary>
+        [HttpPut("{projectId:guid}")]
+        public async Task<ActionResult<ApiResponse<ProjectDto>>> UpdateProject(
+            Guid projectId,
+            [FromBody] UpdateProjectCommand command,
+            CancellationToken cancellationToken)
+        {
+            command.ProjectId = projectId;
+            var result = await _mediator.Send(command, cancellationToken);
+            return Ok(ApiResponse<ProjectDto>.Ok(result, "Cập nhật dự án thành công."));
         }
 
         /// <summary>

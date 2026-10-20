@@ -936,6 +936,41 @@
           }
         },
         {
+          "name": "Update Project",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Updates project fields and normalizes the key', function () {",
+                "  pm.response.to.have.status(200);",
+                "  const body = pm.response.json();",
+                "  const input = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                "  pm.expect(body.success).to.eql(true);",
+                "  pm.expect(body.data.id.toLowerCase()).to.eql(pm.variables.get('projectId').toLowerCase());",
+                "  pm.expect(body.data.name).to.eql(input.name.trim());",
+                "  pm.expect(body.data.projectKey).to.eql(input.projectKey.toUpperCase());",
+                "  pm.expect(body.data.description).to.eql(input.description);",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dự án cập nhật\",\n  \"projectKey\": \"{{projectKey}}\",\n  \"description\": \"Mô tả mới của dự án\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project", "{{projectId}}"]
+            },
+            "description": "Updates only name, projectKey and description. Requires the workspace owner (even without project membership) or a ProjectLeader of this project. Name: 2-100 characters after trimming. ProjectKey: 2-10 ASCII letters/digits, normalized to uppercase, unique among active projects in the same workspace excluding this project. Description: optional, max 500 characters; null or omitted clears it. Returns ApiResponse<ProjectDto>. 400: invalid input or duplicate key; 401: unauthenticated; 403: insufficient role; 404: missing/deleted project. Set accessToken, projectId and projectKey before running; this request changes the selected project."
+          }
+        },
+        {
           "name": "Get Project Detail By Key",
           "request": {
             "method": "GET",

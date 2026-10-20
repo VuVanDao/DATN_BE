@@ -4,5 +4,6 @@ namespace DATN_BE.Shared.Application.Interfaces
     {
         Task EnsureCanViewProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
         Task EnsureCanModifyProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
+        Task EnsureCanManageProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
     }
 }
