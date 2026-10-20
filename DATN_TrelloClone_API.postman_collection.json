@@ -971,6 +971,33 @@
           }
         },
         {
+          "name": "Delete Project",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Soft deletes the project', function () {",
+                "  pm.response.to.have.status(200);",
+                "  const body = pm.response.json();",
+                "  pm.expect(body.success).to.eql(true);",
+                "  pm.expect(body.data).to.eql(true);",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project", "{{projectId}}"]
+            },
+            "description": "Soft deletes the selected project and all its boards, columns and cards. Requires the workspace owner (project membership not required) or a ProjectLeader of this project. Includes active descendants under already deleted boards/columns; preserves existing deletion timestamps. Saves all changes together; no rows are physically deleted. No request body. Returns ApiResponse<bool> with data: true. 400: empty project ID; 401: unauthenticated; 403: insufficient role; 404: missing or already deleted project. Set accessToken and projectId to a disposable test project before running."
+          }
+        },
+        {
           "name": "Get Project Detail By Key",
           "request": {
             "method": "GET",

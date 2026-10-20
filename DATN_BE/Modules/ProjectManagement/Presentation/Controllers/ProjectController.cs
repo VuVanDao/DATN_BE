@@ -1,6 +1,7 @@
 ﻿using DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProejct;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteProject;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.RemoveMemberFromProject;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProject;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectLeader;
@@ -48,6 +49,18 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             command.ProjectId = projectId;
             var result = await _mediator.Send(command, cancellationToken);
             return Ok(ApiResponse<ProjectDto>.Ok(result, "Cập nhật dự án thành công."));
+        }
+
+        /// <summary>
+        /// Xoá mềm dự án và toàn bộ Bảng, Cột, Thẻ thuộc dự án (WorkspaceOwner hoặc ProjectLeader).
+        /// </summary>
+        [HttpDelete("{projectId:guid}")]
+        public async Task<ActionResult<ApiResponse<bool>>> DeleteProject(
+            Guid projectId,
+            CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(new DeleteProjectCommand { ProjectId = projectId }, cancellationToken);
+            return Ok(ApiResponse<bool>.Ok(result, "Đã xoá dự án và toàn bộ Bảng, Cột, Thẻ thuộc dự án."));
         }
 
         /// <summary>

@@ -51,7 +51,7 @@ namespace DATN_BE.Shared.Infrastructure.Services
                          member.UserId == currentUserId &&
                          member.Role.Name == RoleConstants.ProjectLeader &&
                          member.Role.Scope == RoleScope.Project)), cancellationToken),
-                "Chỉ chủ sở hữu Workspace hoặc Trưởng dự án mới được cập nhật dự án.");
+                "Chỉ chủ sở hữu Workspace hoặc Trưởng dự án mới được quản lý dự án.");
         }
 
         private Guid GetCurrentUserId()
