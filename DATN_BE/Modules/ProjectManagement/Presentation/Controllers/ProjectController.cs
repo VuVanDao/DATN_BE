@@ -1,4 +1,3 @@
-using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProejct;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject;
@@ -10,7 +9,6 @@ using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetMyProjects;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectMember;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectDetail;
-using DATN_BE.Modules.ProjectManagement.Application.Queries.GetWorkspaceProjects;
 using DATN_BE.Shared.Application.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -72,17 +70,6 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         {
             var result = await _mediator.Send(new GetProjectDetailQuery(projectKey, workspaceId));
             return Ok(ApiResponse<ProjectDto>.Ok(result, "Lấy thông tin Dự án thành công."));
-        }
-
-        /// <summary>
-        /// Lấy danh sách Dự án trong Workspace
-        /// </summary>
-        [HttpGet("workspace-project/{workspaceId:guid}")]
-        public async Task<ActionResult<ApiResponse<PagedResult<WorkspaceProjectDto>>>> GetWorkspaceProjects(
-            Guid workspaceId, CancellationToken cancellationToken, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 20)
-        {
-            var result = await _mediator.Send(new GetWorkspaceProjectsQuery(workspaceId, pageIndex, pageSize), cancellationToken);
-            return Ok(ApiResponse<PagedResult<WorkspaceProjectDto>>.Ok(result, "Lấy danh sách dự án của workspace thành công"));
         }
 
         /// <summary>

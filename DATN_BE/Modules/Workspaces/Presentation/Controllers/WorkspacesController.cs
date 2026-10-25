@@ -1,3 +1,4 @@
+using DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceProjects;
 using DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceMembers;
 using DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember;
 using DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace;
@@ -43,6 +44,17 @@ namespace DATN_BE.Modules.Workspaces.Presentation.Controllers
         {
             var result = await _mediator.Send(new GetUserWorkspacesQuery());
             return Ok(ApiResponse<List<WorkspaceDto>>.Ok(result, "Lấy danh sách Workspace thành công."));
+        }
+
+        /// <summary>
+        /// Lấy danh sách Dự án trong Workspace
+        /// </summary>
+        [HttpGet("{workspaceId:guid}/projects")]
+        public async Task<ActionResult<ApiResponse<PagedResult<WorkspaceProjectDto>>>> GetWorkspaceProjects(
+            Guid workspaceId, CancellationToken cancellationToken, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 20)
+        {
+            var result = await _mediator.Send(new GetWorkspaceProjectsQuery(workspaceId, pageIndex, pageSize), cancellationToken);
+            return Ok(ApiResponse<PagedResult<WorkspaceProjectDto>>.Ok(result, "Lấy danh sách dự án của workspace thành công"));
         }
 
         /// <summary>

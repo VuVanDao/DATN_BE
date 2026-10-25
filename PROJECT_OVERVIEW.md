@@ -123,11 +123,11 @@ Dự án hiện có **8 Controllers**, **21 Commands** và **9 Queries** đã k�
 ### 5. [`WorkspacesController`](file:///d:/ForJavascript/TrelloClone/Source/DATN_BE/DATN_BE/Modules/Workspaces/Presentation/Controllers/WorkspacesController.cs) (`/api/workspaces`)
 * `POST /api/workspaces` : Tạo Không gian làm việc mới.
 * `GET /api/workspaces` : Danh sách Workspace của người dùng hiện tại.
+* `GET /api/workspaces/{workspaceId}/projects` : Danh sách dự án trong Workspace (phân trang).
 * `POST /api/workspaces/{id}/members` : Thêm thành viên vào Workspace.
 
 ### 6. [`ProjectController`](file:///d:/ForJavascript/TrelloClone/Source/DATN_BE/DATN_BE/Modules/ProjectManagement/Presentation/Controllers/ProjectController.cs) (`/api/project`)
 * `POST /api/project/project` : Tạo mới Dự án trong Workspace.
-* `GET /api/project/workspace-project/{workspaceId}` : Danh sách dự án trong Workspace.
 
 ### 7. [`BoardController`](file:///d:/ForJavascript/TrelloClone/Source/DATN_BE/DATN_BE/Modules/ProjectManagement/Presentation/Controllers/BoardController.cs) (`/api/board`)
 * `GET /api/board/{id}` : Chi tiết Bảng Kanban, danh sách Cột và Thẻ công việc.

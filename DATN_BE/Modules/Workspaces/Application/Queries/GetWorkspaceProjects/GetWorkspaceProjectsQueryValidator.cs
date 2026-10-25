@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetWorkspaceProjects;
+namespace DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceProjects;
 
 public class GetWorkspaceProjectsQueryValidator : AbstractValidator<GetWorkspaceProjectsQuery>
 {

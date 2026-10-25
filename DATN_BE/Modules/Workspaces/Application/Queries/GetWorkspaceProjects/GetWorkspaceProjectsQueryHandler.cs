@@ -5,7 +5,7 @@ using DATN_BE.Shared.Application.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetWorkspaceProjects;
+namespace DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceProjects;
 
 public class GetWorkspaceProjectsQueryHandler(IApplicationDbContext _context, ICurrentUserService _currentUserService)
     : IRequestHandler<GetWorkspaceProjectsQuery, PagedResult<WorkspaceProjectDto>>

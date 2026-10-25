@@ -922,6 +922,53 @@
           }
         },
         {
+          "name": "Get Workspace Projects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}/projects?pageIndex=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "pageIndex",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Returns ApiResponse<PagedResult<WorkspaceProjectDto>> with task/member counts and at most 3 member avatars per project. Owner (even without membership) or workspace member required. PageIndex 1..1000000, pageSize 1..100 (default 20); invalid input 400, inaccessible workspace 404. Ordered by CreatedAt descending then ID."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Projects are paginated', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const data = pm.response.json().data;",
+                  "  pm.expect(data.pageIndex).to.eql(1);",
+                  "  pm.expect(data.items.length).to.be.at.most(20);",
+                  "  data.items.forEach(p => pm.expect(p.members.length).to.be.at.most(3));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Get Workspace Members",
           "request": {
             "method": "GET",
@@ -1079,53 +1126,6 @@
             },
             "description": "Lấy chi tiết một Dự án theo Project Key (ví dụ: 'DATN')."
           }
-        },
-        {
-          "name": "Get Workspace Projects",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/project/workspace-project/{{workspaceId}}?pageIndex=1&pageSize=20",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "project",
-                "workspace-project",
-                "{{workspaceId}}"
-              ],
-              "query": [
-                {
-                  "key": "pageIndex",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "20"
-                }
-              ]
-            },
-            "description": "Returns ApiResponse<PagedResult<WorkspaceProjectDto>> with task/member counts and at most 3 member avatars per project. Owner (even without membership) or workspace member required. PageIndex 1..1000000, pageSize 1..100 (default 20); invalid input 400, inaccessible workspace 404. Ordered by CreatedAt descending then ID."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Projects are paginated', () => {",
-                  "  pm.response.to.have.status(200);",
-                  "  const data = pm.response.json().data;",
-                  "  pm.expect(data.pageIndex).to.eql(1);",
-                  "  pm.expect(data.items.length).to.be.at.most(20);",
-                  "  data.items.forEach(p => pm.expect(p.members.length).to.be.at.most(3));",
-                  "});"
-                ]
-              }
-            }
-          ]
         },
         {
           "name": "Get My Projects Grouped By Workspace",
