@@ -1,14 +1,7 @@
-﻿using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+using DATN_BE.Modules.Workspaces.Application.DTOs;
+using DATN_BE.Shared.Application.Models;
 using MediatR;
 
-namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetWorkspaceProjects
-{
-    public class GetWorkspaceProjectsQuery : IRequest<List<ProjectDto>>
-    {
-        public Guid WorkspaceId { get; set; }
-        public GetWorkspaceProjectsQuery(Guid workspaceId)
-        {
-            WorkspaceId = workspaceId;
-        }
-    }
-}
+namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetWorkspaceProjects;
+
+public record GetWorkspaceProjectsQuery(Guid WorkspaceId, int PageIndex = 1, int PageSize = 20) : IRequest<PagedResult<WorkspaceProjectDto>>;

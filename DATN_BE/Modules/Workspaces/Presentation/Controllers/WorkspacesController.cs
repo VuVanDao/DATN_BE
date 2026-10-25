@@ -1,3 +1,4 @@
+using DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceMembers;
 using DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember;
 using DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace;
 using DATN_BE.Modules.Workspaces.Application.Commands.DeleteWorkspace;
@@ -45,7 +46,18 @@ namespace DATN_BE.Modules.Workspaces.Presentation.Controllers
         }
 
         /// <summary>
-        /// Lấy danh sách các vai trò khả dụng trong Workspace (cho dropdown mời thành viên)
+        /// Lấy danh sách thành viên Workspace theo trang.
+        /// </summary>
+        [HttpGet("{id:guid}/members")]
+        public async Task<ActionResult<ApiResponse<PagedResult<WorkspaceMemberDto>>>> GetMembers(
+            Guid id, CancellationToken cancellationToken, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 20)
+        {
+            var result = await _mediator.Send(new GetWorkspaceMembersQuery(id, pageIndex, pageSize), cancellationToken);
+            return Ok(ApiResponse<PagedResult<WorkspaceMemberDto>>.Ok(result, "Lấy danh sách thành viên thành công."));
+        }
+
+        /// <summary>
+        /// Lấy danh sách các vai trò khả dụng trong Workspace (cho dropdown mời thành viên).
         /// </summary>
         [HttpGet("roles")]
         public async Task<ActionResult<ApiResponse<List<RoleDto>>>> GetWorkspaceRoles()

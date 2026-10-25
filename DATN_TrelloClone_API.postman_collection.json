@@ -763,8 +763,26 @@
                 "{{workspaceSlug}}"
               ]
             },
-            "description": "Lấy thông tin chi tiết Workspace theo slug định danh."
-          }
+            "description": "Returns workspace metadata, currentUserRole, membersCount and at most 4 memberPreview avatars. Does not return members or projects. Owner or workspace member access only."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Workspace detail is bounded', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const data = pm.response.json().data;",
+                  "  pm.expect(data).not.to.have.property('members');",
+                  "  pm.expect(data).not.to.have.property('projects');",
+                  "  pm.expect(data.memberPreview.length).to.be.at.most(4);",
+                  "  pm.expect(data.membersCount).to.be.at.least(data.memberPreview.length);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Update Workspace",
@@ -809,7 +827,7 @@
                 "{{workspaceId}}"
               ]
             },
-            "description": "Cập nhật thông tin Workspace (tên, mô tả, ảnh logo, ảnh bìa qua form-data)."
+            "description": "Cập nhật thông tin Workspace (tên, mô tả, ảnh logo, ảnh bìa qua form-data). Returns the same lightweight metadata contract as Get Workspace By Slug; no full member/project lists."
           }
         },
         {
@@ -902,6 +920,52 @@
             },
             "description": "Xóa Workspace (chỉ dành cho SystemAdmin hoặc WorkspaceOwner)."
           }
+        },
+        {
+          "name": "Get Workspace Members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members?pageIndex=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}",
+                "members"
+              ],
+              "query": [
+                {
+                  "key": "pageIndex",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Returns ApiResponse<PagedResult<WorkspaceMemberDto>>. Owner or workspace member required. Ordered by JoinAt then UserId. pageIndex 1..1000000, pageSize 1..100 (default 20); invalid input 400, inaccessible workspace 404."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Members are paginated', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const data = pm.response.json().data;",
+                  "  pm.expect(data.pageIndex).to.eql(1);",
+                  "  pm.expect(data.items.length).to.be.at.most(20);",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -1022,7 +1086,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/project/workspace-project/{{workspaceId}}",
+              "raw": "{{baseUrl}}/api/project/workspace-project/{{workspaceId}}?pageIndex=1&pageSize=20",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1031,10 +1095,37 @@
                 "project",
                 "workspace-project",
                 "{{workspaceId}}"
+              ],
+              "query": [
+                {
+                  "key": "pageIndex",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
               ]
             },
-            "description": "Lấy danh sách toàn bộ các Dự án thuộc một Workspace."
-          }
+            "description": "Returns ApiResponse<PagedResult<WorkspaceProjectDto>> with task/member counts and at most 3 member avatars per project. Owner (even without membership) or workspace member required. PageIndex 1..1000000, pageSize 1..100 (default 20); invalid input 400, inaccessible workspace 404. Ordered by CreatedAt descending then ID."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Projects are paginated', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const data = pm.response.json().data;",
+                  "  pm.expect(data.pageIndex).to.eql(1);",
+                  "  pm.expect(data.items.length).to.be.at.most(20);",
+                  "  data.items.forEach(p => pm.expect(p.members.length).to.be.at.most(3));",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Get My Projects Grouped By Workspace",

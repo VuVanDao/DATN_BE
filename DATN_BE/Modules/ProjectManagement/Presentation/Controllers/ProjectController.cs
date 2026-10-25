@@ -1,4 +1,5 @@
-﻿using DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProejct;
+using DATN_BE.Modules.Workspaces.Application.DTOs;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProejct;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteProject;
@@ -76,12 +77,12 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         /// <summary>
         /// Lấy danh sách Dự án trong Workspace
         /// </summary>
-        /// bên FE chưua dùng
         [HttpGet("workspace-project/{workspaceId:guid}")]
-        public async Task<ActionResult<ApiResponse<ProjectDto>>> GetWorkspaceProjects(Guid workspaceId)
+        public async Task<ActionResult<ApiResponse<PagedResult<WorkspaceProjectDto>>>> GetWorkspaceProjects(
+            Guid workspaceId, CancellationToken cancellationToken, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 20)
         {
-            var result = await _mediator.Send(new GetWorkspaceProjectsQuery(workspaceId));
-            return Ok(ApiResponse<List<ProjectDto>>.Ok(result, "Lấy danh sách dự án của workspace thành công"));
+            var result = await _mediator.Send(new GetWorkspaceProjectsQuery(workspaceId, pageIndex, pageSize), cancellationToken);
+            return Ok(ApiResponse<PagedResult<WorkspaceProjectDto>>.Ok(result, "Lấy danh sách dự án của workspace thành công"));
         }
 
         /// <summary>

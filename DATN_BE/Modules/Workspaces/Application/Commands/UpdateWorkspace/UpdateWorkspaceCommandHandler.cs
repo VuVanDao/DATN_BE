@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.Workspaces.Application.DTOs;
+using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -32,46 +32,32 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.UpdateWorkspace
             await GenerateNewUniqueSlugtoUpdate(workspaceToUpdate, request.Name, cancellationToken);
             await UploadImagesAsync(workspaceToUpdate, request, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
-            var res = await _context.Workspaces.AsNoTracking().Select(w => new WorkspaceDetailDto
-            {
-                Name = w.Name,
-                Id = w.Id,
-                Slug = w.Slug,
-                OwnerId = w.OwnerId,
-                OwnerName = w.Owner.Username,
-                LogoUrl = w.LogoUrl,
-                CoverImageUrl = w.CoverImgUrl,
-                Description = w.Description,
-                CreatedAt = w.CreatedAt,
-                CurrentUserRole = w.OwnerId == currUserId ? RoleConstants.WorkspaceOwner:RoleConstants.WorkspaceMember,
-                Members = w.Members.Select(m => new WorkspaceMemberDto
+            return await _context.Workspaces.AsNoTracking()
+                .Where(w => w.Id == request.WorkspaceId)
+                .Select(w => new WorkspaceDetailDto
                 {
-                    Email = m.User.Email,
-                    UserId = m.UserId,
-                    Username = m.User.Username,
-                    AvatarUrl = m.User.AvatarUrl,
-                    RoleId = m.RoleId,
-                    RoleName = m.Role.Name ?? RoleConstants.WorkspaceMember,
-                    JoinAt = m.JoinAt,
-                }).ToList(),
-                Projects = w.Projects.Select(p => new WorkspaceProjectDto
-                {
-                    Id = p.Id,
-                    Description = p.Description,
-                    Name = p.Name,
-                    CreatedAt = p.CreatedAt,
-                    MembersCount = p.ProjectMembers.Count,
-                    Members = p.ProjectMembers.Select(pm => new ProjectMemberAvatarDto
-                    {
-                        UserId = pm.UserId,
-                        Username = pm.User.Username,
-                        AvatarUrl = pm.User.AvatarUrl,
-                    }).ToList(),
-                    ProjectKey = p.ProjectKey,
-                    TasksCount = p.Boards.SelectMany(b => b.Columns).SelectMany(col => col.Cards).Count(ca => !ca.IsDeleted),
-                }).OrderByDescending(p => p.CreatedAt).ToList()
-            }).FirstOrDefaultAsync(w => w.Id == request.WorkspaceId,cancellationToken) ?? throw new NotFoundException("Workspace không tồn tại");
-            return res ;
+                    Id = w.Id,
+                    Name = w.Name,
+                    Slug = w.Slug,
+                    Description = w.Description,
+                    LogoUrl = w.LogoUrl,
+                    CoverImageUrl = w.CoverImgUrl,
+                    OwnerId = w.OwnerId,
+                    OwnerName = w.Owner.Username ?? string.Empty,
+                    CreatedAt = w.CreatedAt,
+                    CurrentUserRole = w.OwnerId == currUserId ? RoleConstants.WorkspaceOwner :
+                        w.Members.Where(m => m.UserId == currUserId).Select(m => m.Role.Name).FirstOrDefault(),
+                    MembersCount = w.Members.Count,
+                    MemberPreview = w.Members.OrderBy(m => m.JoinAt).ThenBy(m => m.UserId).Take(4)
+                        .Select(m => new ProjectMemberAvatarDto
+                        {
+                            UserId = m.UserId,
+                            Username = m.User.Username ?? string.Empty,
+                            AvatarUrl = m.User.AvatarUrl
+                        }).ToList()
+                })
+                .FirstOrDefaultAsync(cancellationToken)
+                ?? throw new NotFoundException("Workspace không tồn tại");
         }
         private async System.Threading.Tasks.Task GenerateNewUniqueSlugtoUpdate(Workspace workspace, string? requestedname, CancellationToken cancellationToken)
         {

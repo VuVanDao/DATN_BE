@@ -1,4 +1,4 @@
-﻿namespace DATN_BE.Modules.Workspaces.Application.DTOs
+namespace DATN_BE.Modules.Workspaces.Application.DTOs
 {
     public class WorkspaceDetailDto
     {
@@ -12,8 +12,8 @@
         public string OwnerName { get; set; } = string.Empty;
         public string? CurrentUserRole { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
-        public List<WorkspaceMemberDto> Members { get; set; } = new();
-        public List<WorkspaceProjectDto> Projects { get; set; } = new();
+        public int MembersCount { get; set; }
+        public List<ProjectMemberAvatarDto> MemberPreview { get; set; } = new();
     }
     public class WorkspaceProjectDto
     {

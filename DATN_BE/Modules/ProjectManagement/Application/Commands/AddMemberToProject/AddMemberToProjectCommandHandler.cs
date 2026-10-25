@@ -74,7 +74,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProe
             foreach (var member in request.Members)
             {
                 // check user belong to workspace
-                var isUserBelongToWorkspace = validWorkspaceUserIds.Any(wsui => wsui == member.UserId);
+                var isUserBelongToWorkspace = validWorkspaceUserIds.Any(wsuID => wsuID == member.UserId);
                 if (!isUserBelongToWorkspace)
                 {
                     throw new BadRequestException($"Người dùng với Id '{member.UserId}' không thuộc Không gian làm việc này");
