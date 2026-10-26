@@ -34,6 +34,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectDetail
 
             await _authorizationService.EnsureCanViewProjectAsync(projectExists.projectId, cancellationToken);
 
+            var CardBelongToProject = await _context.Cards.Where(card => card.Column.Board.ProjectId == projectExists.projectId).CountAsync();
             return await _context.Projects
                 .AsNoTracking()
                 .Where(project => project.ProjectKey == request.projectKey)
@@ -49,7 +50,8 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectDetail
                     BoardsCount = project.Boards.Count,
                     MembersCount = project.ProjectMembers.Count,
                     SprintCount = project.Sprints.Count,
-                    CreatedAt = project.CreatedAt
+                    CardCount =  CardBelongToProject,
+                    CreatedAt = project.CreatedAt,
                 })
                 .FirstAsync(cancellationToken);
         }

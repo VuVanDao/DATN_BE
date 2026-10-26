@@ -12,6 +12,7 @@
         public int BoardsCount { get; set; }
         public int MembersCount { get; set; }
         public int SprintCount {  get; set; }
+        public int CardCount {  get; set; }
         public DateTimeOffset CreatedAt { get; set; }
     }
 }
