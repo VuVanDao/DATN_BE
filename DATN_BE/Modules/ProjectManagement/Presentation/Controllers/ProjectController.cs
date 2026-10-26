@@ -13,6 +13,7 @@ using DATN_BE.Shared.Application.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectRoles;
 
 namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
 {
@@ -131,6 +132,15 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         {
             var result = await _mediator.Send(new RemoveMemberFromProjectCommand(projectId, userId));
             return Ok(ApiResponse<bool>.Ok(result, "Thành viên đã không còn trong dự án"));
+        }
+        /// <summary>
+        /// lấy danh sách các quyền trong phạm vi project
+        /// </summary>
+        [HttpGet("roles")]
+        public async Task<ActionResult<ApiResponse<List<ProjectRoleDto>>>> GetProjectRole()
+        {
+            var result = await _mediator.Send(new GetProjectRoleQuery());
+            return Ok(ApiResponse<List<ProjectRoleDto>>.Ok(result, "Lấy danh sách các vai trò phạm vi dự án thành công"));
         }
     }
 }
