@@ -59,6 +59,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProject
                     BoardsCount = project.Boards.Count,
                     MembersCount = project.ProjectMembers.Count,
                     SprintCount = project.Sprints.Count,
+                    CardCount = _context.Cards.Count(card => card.Column.Board.ProjectId == project.Id),
                     CreatedAt = project.CreatedAt
                 })
                 .FirstAsync(cancellationToken);
