@@ -26,6 +26,7 @@ public class GetWorkspaceProjectsQueryHandler(IApplicationDbContext _context, IC
                 Id = p.Id, Name = p.Name, ProjectKey = p.ProjectKey, Description = p.Description,
                 CreatedAt = p.CreatedAt, MembersCount = p.ProjectMembers.Count,
                 TasksCount = p.Boards.SelectMany(b => b.Columns).SelectMany(c => c.Cards).Count(),
+                IsMember = p.ProjectMembers.Any(m => m.UserId == userId),
                 Members = p.ProjectMembers.OrderBy(m => m.JoinedAt).ThenBy(m => m.UserId).Take(3)
                     .Select(m => new ProjectMemberAvatarDto
                     {

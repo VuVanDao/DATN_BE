@@ -10,13 +10,16 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProject
     {
         private readonly IApplicationDbContext _context;
         private readonly IProjectAuthorizationService _authorizationService;
+        private readonly ICurrentUserService _currentUserService;
 
         public UpdateProjectCommandHandler(
             IApplicationDbContext context,
-            IProjectAuthorizationService authorizationService)
+            IProjectAuthorizationService authorizationService,
+            ICurrentUserService currentUserService)
         {
             _context = context;
             _authorizationService = authorizationService;
+            _currentUserService = currentUserService;
         }
 
         public async Task<ProjectDto> Handle(UpdateProjectCommand request, CancellationToken cancellationToken)
@@ -44,25 +47,38 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProject
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            return await _context.Projects
+            var currentUserId = _currentUserService.UserId;
+            var currentMember = currentUserId.HasValue
+                ? await _context.ProjectMembers
+                    .AsNoTracking()
+                    .Include(pm => pm.Role)
+                    .FirstOrDefaultAsync(pm => pm.ProjectId == project.Id && pm.UserId == currentUserId.Value, cancellationToken)
+                : null;
+
+            var result = await _context.Projects
                 .AsNoTracking()
-                .Where(project => project.Id == request.ProjectId)
-                .Select(project => new ProjectDto
+                .Where(p => p.Id == request.ProjectId)
+                .Select(p => new ProjectDto
                 {
-                    Id = project.Id,
-                    Name = project.Name,
-                    ProjectKey = project.ProjectKey,
-                    Description = project.Description,
-                    WorkspaceId = project.WorkspaceId,
-                    CreatedById = project.CreatedById,
-                    CreatedByName = project.CreatedBy.Username,
-                    BoardsCount = project.Boards.Count,
-                    MembersCount = project.ProjectMembers.Count,
-                    SprintCount = project.Sprints.Count,
-                    CardCount = _context.Cards.Count(card => card.Column.Board.ProjectId == project.Id),
-                    CreatedAt = project.CreatedAt
+                    Id = p.Id,
+                    Name = p.Name,
+                    ProjectKey = p.ProjectKey,
+                    Description = p.Description,
+                    WorkspaceId = p.WorkspaceId,
+                    CreatedById = p.CreatedById,
+                    CreatedByName = p.CreatedBy.Username,
+                    BoardsCount = p.Boards.Count,
+                    MembersCount = p.ProjectMembers.Count,
+                    SprintCount = p.Sprints.Count,
+                    CardCount = _context.Cards.Count(card => card.Column.Board.ProjectId == p.Id),
+                    CreatedAt = p.CreatedAt
                 })
                 .FirstAsync(cancellationToken);
+
+            result.IsMember = currentMember != null;
+            result.CurrentUserRole = currentMember?.Role?.Name;
+
+            return result;
         }
     }
 }

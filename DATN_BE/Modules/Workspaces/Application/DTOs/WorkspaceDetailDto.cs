@@ -25,6 +25,7 @@ namespace DATN_BE.Modules.Workspaces.Application.DTOs
         public int TasksCount { get; set; }
         public List<ProjectMemberAvatarDto> Members { get; set; } = new();
         public DateTimeOffset CreatedAt { get; set; }
+        public bool IsMember { get; set; }
     }
     public class ProjectMemberAvatarDto
     {

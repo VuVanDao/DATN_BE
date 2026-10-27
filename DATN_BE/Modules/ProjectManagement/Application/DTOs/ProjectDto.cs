@@ -1,4 +1,4 @@
-﻿namespace DATN_BE.Modules.ProjectManagement.Application.DTOs
+namespace DATN_BE.Modules.ProjectManagement.Application.DTOs
 {
     public class ProjectDto
     {
@@ -14,5 +14,7 @@
         public int SprintCount {  get; set; }
         public int CardCount {  get; set; }
         public DateTimeOffset CreatedAt { get; set; }
+        public bool IsMember { get; set; }
+        public string? CurrentUserRole { get; set; }
     }
 }

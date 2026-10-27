@@ -102,7 +102,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
                 BoardsCount = 1,
                 MembersCount = memberCount,
                 SprintCount = 0,
-                CreatedAt = newProject.CreatedAt
+                CreatedAt = newProject.CreatedAt,
+                IsMember = request.IsAssignAsLeader,
+                CurrentUserRole = request.IsAssignAsLeader ? RoleConstants.ProjectLeader : RoleConstants.ProjectMember
             };
         }
     }

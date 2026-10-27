@@ -60,7 +60,8 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetMyProjects
                         BoardsCount = project.Boards.Count,
                         MembersCount = project.ProjectMembers.Count,
                         SprintCount = project.Sprints.Count,
-                        CreatedAt = project.CreatedAt
+                        CreatedAt = project.CreatedAt,
+                        IsMember = true
                     }
                 })
                 .ToListAsync(cancellationToken);
