@@ -1,3 +1,6 @@
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -34,10 +37,10 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectDetail
 
             await _authorizationService.EnsureCanViewProjectAsync(projectExists.projectId, cancellationToken);
 
-            var CardBelongToProject = await _context.Cards.Where(card => card.Column.Board.ProjectId == projectExists.projectId).CountAsync();
+            var CardBelongToProject = await _context.Cards.Where(card => card.Column.Board.ProjectId == projectExists.projectId).CountAsync(cancellationToken);
             return await _context.Projects
                 .AsNoTracking()
-                .Where(project => project.ProjectKey == request.projectKey)
+                .Where(project => project.ProjectKey == request.projectKey && project.WorkspaceId == request.workspaceId)
                 .Select(project => new ProjectDto
                 {
                     Id = project.Id,
@@ -50,7 +53,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectDetail
                     BoardsCount = project.Boards.Count,
                     MembersCount = project.ProjectMembers.Count,
                     SprintCount = project.Sprints.Count,
-                    CardCount =  CardBelongToProject,
+                    CardCount = CardBelongToProject,
                     CreatedAt = project.CreatedAt,
                 })
                 .FirstAsync(cancellationToken);

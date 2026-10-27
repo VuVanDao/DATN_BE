@@ -1,3 +1,7 @@
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -11,17 +15,21 @@ namespace DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceBySlug
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
+
         public GetWorkspaceBySlugQueryHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
             _currentUserService = currentUserService;
         }
+
         public async Task<WorkspaceDetailDto> Handle(GetWorkspaceBySlugQuery request, CancellationToken cancellationToken)
         {
             var currUserId = _currentUserService.UserId ?? throw new ForbiddenException("Bạn cần đăng nhập để xem thông tin Workspace");
             var slug = request.Slug.Trim().ToLower();
+            var isGuid = Guid.TryParse(request.Slug.Trim(), out var workspaceId);
+
             return await _context.Workspaces.AsNoTracking()
-                .Where(w => w.Slug == slug &&
+                .Where(w => (w.Slug == slug || (isGuid && w.Id == workspaceId)) &&
                     (w.OwnerId == currUserId || w.Members.Any(m => m.UserId == currUserId)))
                 .Select(w => new WorkspaceDetailDto
                 {
