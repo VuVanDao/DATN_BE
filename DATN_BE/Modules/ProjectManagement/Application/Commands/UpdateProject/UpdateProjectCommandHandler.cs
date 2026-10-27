@@ -1,6 +1,7 @@
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -75,8 +76,13 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProject
                 })
                 .FirstAsync(cancellationToken);
 
-            result.IsMember = currentMember != null;
-            result.CurrentUserRole = currentMember?.Role?.Name;
+            var isWorkspaceOwner = currentUserId.HasValue &&
+                await _context.Workspaces.AnyAsync(w => w.Id == project.WorkspaceId && w.OwnerId == currentUserId.Value, cancellationToken);
+
+            result.IsMember = isWorkspaceOwner || currentMember != null;
+            result.CurrentUserRole = isWorkspaceOwner
+                ? (currentMember?.Role?.Name ?? RoleConstants.WorkspaceOwner)
+                : currentMember?.Role?.Name;
 
             return result;
         }

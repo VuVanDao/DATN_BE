@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,18 +30,20 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectDetail
             GetProjectDetailQuery request,
             CancellationToken cancellationToken)
         {
+            var currentUserId = _currentUserService.UserId;
+
             var projectExists = await _context.Projects
                 .AsNoTracking()
                 .Where(p => p.ProjectKey == request.projectKey && p.WorkspaceId == request.workspaceId)
                 .Select(p => new
                 {
-                    projectId = p.Id
+                    projectId = p.Id,
+                    isWorkspaceOwner = currentUserId.HasValue && p.Workspace.OwnerId == currentUserId.Value
                 })
                 .FirstOrDefaultAsync(cancellationToken) ?? throw new NotFoundException("Project", request.projectKey);
 
             await _authorizationService.EnsureCanViewProjectAsync(projectExists.projectId, cancellationToken);
 
-            var currentUserId = _currentUserService.UserId;
             var currentMember = currentUserId.HasValue
                 ? await _context.ProjectMembers
                     .AsNoTracking()
@@ -72,8 +75,10 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectDetail
                 })
                 .FirstAsync(cancellationToken);
 
-            projectDto.IsMember = currentMember != null;
-            projectDto.CurrentUserRole = currentMember?.Role?.Name;
+            projectDto.IsMember = projectExists.isWorkspaceOwner || currentMember != null;
+            projectDto.CurrentUserRole = projectExists.isWorkspaceOwner
+                ? (currentMember?.Role?.Name ?? RoleConstants.WorkspaceOwner)
+                : currentMember?.Role?.Name;
 
             return projectDto;
         }

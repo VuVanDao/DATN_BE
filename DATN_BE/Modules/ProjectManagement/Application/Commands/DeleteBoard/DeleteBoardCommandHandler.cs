@@ -1,8 +1,6 @@
-using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Domain;
-using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,28 +31,16 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteBoard
                 .FirstOrDefaultAsync(item => item.Id == request.BoardId, cancellationToken)
                 ?? throw new NotFoundException("Board", request.BoardId);
 
-            await _authorizationService.EnsureCanModifyProjectAsync(board.ProjectId, cancellationToken);
-
-            var isProjectLeader = await _context.ProjectMembers
-                .AnyAsync(member =>
-                    member.ProjectId == board.ProjectId &&
-                    member.UserId == currentUserId &&
-                    member.Role.Name == RoleConstants.ProjectLeader,
-                    cancellationToken);
-
-            if (!isProjectLeader)
-            {
-                throw new ForbiddenException("Chỉ Trưởng dự án mới được xoá Bảng.");
-            }
+            await _authorizationService.EnsureCanManageProjectAsync(board.ProjectId, cancellationToken);
 
             var columns = await _context.Columns
                 .IgnoreQueryFilters()
                 .Where(column => column.BoardId == board.Id)
                 .ToListAsync(cancellationToken);
             var columnIds = columns.Select(column => column.Id).ToList();
-            
+
             var cards = columnIds.Count == 0
-                ? new List<Card>()
+                ? new List<DATN_BE.Modules.Task.Domain.Entities.Card>()
                 : await _context.Cards
                     .IgnoreQueryFilters()
                     .Where(card => columnIds.Contains(card.ColumnId))
@@ -62,18 +48,17 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteBoard
 
             var deletedAt = DateTimeOffset.UtcNow;
             MarkAsDeleted(board, deletedAt);
-            
             foreach (var column in columns)
             {
                 MarkAsDeleted(column, deletedAt);
             }
-
             foreach (var card in cards)
             {
                 MarkAsDeleted(card, deletedAt);
             }
 
             await _context.SaveChangesAsync(cancellationToken);
+
             return true;
         }
 

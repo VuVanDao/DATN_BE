@@ -39,20 +39,8 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateBoard
                 throw new NotFoundException("Project", request.ProjectId);
             }
 
-            // This check verifies that the creator is a member of the project.
-            await _authorizationService.EnsureCanModifyProjectAsync(request.ProjectId, cancellationToken);
-
-            var isProjectLeader = await _context.ProjectMembers
-                .AnyAsync(pm =>
-                    pm.ProjectId == request.ProjectId &&
-                    pm.UserId == currentUserId &&
-                    pm.Role.Name == RoleConstants.ProjectLeader,
-                    cancellationToken);
-
-            if (!isProjectLeader)
-            {
-                throw new ForbiddenException("Chỉ Trưởng dự án mới được tạo Bảng.");
-            }
+            // Chỉ WorkspaceOwner hoặc ProjectLeader mới có quyền tạo Bảng
+            await _authorizationService.EnsureCanManageProjectAsync(request.ProjectId, cancellationToken);
 
             var slug = SlugHelper.GenerateSlug(request.Slug);
             if (string.IsNullOrWhiteSpace(slug))

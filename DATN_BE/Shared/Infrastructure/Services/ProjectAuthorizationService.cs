@@ -36,7 +36,8 @@ namespace DATN_BE.Shared.Infrastructure.Services
             return EnsureAsync(
                 _context.Projects.AnyAsync(project =>
                     project.Id == projectId &&
-                    project.ProjectMembers.Any(member => member.UserId == currentUserId), cancellationToken),
+                    (project.Workspace.OwnerId == currentUserId ||
+                     project.ProjectMembers.Any(member => member.UserId == currentUserId)), cancellationToken),
                 "Bạn chưa tham gia dự án này nên không thể thay đổi dữ liệu.");
         }
 
@@ -62,11 +63,6 @@ namespace DATN_BE.Shared.Infrastructure.Services
 
         private static async Task EnsureAsync(Task<bool> accessCheck, string forbiddenMessage)
         {
-            // accessCheck
-            /*
-            - view: workspaceOwner hay thanh vien workspace co the view
-            - modify: chi member thuoc project can do it
-            */
             var hasAccess = await accessCheck;
             if (!hasAccess)
             {

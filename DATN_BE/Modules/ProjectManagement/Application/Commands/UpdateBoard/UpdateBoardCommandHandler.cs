@@ -26,7 +26,6 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoard
 
         public async Task<BoardDto> Handle(UpdateBoardCommand request, CancellationToken cancellationToken)
         {
-
             var currentUserId = _currentUserService.UserId
                 ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này.");
 
@@ -34,19 +33,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoard
                 .FirstOrDefaultAsync(item => item.Id == request.BoardId, cancellationToken)
                 ?? throw new NotFoundException("Board", request.BoardId);
 
-            await _authorizationService.EnsureCanModifyProjectAsync(board.ProjectId, cancellationToken);
-
-            var isProjectLeader = await _context.ProjectMembers
-                .AnyAsync(member =>
-                    member.ProjectId == board.ProjectId &&
-                    member.UserId == currentUserId &&
-                    member.Role.Name == RoleConstants.ProjectLeader,
-                    cancellationToken);
-
-            if (!isProjectLeader)
-            {
-                throw new ForbiddenException("Chỉ Trưởng dự án mới được cập nhật Bảng.");
-            }
+            await _authorizationService.EnsureCanManageProjectAsync(board.ProjectId, cancellationToken);
 
             var slug = SlugHelper.GenerateSlug(request.Slug);
             if (string.IsNullOrWhiteSpace(slug))
@@ -58,8 +45,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoard
                 .AnyAsync(item =>
                     item.ProjectId == board.ProjectId &&
                     item.Slug == slug &&
-                    item.Id != board.Id,
-                    cancellationToken);
+                    item.Id != board.Id, cancellationToken);
 
             if (slugExists)
             {

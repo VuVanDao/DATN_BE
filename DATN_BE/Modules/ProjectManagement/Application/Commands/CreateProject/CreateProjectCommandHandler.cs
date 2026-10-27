@@ -103,8 +103,8 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
                 MembersCount = memberCount,
                 SprintCount = 0,
                 CreatedAt = newProject.CreatedAt,
-                IsMember = request.IsAssignAsLeader,
-                CurrentUserRole = request.IsAssignAsLeader ? RoleConstants.ProjectLeader : RoleConstants.ProjectMember
+                IsMember = true,
+                CurrentUserRole = request.IsAssignAsLeader ? RoleConstants.ProjectLeader : RoleConstants.WorkspaceOwner
             };
         }
     }

@@ -35,14 +35,14 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBoards
                 throw new NotFoundException("Project", request.ProjectId);
             }
 
-            var isProjectMember = await _context.ProjectMembers
+            var hasAccess = await _context.Projects
                 .AsNoTracking()
-                .AnyAsync(member =>
-                    member.ProjectId == request.ProjectId &&
-                    member.UserId == currentUserId,
+                .AnyAsync(p => p.Id == request.ProjectId &&
+                    (p.Workspace.OwnerId == currentUserId ||
+                     p.ProjectMembers.Any(pm => pm.UserId == currentUserId)),
                     cancellationToken);
 
-            if (!isProjectMember)
+            if (!hasAccess)
             {
                 throw new ForbiddenException("Bạn chưa tham gia Project này nên không thể xem danh sách Bảng.");
             }
