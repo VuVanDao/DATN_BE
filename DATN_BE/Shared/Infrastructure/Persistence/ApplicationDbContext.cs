@@ -3,6 +3,7 @@ using DATN_BE.Modules.Identity.Domain.Job;
 using DATN_BE.Modules.Notifications.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.Security.Domain.Entities;
+using DATN_BE.Modules.Security.Infrastructure.Auditing;
 using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Application.Interfaces;
@@ -14,8 +15,12 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
 {
     public class ApplicationDbContext : DbContext, IApplicationDbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        private readonly ICurrentUserService _currentUserService;
+
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,
+            ICurrentUserService currentUserService) : base(options)
         {
+            _currentUserService = currentUserService;
         }
 
         public DbSet<User> Users => Set<User>();
@@ -61,17 +66,65 @@ namespace DATN_BE.Shared.Infrastructure.Persistence
                 }
             }
         }
-        // 1. Ghi đè phương thức SaveChangesAsync (Bất đồng bộ)
-        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+            => SaveChangesAsync(true, cancellationToken);
+
+        public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess,
+            CancellationToken cancellationToken = default)
         {
-            HandleBeforeSaveChanges();
-            return await base.SaveChangesAsync(cancellationToken);
+            var auditLogs = PrepareChanges();
+            try
+            {
+                // Business changes and audit rows commit in the same transaction.
+                return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+            }
+            catch
+            {
+                DetachAuditLogs(auditLogs);
+                throw;
+            }
         }
-        // 2. Ghi đè phương thức SaveChanges (Đồng bộ)
-        public override int SaveChanges()
+
+        public override int SaveChanges() => SaveChanges(true);
+
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
         {
+            var auditLogs = PrepareChanges();
+            try
+            {
+                return base.SaveChanges(acceptAllChangesOnSuccess);
+            }
+            catch
+            {
+                DetachAuditLogs(auditLogs);
+                throw;
+            }
+        }
+
+        private List<ActivityLog> PrepareChanges()
+        {
+            ChangeTracker.DetectChanges();
             HandleBeforeSaveChanges();
-            return base.SaveChanges();
+            ChangeTracker.DetectChanges();
+
+            // Seeder/background jobs have no authenticated actor; user commands use JWT identity.
+            if (_currentUserService.UserId is not Guid actorId)
+                return new List<ActivityLog>();
+
+            var now = DateTimeOffset.UtcNow;
+            var auditLogs = ChangeTracker.Entries().ToArray()
+                .Select(entry => WorkspaceProjectAuditLogFactory.Create(entry, actorId, now))
+                .OfType<ActivityLog>()
+                .ToList();
+            ActivityLogs.AddRange(auditLogs);
+            return auditLogs;
+        }
+
+        private void DetachAuditLogs(IEnumerable<ActivityLog> auditLogs)
+        {
+            // A failed save must not leave audit rows queued for a later retry.
+            foreach (var auditLog in auditLogs)
+                Entry(auditLog).State = EntityState.Detached;
         }
         // 3. Hàm cốt lõi: Tự động can thiệp vào ChangeTracker
         private void HandleBeforeSaveChanges()

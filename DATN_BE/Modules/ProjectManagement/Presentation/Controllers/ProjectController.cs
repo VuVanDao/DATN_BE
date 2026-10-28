@@ -7,6 +7,8 @@ using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProject;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectLeader;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetMyProjects;
+using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectAuditLogs;
+using DATN_BE.Modules.Security.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectMember;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectDetail;
 using DATN_BE.Shared.Application.Models;
@@ -87,6 +89,17 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         {
             var result = await _mediator.Send(new GetMyProjectsQuery(workspaceId), cancellationToken);
             return Ok(ApiResponse<List<MyProjectsWorkspaceDto>>.Ok(result, "Lấy danh sách dự án đã tham gia thành công."));
+        }
+
+        /// <summary>
+        /// Xem lịch sử quản trị dự án (WorkspaceOwner hoặc ProjectLeader), kể cả dự án đã xoá mềm.
+        /// </summary>
+        [HttpGet("{projectId:guid}/audit-logs")]
+        public async Task<ActionResult<ApiResponse<PagedResult<ActivityLogDto>>>> GetAuditLogs(
+            Guid projectId, CancellationToken cancellationToken, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 20)
+        {
+            var result = await _mediator.Send(new GetProjectAuditLogsQuery(projectId, pageIndex, pageSize), cancellationToken);
+            return Ok(ApiResponse<PagedResult<ActivityLogDto>>.Ok(result, "Lấy lịch sử dự án thành công."));
         }
 
         /// <summary>

@@ -1,4 +1,6 @@
 using DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceProjects;
+using DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceAuditLogs;
+using DATN_BE.Modules.Security.Application.DTOs;
 using DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceMembers;
 using DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember;
 using DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace;
@@ -55,6 +57,17 @@ namespace DATN_BE.Modules.Workspaces.Presentation.Controllers
         {
             var result = await _mediator.Send(new GetWorkspaceProjectsQuery(workspaceId, pageIndex, pageSize), cancellationToken);
             return Ok(ApiResponse<PagedResult<WorkspaceProjectDto>>.Ok(result, "Lấy danh sách dự án của workspace thành công"));
+        }
+
+        /// <summary>
+        /// Xem lịch sử quản trị Workspace (chỉ WorkspaceOwner), kể cả Workspace đã xoá mềm.
+        /// </summary>
+        [HttpGet("{id:guid}/audit-logs")]
+        public async Task<ActionResult<ApiResponse<PagedResult<ActivityLogDto>>>> GetAuditLogs(
+            Guid id, CancellationToken cancellationToken, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 20)
+        {
+            var result = await _mediator.Send(new GetWorkspaceAuditLogsQuery(id, pageIndex, pageSize), cancellationToken);
+            return Ok(ApiResponse<PagedResult<ActivityLogDto>>.Ok(result, "Lấy lịch sử Workspace thành công."));
         }
 
         /// <summary>

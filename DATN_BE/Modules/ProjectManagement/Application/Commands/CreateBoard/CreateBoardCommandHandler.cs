@@ -39,8 +39,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateBoard
                 throw new NotFoundException("Project", request.ProjectId);
             }
 
-            // Chỉ WorkspaceOwner hoặc ProjectLeader mới có quyền tạo Bảng
-            await _authorizationService.EnsureCanManageProjectAsync(request.ProjectId, cancellationToken);
+            await _authorizationService.EnsureProjectLeaderAsync(request.ProjectId, cancellationToken);
 
             var slug = SlugHelper.GenerateSlug(request.Slug);
             if (string.IsNullOrWhiteSpace(slug))

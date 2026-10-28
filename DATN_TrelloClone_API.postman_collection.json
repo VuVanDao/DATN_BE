@@ -1013,6 +1013,56 @@
               }
             }
           ]
+        },
+        {
+          "name": "Get Workspace Audit Logs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Audit history returns 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"History is paginated and scoped\", function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.items).to.be.an(\"array\");",
+                  "  pm.expect(body.data.pageIndex).to.eql(1);",
+                  "  pm.expect(body.data.pageSize).to.eql(20);",
+                  "  body.data.items.forEach(log => pm.expect(log.entityId).to.eql(pm.variables.get('workspaceId')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Workspaces/{{workspaceId}}/audit-logs?pageIndex=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Workspaces",
+                "{{workspaceId}}",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "pageIndex",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "WorkspaceOwner only. Includes workspace metadata/lifecycle and workspace membership events. Returns ApiResponse<PagedResult<ActivityLogDto>>, newest first (createdAt, id descending). PageIndex: 1..1000000; pageSize: 1..100. Works after soft deletion of the target. 400 invalid pagination; 401 unauthenticated; 403 insufficient privileges; 404 missing resource. DetailsJson is a JSON string with memberUserId and before/after snapshots. Only successful authenticated workspace/project metadata, lifecycle and membership changes are recorded; historical changes are not reconstructed."
+          },
+          "response": []
         }
       ]
     },
@@ -1048,62 +1098,83 @@
         },
         {
           "name": "Update Project",
-          "event": [{
-            "listen": "test",
-            "script": {
-              "type": "text/javascript",
-              "exec": [
-                "pm.test('Updates project fields and normalizes the key', function () {",
-                "  pm.response.to.have.status(200);",
-                "  const body = pm.response.json();",
-                "  const input = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
-                "  pm.expect(body.success).to.eql(true);",
-                "  pm.expect(body.data.id.toLowerCase()).to.eql(pm.variables.get('projectId').toLowerCase());",
-                "  pm.expect(body.data.name).to.eql(input.name.trim());",
-                "  pm.expect(body.data.projectKey).to.eql(input.projectKey.toUpperCase());",
-                "  pm.expect(body.data.description).to.eql(input.description);",
-                "});"
-              ]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Updates project fields and normalizes the key', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  const input = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.id.toLowerCase()).to.eql(pm.variables.get('projectId').toLowerCase());",
+                  "  pm.expect(body.data.name).to.eql(input.name.trim());",
+                  "  pm.expect(body.data.projectKey).to.eql(input.projectKey.toUpperCase());",
+                  "  pm.expect(body.data.description).to.eql(input.description);",
+                  "});"
+                ]
+              }
             }
-          }],
+          ],
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Dự án cập nhật\",\n  \"projectKey\": \"{{projectKey}}\",\n  \"description\": \"Mô tả mới của dự án\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/project/{{projectId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "project", "{{projectId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}"
+              ]
             },
             "description": "Updates only name, projectKey and description. Requires the workspace owner (even without project membership) or a ProjectLeader of this project. Name: 2-100 characters after trimming. ProjectKey: 2-10 ASCII letters/digits, normalized to uppercase, unique among active projects in the same workspace excluding this project. Description: optional, max 500 characters; null or omitted clears it. Returns ApiResponse<ProjectDto>. 400: invalid input or duplicate key; 401: unauthenticated; 403: insufficient role; 404: missing/deleted project. Set accessToken, projectId and projectKey before running; this request changes the selected project."
           }
         },
         {
           "name": "Delete Project",
-          "event": [{
-            "listen": "test",
-            "script": {
-              "type": "text/javascript",
-              "exec": [
-                "pm.test('Soft deletes the project', function () {",
-                "  pm.response.to.have.status(200);",
-                "  const body = pm.response.json();",
-                "  pm.expect(body.success).to.eql(true);",
-                "  pm.expect(body.data).to.eql(true);",
-                "});"
-              ]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Soft deletes the project', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data).to.eql(true);",
+                  "});"
+                ]
+              }
             }
-          }],
+          ],
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/project/{{projectId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "project", "{{projectId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}"
+              ]
             },
             "description": "Soft deletes the selected project and all its boards, columns and cards. Requires the workspace owner (project membership not required) or a ProjectLeader of this project. Includes active descendants under already deleted boards/columns; preserves existing deletion timestamps. Saves all changes together; no rows are physically deleted. No request body. Returns ApiResponse<bool> with data: true. 400: empty project ID; 401: unauthenticated; 403: insufficient role; 404: missing or already deleted project. Set accessToken and projectId to a disposable test project before running."
           }
@@ -1129,98 +1200,132 @@
         },
         {
           "name": "Get My Projects Grouped By Workspace",
-          "event": [{
-            "listen": "test",
-            "script": {
-              "type": "text/javascript",
-              "exec": [
-                "pm.test('Returns joined projects grouped by workspace', function () {",
-                "  pm.response.to.have.status(200);",
-                "  const body = pm.response.json();",
-                "  pm.expect(body.success).to.eql(true);",
-                "  pm.expect(body.data).to.be.an('array');",
-                "  const workspaceIds = body.data.map(g => g.workspaceId);",
-                "  pm.expect(new Set(workspaceIds).size).to.eql(workspaceIds.length);",
-                "  const projectIds = body.data.flatMap(g => g.projects.map(p => p.id));",
-                "  pm.expect(new Set(projectIds).size).to.eql(projectIds.length);",
-                "  body.data.forEach(g => {",
-                "    pm.expect(g.workspaceName).to.be.a('string');",
-                "    pm.expect(g.workspaceSlug).to.be.a('string');",
-                "    pm.expect(g.projects).to.be.an('array').that.is.not.empty;",
-                "    g.projects.forEach(p => pm.expect(p.workspaceId).to.eql(g.workspaceId));",
-                "  });",
-                "});"
-              ]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns joined projects grouped by workspace', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data).to.be.an('array');",
+                  "  const workspaceIds = body.data.map(g => g.workspaceId);",
+                  "  pm.expect(new Set(workspaceIds).size).to.eql(workspaceIds.length);",
+                  "  const projectIds = body.data.flatMap(g => g.projects.map(p => p.id));",
+                  "  pm.expect(new Set(projectIds).size).to.eql(projectIds.length);",
+                  "  body.data.forEach(g => {",
+                  "    pm.expect(g.workspaceName).to.be.a('string');",
+                  "    pm.expect(g.workspaceSlug).to.be.a('string');",
+                  "    pm.expect(g.projects).to.be.an('array').that.is.not.empty;",
+                  "    g.projects.forEach(p => pm.expect(p.workspaceId).to.eql(g.workspaceId));",
+                  "  });",
+                  "});"
+                ]
+              }
             }
-          }],
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/project/my-projects",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "project", "my-projects"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "my-projects"
+              ]
             },
             "description": "Requires the inherited Bearer accessToken. Returns only projects with a ProjectMembers entry for the authenticated user, grouped as {workspaceId, workspaceName, workspaceSlug, projects: ProjectDto[]}. Workspace ownership or membership alone does not qualify. Deleted projects/workspaces are excluded. Groups are ordered by workspace name then ID; projects by CreatedAt descending then ID. Empty results return data: []. No pagination. Missing authentication returns 401."
           }
         },
         {
           "name": "Get My Projects In Workspace",
-          "event": [{
-            "listen": "test",
-            "script": {
-              "type": "text/javascript",
-              "exec": [
-                "pm.test('Returns only joined projects in the selected workspace', function () {",
-                "  pm.response.to.have.status(200);",
-                "  const body = pm.response.json();",
-                "  pm.expect(body.success).to.eql(true);",
-                "  pm.expect(body.data).to.be.an('array');",
-                "  pm.expect(body.data.length).to.be.at.most(1);",
-                "  const workspaceId = pm.variables.get('workspaceId').toLowerCase();",
-                "  body.data.forEach(g => {",
-                "    pm.expect(g.workspaceId).to.eql(workspaceId);",
-                "    pm.expect(g.projects).to.be.an('array').that.is.not.empty;",
-                "    g.projects.forEach(p => pm.expect(p.workspaceId).to.eql(workspaceId));",
-                "  });",
-                "});"
-              ]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns only joined projects in the selected workspace', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data).to.be.an('array');",
+                  "  pm.expect(body.data.length).to.be.at.most(1);",
+                  "  const workspaceId = pm.variables.get('workspaceId').toLowerCase();",
+                  "  body.data.forEach(g => {",
+                  "    pm.expect(g.workspaceId).to.eql(workspaceId);",
+                  "    pm.expect(g.projects).to.be.an('array').that.is.not.empty;",
+                  "    g.projects.forEach(p => pm.expect(p.workspaceId).to.eql(workspaceId));",
+                  "  });",
+                  "});"
+                ]
+              }
             }
-          }],
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/project/my-projects?workspaceId={{workspaceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "project", "my-projects"],
-              "query": [{"key": "workspaceId", "value": "{{workspaceId}}"}]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "my-projects"
+              ],
+              "query": [
+                {
+                  "key": "workspaceId",
+                  "value": "{{workspaceId}}"
+                }
+              ]
             },
             "description": "Set workspaceId to a non-empty GUID. Uses the same grouped response as the unfiltered request, with at most one workspace group. Unknown workspace or no joined projects returns 200 with data: []; the filter never grants access to other projects. Invalid GUID or Guid.Empty returns 400."
           }
         },
         {
           "name": "Get My Projects Reject Empty Workspace Id",
-          "event": [{
-            "listen": "test",
-            "script": {
-              "type": "text/javascript",
-              "exec": [
-                "pm.test('Rejects Guid.Empty', function () {",
-                "  pm.response.to.have.status(400);",
-                "  pm.expect(pm.response.json().success).to.eql(false);",
-                "});"
-              ]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rejects Guid.Empty', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
             }
-          }],
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/project/my-projects?workspaceId=00000000-0000-0000-0000-000000000000",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "project", "my-projects"],
-              "query": [{"key": "workspaceId", "value": "00000000-0000-0000-0000-000000000000"}]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "my-projects"
+              ],
+              "query": [
+                {
+                  "key": "workspaceId",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
             },
             "description": "Authenticated validation check: Guid.Empty is not a valid workspace filter and returns 400."
           }
@@ -1325,6 +1430,56 @@
             },
             "description": "Xóa thành viên khỏi Dự án."
           }
+        },
+        {
+          "name": "Get Project Audit Logs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Audit history returns 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"History is paginated and scoped\", function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.items).to.be.an(\"array\");",
+                  "  pm.expect(body.data.pageIndex).to.eql(1);",
+                  "  pm.expect(body.data.pageSize).to.eql(20);",
+                  "  body.data.items.forEach(log => pm.expect(log.entityId).to.eql(pm.variables.get('projectId')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Project/{{projectId}}/audit-logs?pageIndex=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Project",
+                "{{projectId}}",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "pageIndex",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "WorkspaceOwner or this project's ProjectLeader. Includes project metadata/lifecycle and project membership events. Returns ApiResponse<PagedResult<ActivityLogDto>>, newest first (createdAt, id descending). PageIndex: 1..1000000; pageSize: 1..100. Works after soft deletion of the target. 400 invalid pagination; 401 unauthenticated; 403 insufficient privileges; 404 missing resource. DetailsJson is a JSON string with memberUserId and before/after snapshots. Only successful authenticated workspace/project metadata, lifecycle and membership changes are recorded; historical changes are not reconstructed."
+          },
+          "response": []
         }
       ]
     },
@@ -1375,7 +1530,7 @@
                 "{{boardId}}"
               ]
             },
-            "description": "Cập nhật title, slug và type của Bảng. Chỉ ProjectLeader được phép thực hiện."
+            "description": "Cập nhật title, slug và type của Bảng. Chỉ ProjectLeader được phép thực hiện. WorkspaceOwner must join this project as a project-scoped ProjectLeader to perform this action."
           }
         },
         {
@@ -1394,7 +1549,7 @@
                 "{{boardId}}"
               ]
             },
-            "description": "Xoá mềm Bảng cùng toàn bộ Column và Card thuộc Bảng. Chỉ ProjectLeader được phép thực hiện."
+            "description": "Xoá mềm Bảng cùng toàn bộ Column và Card thuộc Bảng. Chỉ ProjectLeader được phép thực hiện. WorkspaceOwner must join this project as a project-scoped ProjectLeader to perform this action."
           }
         },
         {
@@ -1414,7 +1569,7 @@
                 "{{projectId}}"
               ]
             },
-            "description": "Lấy danh sách Board của Project. Chỉ thành viên của Project được phép gọi."
+            "description": "WorkspaceOwner or a direct project member may list boards. Workspace ownership does not grant board write access."
           }
         },
         {
@@ -1443,7 +1598,7 @@
                 "columns"
               ]
             },
-            "description": "Tạo Cột mới trong Bảng Kanban."
+            "description": "Tạo Cột mới trong Bảng Kanban.\nRequires direct project membership. WorkspaceOwner outside the project receives 403."
           }
         },
         {
@@ -1473,7 +1628,7 @@
                 "reorder"
               ]
             },
-            "description": "Sắp xếp lại thứ tự các Cột trong Bảng Kanban khi người dùng kéo thả."
+            "description": "Sắp xếp lại thứ tự các Cột trong Bảng Kanban khi người dùng kéo thả.\nRequires direct project membership. WorkspaceOwner outside the project receives 403."
           }
         }
       ]
@@ -1505,7 +1660,7 @@
                 "cards"
               ]
             },
-            "description": "Tạo Thẻ công việc (Card) mới trong một Cột. Hỗ trợ CardType: Task, Bug, Story, Epic. CardPriority: Low, Medium, High, Urgent."
+            "description": "Tạo Thẻ công việc (Card) mới trong một Cột. Hỗ trợ CardType: Task, Bug, Story, Epic. CardPriority: Low, Medium, High, Urgent.\nRequires direct project membership. WorkspaceOwner outside the project receives 403."
           }
         },
         {
@@ -1552,7 +1707,7 @@
                 "{{cardId}}"
               ]
             },
-            "description": "Cập nhật thông tin chi tiết của Thẻ công việc (Title, Description, Type, Priority, DueDate, StoryPoints, ProgressPercentage,...)."
+            "description": "Cập nhật thông tin chi tiết của Thẻ công việc (Title, Description, Type, Priority, DueDate, StoryPoints, ProgressPercentage,...).\nRequires direct project membership. WorkspaceOwner outside the project receives 403."
           }
         },
         {
@@ -1581,7 +1736,7 @@
                 "move"
               ]
             },
-            "description": "Kéo thả Thẻ công việc: Chuyển sang cột khác hoặc thay đổi vị trí thứ tự trong cột hiện tại. Tự động re-index vị trí các thẻ khác."
+            "description": "Kéo thả Thẻ công việc: Chuyển sang cột khác hoặc thay đổi vị trí thứ tự trong cột hiện tại. Tự động re-index vị trí các thẻ khác.\nRequires direct project membership. WorkspaceOwner outside the project receives 403."
           }
         },
         {
@@ -1610,7 +1765,7 @@
                 "comments"
               ]
             },
-            "description": "Thêm bình luận mới vào Thẻ công việc."
+            "description": "Thêm bình luận mới vào Thẻ công việc.\nRequires direct project membership. WorkspaceOwner outside the project receives 403."
           }
         },
         {
@@ -1629,7 +1784,7 @@
                 "{{cardId}}"
               ]
             },
-            "description": "Xóa Thẻ công việc (Soft delete - IsDeleted = true)."
+            "description": "Xóa Thẻ công việc (Soft delete - IsDeleted = true).\nRequires direct project membership. WorkspaceOwner outside the project receives 403."
           }
         }
       ]

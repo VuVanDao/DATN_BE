@@ -31,7 +31,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteBoard
                 .FirstOrDefaultAsync(item => item.Id == request.BoardId, cancellationToken)
                 ?? throw new NotFoundException("Board", request.BoardId);
 
-            await _authorizationService.EnsureCanManageProjectAsync(board.ProjectId, cancellationToken);
+            await _authorizationService.EnsureProjectLeaderAsync(board.ProjectId, cancellationToken);
 
             var columns = await _context.Columns
                 .IgnoreQueryFilters()

@@ -52,7 +52,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             return Ok(ApiResponse<bool>.Ok(result, "Đã xoá Bảng và các dữ liệu trực thuộc."));
         }
         /// <summary>
-        /// Lấy danh sách Bảng trong Dự án. Chỉ thành viên của Dự án được phép xem.
+        /// Lấy danh sách Bảng trong Dự án. WorkspaceOwner hoặc thành viên của Dự án được phép xem.
         /// </summary>
         [HttpGet("project/{projectId:guid}")]
         public async Task<ActionResult<ApiResponse<List<BoardDto>>>> GetProjectBoards(Guid projectId)

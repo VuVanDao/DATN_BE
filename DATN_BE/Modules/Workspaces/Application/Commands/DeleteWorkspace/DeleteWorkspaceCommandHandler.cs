@@ -1,5 +1,6 @@
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,50 +40,40 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.DeleteWorkspace
                 throw new ForbiddenException("Chỉ chủ sở hữu Workspace mới có quyền xóa Workspace này.");
             }
 
-            // 4. Batch Update trực tiếp tại CSDL qua Navigation Property (không cần query trung gian lấy ID)
-            // Lưu ý: Cần cập nhật từ dưới lên (Bottom-Up: Cards -> Columns -> Boards -> Projects -> Workspace)
-            // hoặc dùng IgnoreQueryFilters() để tránh Global Query Filter (IsDeleted = false) chặn các bảng cha
+            // Track the cascade so project deletions and audit rows share the same SaveChanges transaction.
+            // Ignore filters to include active descendants beneath previously deleted parents.
             var now = DateTimeOffset.UtcNow;
 
-            // Xóa Cards thuộc Workspace này
-            await _context.Cards
+            var cards = await _context.Cards
                 .IgnoreQueryFilters()
                 .Where(c => c.Column.Board.Project.WorkspaceId == currentWorkspace.Id && !c.IsDeleted)
-                .ExecuteUpdateAsync(card => card
-                    .SetProperty(c => c.IsDeleted, true)
-                    .SetProperty(c => c.DeletedAt, now), cancellationToken);
+                .ToListAsync(cancellationToken);
 
-            // Xóa Columns thuộc Workspace này
-            await _context.Columns
+            var columns = await _context.Columns
                 .IgnoreQueryFilters()
                 .Where(col => col.Board.Project.WorkspaceId == currentWorkspace.Id && !col.IsDeleted)
-                .ExecuteUpdateAsync(column => column
-                    .SetProperty(col => col.IsDeleted, true)
-                    .SetProperty(col => col.DeletedAt, now), cancellationToken);
+                .ToListAsync(cancellationToken);
 
-            // Xóa Boards thuộc Workspace này
-            await _context.Boards
+            var boards = await _context.Boards
                 .IgnoreQueryFilters()
                 .Where(b => b.Project.WorkspaceId == currentWorkspace.Id && !b.IsDeleted)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(b => b.IsDeleted, true)
-                    .SetProperty(b => b.DeletedAt, now), cancellationToken);
+                .ToListAsync(cancellationToken);
 
-            // Xóa Sprints thuộc Workspace này
-            await _context.Sprints
+            var sprints = await _context.Sprints
                 .IgnoreQueryFilters()
                 .Where(sp => sp.Project.WorkspaceId == currentWorkspace.Id && !sp.IsDeleted)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(sp => sp.IsDeleted, true)
-                    .SetProperty(sp => sp.DeletedAt, now), cancellationToken);
+                .ToListAsync(cancellationToken);
 
-            // Xóa Projects thuộc Workspace này
-            await _context.Projects
+            var projects = await _context.Projects
                 .IgnoreQueryFilters()
                 .Where(p => p.WorkspaceId == currentWorkspace.Id && !p.IsDeleted)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(p => p.IsDeleted, true)
-                    .SetProperty(p => p.DeletedAt, now), cancellationToken);
+                .ToListAsync(cancellationToken);
+
+            foreach (var entity in cards.Cast<ISoftDelete>().Concat(columns).Concat(boards).Concat(sprints).Concat(projects))
+            {
+                entity.IsDeleted = true;
+                entity.DeletedAt = now;
+            }
 
             // Xóa Workspace
             currentWorkspace.IsDeleted = true;

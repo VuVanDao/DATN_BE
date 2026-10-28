@@ -36,16 +36,35 @@ namespace DATN_BE.Shared.Infrastructure.Services
             return EnsureAsync(
                 _context.Projects.AnyAsync(project =>
                     project.Id == projectId &&
-                    (project.Workspace.OwnerId == currentUserId ||
-                     project.ProjectMembers.Any(member => member.UserId == currentUserId)), cancellationToken),
+                    project.ProjectMembers.Any(member => member.UserId == currentUserId), cancellationToken),
                 "Bạn chưa tham gia dự án này nên không thể thay đổi dữ liệu.");
         }
 
-        public Task EnsureCanManageProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+        public Task EnsureProjectLeaderAsync(Guid projectId, CancellationToken cancellationToken = default)
         {
             var currentUserId = GetCurrentUserId();
             return EnsureAsync(
                 _context.Projects.AnyAsync(project =>
+                    project.Id == projectId &&
+                    project.ProjectMembers.Any(member =>
+                        member.UserId == currentUserId &&
+                        member.Role.Name == RoleConstants.ProjectLeader &&
+                        member.Role.Scope == RoleScope.Project), cancellationToken),
+                "Chỉ Trưởng dự án mới được tạo, sửa hoặc xoá Bảng.");
+        }
+
+        public Task EnsureCanManageProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+            => EnsureCanManageProjectAsync(projectId, false, cancellationToken);
+
+        public Task EnsureCanViewProjectAuditAsync(Guid projectId, CancellationToken cancellationToken = default)
+            => EnsureCanManageProjectAsync(projectId, true, cancellationToken);
+
+        private Task EnsureCanManageProjectAsync(Guid projectId, bool includeDeleted, CancellationToken cancellationToken)
+        {
+            var currentUserId = GetCurrentUserId();
+            var projects = includeDeleted ? _context.Projects.IgnoreQueryFilters() : _context.Projects;
+            return EnsureAsync(
+                projects.AnyAsync(project =>
                     project.Id == projectId &&
                     (project.Workspace.OwnerId == currentUserId ||
                      project.ProjectMembers.Any(member =>

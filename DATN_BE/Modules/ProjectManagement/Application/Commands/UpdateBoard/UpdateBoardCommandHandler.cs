@@ -33,7 +33,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoard
                 .FirstOrDefaultAsync(item => item.Id == request.BoardId, cancellationToken)
                 ?? throw new NotFoundException("Board", request.BoardId);
 
-            await _authorizationService.EnsureCanManageProjectAsync(board.ProjectId, cancellationToken);
+            await _authorizationService.EnsureProjectLeaderAsync(board.ProjectId, cancellationToken);
 
             var slug = SlugHelper.GenerateSlug(request.Slug);
             if (string.IsNullOrWhiteSpace(slug))
