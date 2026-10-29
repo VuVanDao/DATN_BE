@@ -374,6 +374,57 @@ public class WorkspaceProjectSecurityTests
         Assert.Equal(1, await f.Db.ActivityLogs.CountAsync());
     }
 
+    [Theory]
+    [InlineData("member", true)]
+    [InlineData("leader", true)]
+    [InlineData("owner", false)]
+    [InlineData("outsider", false)]
+    public async Task Board_preferences_require_direct_project_membership(string actor, bool allowed)
+    {
+        await using var f = await Fixture.Create();
+        f.Current.UserId = f.Actor(actor);
+        var handler = new DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoardPreference.UpdateBoardPreferenceCommandHandler(f.Db, f.Current, f.Auth);
+        var command = new DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoardPreference.UpdateBoardPreferenceCommand
+            { BoardId = f.Board.Id, IsPinned = true, MarkViewed = true };
+        if (!allowed)
+        {
+            await Assert.ThrowsAsync<ForbiddenException>(() => handler.Handle(command, default));
+            Assert.Empty(await f.Db.UserBoardPreferences.ToListAsync());
+            return;
+        }
+        var result = await handler.Handle(command, default);
+        Assert.True(result.IsPinned);
+        var viewedAt = result.LastViewedAt;
+        command.IsPinned = false;
+        command.MarkViewed = false;
+        result = await handler.Handle(command, default);
+        Assert.False(result.IsPinned);
+        Assert.Equal(viewedAt, result.LastViewedAt);
+        command.IsPinned = null;
+        command.MarkViewed = true;
+        result = await handler.Handle(command, default);
+        Assert.False(result.IsPinned);
+        Assert.True(result.LastViewedAt >= viewedAt);
+        Assert.Single(await f.Db.UserBoardPreferences.ToListAsync());
+    }
+
+    [Theory]
+    [InlineData("board")]
+    [InlineData("project")]
+    [InlineData("workspace")]
+    public async Task Board_preferences_reject_deleted_hierarchy(string deleted)
+    {
+        await using var f = await Fixture.Create();
+        f.Current.UserId = f.Member.Id;
+        if (deleted == "board") (await f.Db.Boards.SingleAsync()).IsDeleted = true;
+        if (deleted == "project") (await f.Db.Projects.SingleAsync()).IsDeleted = true;
+        if (deleted == "workspace") (await f.Db.Workspaces.SingleAsync()).IsDeleted = true;
+        await f.Db.SaveChangesAsync();
+        var handler = new DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoardPreference.UpdateBoardPreferenceCommandHandler(f.Db, f.Current, f.Auth);
+        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(new() { BoardId = f.Board.Id, MarkViewed = true }, default));
+        Assert.Empty(await f.Db.UserBoardPreferences.ToListAsync());
+    }
+
     private static async Task Check(Func<Task> action, bool allowed)
     {
         if (allowed) await action();

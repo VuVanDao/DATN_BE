@@ -1,8 +1,9 @@
-﻿using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateBoard;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateBoard;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteBoard;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.ReorderColumns;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoard;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoardPreference;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBoards;
@@ -42,6 +43,18 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<BoardDto>.Ok(result, "Cập nhật Bảng thành công."));
         }
+        /// <summary>
+        /// Cập nhật ghim/lượt xem của người đăng nhập. Yêu cầu thành viên trực tiếp của Dự án.
+        /// </summary>
+        [HttpPatch("{id:guid}/preferences")]
+        public async Task<ActionResult<ApiResponse<BoardPreferenceDto>>> UpdatePreference(
+            Guid id, [FromBody] UpdateBoardPreferenceCommand command, CancellationToken cancellationToken)
+        {
+            command.BoardId = id;
+            var result = await _mediator.Send(command, cancellationToken);
+            return Ok(ApiResponse<BoardPreferenceDto>.Ok(result, "Đã cập nhật tùy chọn Bảng."));
+        }
+
         /// <summary>
         /// Xoá mềm Bảng và toàn bộ Cột, Thẻ thuộc Bảng. Chỉ Trưởng dự án được phép thực hiện.
         /// </summary>
