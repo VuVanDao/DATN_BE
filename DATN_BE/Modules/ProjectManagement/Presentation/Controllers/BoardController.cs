@@ -24,6 +24,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         {
             _mediator = mediator;
         }
+
         /// <summary>
         /// Tạo mới Bảng trong một Dự án. Chỉ Trưởng dự án được phép thực hiện.
         /// </summary>
@@ -33,6 +34,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<BoardDto>.Ok(result, "Tạo mới Bảng thành công."));
         }
+
         /// <summary>
         /// Cập nhật tiêu đề, slug và loại Bảng. Chỉ Trưởng dự án được phép thực hiện.
         /// </summary>
@@ -43,6 +45,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<BoardDto>.Ok(result, "Cập nhật Bảng thành công."));
         }
+
         /// <summary>
         /// Cập nhật ghim/lượt xem của người đăng nhập. Yêu cầu thành viên trực tiếp của Dự án.
         /// </summary>
@@ -64,6 +67,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             var result = await _mediator.Send(new DeleteBoardCommand { BoardId = id });
             return Ok(ApiResponse<bool>.Ok(result, "Đã xoá Bảng và các dữ liệu trực thuộc."));
         }
+
         /// <summary>
         /// Lấy danh sách Bảng trong Dự án. WorkspaceOwner hoặc thành viên của Dự án được phép xem.
         /// </summary>
@@ -73,15 +77,17 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             var result = await _mediator.Send(new GetProjectBoardsQuery(projectId));
             return Ok(ApiResponse<List<BoardDto>>.Ok(result, "Lấy danh sách Bảng thành công."));
         }
+
         /// <summary>
-        /// Lấy chi tiết Bảng kèm danh sách Cột theo thứ tự
+        /// Lấy chi tiết Bảng kèm danh sách Cột theo thứ tự theo slug và projectId
         /// </summary>
         [HttpGet("{slug}/project/{projectId:guid}")]
         public async Task<ActionResult<ApiResponse<BoardDetailDto>>> GetBoardDetail(string slug, Guid projectId)
         {
-            var result = await _mediator.Send(new GetBoardDetailQuery(slug,projectId));
+            var result = await _mediator.Send(new GetBoardDetailQuery(slug, projectId));
             return Ok(ApiResponse<BoardDetailDto>.Ok(result, "Lấy thông tin Bảng thành công."));
         }
+
         /// <summary>
         /// Tạo mới column
         /// </summary>
@@ -92,6 +98,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<ColumnDto>.Ok(result, "Tạo mới cột thành công"));
         }
+
         /// <summary>
         /// Sắp xếp lại thứ tự các Cột khi kéo thả
         /// </summary>

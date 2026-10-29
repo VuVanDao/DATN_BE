@@ -1,4 +1,6 @@
-﻿namespace DATN_BE.Modules.ProjectManagement.Application.DTOs
+using DATN_BE.Modules.Task.Application.DTOs;
+
+namespace DATN_BE.Modules.ProjectManagement.Application.DTOs
 {
     public class ColumnDto
     {
@@ -7,5 +9,6 @@
         public int Position { get; set; }
         public bool IsDoneColumn { get; set; }
         public Guid BoardId { get; set; }
+        public List<CardDto> Cards { get; set; } = new();
     }
 }

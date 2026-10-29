@@ -1,4 +1,4 @@
-﻿namespace DATN_BE.Modules.ProjectManagement.Application.DTOs
+namespace DATN_BE.Modules.ProjectManagement.Application.DTOs
 {
     public class BoardDetailDto
     {
@@ -8,6 +8,9 @@
         public string Type { get; set; } = string.Empty;
         public Guid ProjectId { get; set; }
         public string ProjectName { get; set; } = string.Empty;
+        public string? ProjectKey { get; set; }
+        public Guid? WorkspaceId { get; set; }
+        public bool IsPinned { get; set; }
         public List<ColumnDto> Columns { get; set; } = new();
     }
 }

@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using MediatR;
 
 namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
@@ -7,11 +7,11 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
     {
         public string BoardSlug { get; set; }
         public Guid ProjectId { get; set; }
+
         public GetBoardDetailQuery(string boardSlug, Guid projectId)
         {
             BoardSlug = boardSlug;
             ProjectId = projectId;
         }
-       
     }
 }

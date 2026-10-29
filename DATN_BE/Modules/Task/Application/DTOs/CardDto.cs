@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.Task.Domain.Enum;
+using DATN_BE.Modules.Task.Domain.Enum;
 
 namespace DATN_BE.Modules.Task.Application.DTOs
 {
@@ -23,5 +23,6 @@ namespace DATN_BE.Modules.Task.Application.DTOs
         public string ReporterName { get; set; } = string.Empty;
         public Guid? SprintId { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
+        public int CommentsCount { get; set; }
     }
 }
