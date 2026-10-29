@@ -50,7 +50,11 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBoards
             return await _context.Boards
                 .AsNoTracking()
                 .Where(board => board.ProjectId == request.ProjectId)
-                .OrderBy(board => board.CreatedAt)
+                .OrderByDescending(board => board.UserBoardPreferences
+                    .Where(p => p.UserId == currentUserId)
+                    .Select(p => p.IsPinned)
+                    .FirstOrDefault())
+                .ThenBy(board => board.CreatedAt)
                 .Select(board => new BoardDto
                 {
                     Id = board.Id,
@@ -58,7 +62,15 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBoards
                     Title = board.Title,
                     Slug = board.Slug,
                     Type = board.Type.ToString(),
-                    CreatedAt = board.CreatedAt
+                    CreatedAt = board.CreatedAt,
+                    IsPinned = board.UserBoardPreferences
+                        .Where(p => p.UserId == currentUserId)
+                        .Select(p => p.IsPinned)
+                        .FirstOrDefault(),
+                    LastViewedAt = board.UserBoardPreferences
+                        .Where(p => p.UserId == currentUserId)
+                        .Select(p => (DateTimeOffset?)p.LastViewedAt)
+                        .FirstOrDefault()
                 })
                 .ToListAsync(cancellationToken);
         }
