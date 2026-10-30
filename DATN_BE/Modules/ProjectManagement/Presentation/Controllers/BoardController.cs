@@ -7,6 +7,7 @@ using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoardPreferen
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBoards;
+using DATN_BE.Modules.ProjectManagement.Application.Queries.GetMyBoards;
 using DATN_BE.Shared.Application.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +34,17 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         {
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<BoardDto>.Ok(result, "Tạo mới Bảng thành công."));
+        }
+
+        /// <summary>
+        /// Lấy tối đa 3 Bảng gần đây và 3 Bảng đã ghim của người đăng nhập,
+        /// mỗi nhóm sắp xếp theo lần xem mới nhất.
+        /// </summary>
+        [HttpGet("my-boards")]
+        public async Task<ActionResult<ApiResponse<MyBoardsDto>>> GetMyBoards(CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(new GetMyBoardsQuery(), cancellationToken);
+            return Ok(ApiResponse<MyBoardsDto>.Ok(result, "Lấy danh sách Bảng cá nhân thành công."));
         }
 
         /// <summary>

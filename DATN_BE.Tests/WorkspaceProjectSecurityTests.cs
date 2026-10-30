@@ -59,6 +59,69 @@ namespace DATN_BE.Tests;
 
 public class WorkspaceProjectSecurityTests
 {
+    [Fact]
+    public async Task My_boards_limit_each_group_and_isolate_current_user()
+    {
+        await using var f = await Fixture.Create();
+        f.Current.UserId = f.Member.Id;
+        var start = DateTimeOffset.UtcNow.AddDays(-1);
+        var boards = Enumerable.Range(0, 6).Select(i => new Board
+        {
+            ProjectId = f.Project.Id, Title = $"Board {i}", Slug = $"board-{i}"
+        }).ToArray();
+        f.Db.Boards.AddRange(boards);
+        for (var i = 0; i < boards.Length; i++)
+            f.Db.UserBoardPreferences.Add(new UserBoardPreference
+            {
+                UserId = f.Member.Id, BoardId = boards[i].Id,
+                IsPinned = i < 5, LastViewedAt = start.AddMinutes(i)
+            });
+        f.Db.UserBoardPreferences.Add(new UserBoardPreference
+        {
+            UserId = f.Leader.Id, BoardId = f.Board.Id, IsPinned = true,
+            LastViewedAt = start.AddDays(2)
+        });
+        await f.Db.SaveChangesAsync();
+        f.Db.ChangeTracker.Clear();
+        var handler = new DATN_BE.Modules.ProjectManagement.Application.Queries.GetMyBoards.GetMyBoardsQueryHandler(f.Db, f.Current);
+        var result = await handler.Handle(new(), default);
+        Assert.Equal(new[] { boards[5].Id, boards[4].Id, boards[3].Id }, result.RecentBoards.Select(b => b.BoardId));
+        Assert.Equal(new[] { boards[4].Id, boards[3].Id, boards[2].Id }, result.PinnedBoards.Select(b => b.BoardId));
+        Assert.Equal(boards[5].Slug, result.RecentBoards[0].BoardSlug);
+        Assert.All(result.RecentBoards, b => Assert.Equal(f.Project.Id, b.ProjectId));
+
+        f.Current.UserId = f.Outsider.Id;
+        Assert.Empty((await handler.Handle(new(), default)).RecentBoards);
+        f.Current.UserId = null;
+        await Assert.ThrowsAsync<ForbiddenException>(() => handler.Handle(new(), default));
+    }
+
+    [Theory]
+    [InlineData("board")]
+    [InlineData("project")]
+    [InlineData("workspace")]
+    [InlineData("membership")]
+    public async Task My_boards_exclude_deleted_hierarchy_and_revoked_access(string removed)
+    {
+        await using var f = await Fixture.Create();
+        f.Current.UserId = f.Member.Id;
+        f.Db.UserBoardPreferences.Add(new UserBoardPreference
+        {
+            UserId = f.Member.Id, BoardId = f.Board.Id, IsPinned = true
+        });
+        await f.Db.SaveChangesAsync();
+        if (removed == "board") f.Db.Boards.Remove(await f.Db.Boards.SingleAsync());
+        if (removed == "project") f.Db.Projects.Remove(await f.Db.Projects.SingleAsync());
+        if (removed == "workspace") f.Db.Workspaces.Remove(await f.Db.Workspaces.SingleAsync());
+        if (removed == "membership") f.Db.ProjectMembers.Remove(await f.Db.ProjectMembers.SingleAsync(m => m.UserId == f.Member.Id));
+        await f.Db.SaveChangesAsync();
+        f.Db.ChangeTracker.Clear();
+        var handler = new DATN_BE.Modules.ProjectManagement.Application.Queries.GetMyBoards.GetMyBoardsQueryHandler(f.Db, f.Current);
+        var result = await handler.Handle(new(), default);
+        Assert.Empty(result.RecentBoards);
+        Assert.Empty(result.PinnedBoards);
+    }
+
     [Theory]
     [InlineData("workspace", "owner", 1, 20, 200)]
     [InlineData("workspace", "leader", 1, 20, 403)]
