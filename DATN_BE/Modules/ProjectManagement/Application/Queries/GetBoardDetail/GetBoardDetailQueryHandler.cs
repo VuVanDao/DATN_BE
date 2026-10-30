@@ -46,30 +46,15 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                 ?? throw new NotFoundException("Board", request.BoardSlug);
 
             var currentUserId = _currentUserService?.UserId;
-            bool isPinned = false;
+            var isPinned = false;
 
             if (currentUserId.HasValue)
             {
-                var pref = await _context.UserBoardPreferences
-                    .FirstOrDefaultAsync(p => p.BoardId == board.Id && p.UserId == currentUserId.Value, cancellationToken);
-
-                if (pref != null)
-                {
-                    isPinned = pref.IsPinned;
-                    pref.LastViewedAt = DateTimeOffset.UtcNow;
-                }
-                else
-                {
-                    _context.UserBoardPreferences.Add(new UserBoardPreference
-                    {
-                        BoardId = board.Id,
-                        UserId = currentUserId.Value,
-                        IsPinned = false,
-                        LastViewedAt = DateTimeOffset.UtcNow
-                    });
-                }
-
-                await _context.SaveChangesAsync(cancellationToken);
+                isPinned = await _context.UserBoardPreferences
+                    .AsNoTracking()
+                    .Where(p => p.BoardId == board.Id && p.UserId == currentUserId.Value)
+                    .Select(p => p.IsPinned)
+                    .FirstOrDefaultAsync(cancellationToken);
             }
 
             return new BoardDetailDto
