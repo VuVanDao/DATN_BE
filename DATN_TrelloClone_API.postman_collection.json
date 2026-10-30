@@ -1602,6 +1602,23 @@
           }
         },
         {
+          "name": "Update Column",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Done\",\n  \"isDoneColumn\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardId}}/columns/{{columnId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "board", "{{boardId}}", "columns", "{{columnId}}"]
+            },
+            "description": "Updates Title and IsDoneColumn; both fields required. Title must be nonblank, max 100 characters; trimmed before saving. Requires direct project membership. Returns ApiResponse<ColumnDto>. 400: invalid input; 401: unauthenticated; 403: not a project member; 404: Board or Column missing/deleted, or Column belongs to another Board. Preserves position and existing cards. Set boardId and columnId to real IDs."
+          }
+        },
+        {
           "name": "Reorder Columns",
           "request": {
             "method": "PUT",

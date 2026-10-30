@@ -59,6 +59,68 @@ namespace DATN_BE.Tests;
 
 public class WorkspaceProjectSecurityTests
 {
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Update_column_persists_fields_and_preserves_position(bool isDone)
+    {
+        await using var f = await Fixture.Create();
+        f.Current.UserId = f.Member.Id;
+        var original = await f.Db.Columns.SingleAsync(c => c.Id == f.Column.Id);
+        original.IsDoneColumn = !isDone;
+        original.Position = 7;
+        await f.Db.SaveChangesAsync();
+        var handler = new DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateColumn.UpdateColumnCommandHandler(f.Db, f.Auth);
+        var result = await handler.Handle(new()
+        {
+            BoardId = f.Board.Id, ColumnId = f.Column.Id, Title = "  Updated  ", IsDoneColumn = isDone
+        }, default);
+        f.Db.ChangeTracker.Clear();
+        var saved = await f.Db.Columns.SingleAsync(c => c.Id == result.Id);
+        Assert.Equal("Updated", saved.Title);
+        Assert.Equal(isDone, saved.IsDoneColumn);
+        Assert.Equal(7, saved.Position);
+        Assert.Equal(f.Board.Id, result.BoardId);
+        Assert.Equal(saved.Title, result.Title);
+        Assert.Equal(saved.IsDoneColumn, result.IsDoneColumn);
+    }
+
+    [Fact]
+    public async Task Update_column_rejects_outsider_and_wrong_board()
+    {
+        await using var f = await Fixture.Create();
+        var handler = new DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateColumn.UpdateColumnCommandHandler(f.Db, f.Auth);
+        var command = new DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateColumn.UpdateColumnCommand
+        {
+            BoardId = f.Board.Id, ColumnId = f.Column.Id, Title = "Updated", IsDoneColumn = true
+        };
+        f.Current.UserId = f.Outsider.Id;
+        await Assert.ThrowsAsync<ForbiddenException>(() => handler.Handle(command, default));
+        f.Current.UserId = f.Member.Id;
+        var otherBoard = new Board { ProjectId = f.Project.Id, Title = "Other", Slug = "other" };
+        f.Db.Boards.Add(otherBoard);
+        await f.Db.SaveChangesAsync();
+        command.BoardId = otherBoard.Id;
+        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, default));
+        Assert.Equal("Column", f.Column.Title);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public void Update_column_validates_title(string? title)
+    {
+        var validator = new DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateColumn.UpdateColumnCommandValidator();
+        var command = new DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateColumn.UpdateColumnCommand
+        {
+            BoardId = Guid.NewGuid(), ColumnId = Guid.NewGuid(), Title = title!, IsDoneColumn = false
+        };
+        Assert.False(validator.Validate(command).IsValid);
+        command.Title = new string('a', 101);
+        Assert.False(validator.Validate(command).IsValid);
+    }
+
     [Fact]
     public async Task My_boards_limit_each_group_and_isolate_current_user()
     {

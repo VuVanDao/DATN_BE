@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -36,11 +36,11 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn
                 Title = request.Title,
                 BoardId = request.BoardId,
                 IsDoneColumn = request.IsDoneColumn,
-                Position = maxPosition +1
+                Position = maxPosition + 1
             };
 
             _context.Columns.Add(newColumn);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             return new ColumnDto
             {

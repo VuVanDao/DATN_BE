@@ -4,6 +4,7 @@ using DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteBoard;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.ReorderColumns;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoard;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoardPreference;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateColumn;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBoards;
@@ -109,6 +110,19 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             command.BoardId = id;
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<ColumnDto>.Ok(result, "Tạo mới cột thành công"));
+        }
+
+        /// <summary>
+        /// Cập nhật tiêu đề và cấu hình hoàn thành của Cột. Yêu cầu thành viên trực tiếp của Dự án.
+        /// </summary>
+        [HttpPut("{id:guid}/columns/{columnId:guid}")]
+        public async Task<ActionResult<ApiResponse<ColumnDto>>> UpdateColumn(
+            Guid id, Guid columnId, [FromBody] UpdateColumnCommand command, CancellationToken cancellationToken)
+        {
+            command.BoardId = id;
+            command.ColumnId = columnId;
+            var result = await _mediator.Send(command, cancellationToken);
+            return Ok(ApiResponse<ColumnDto>.Ok(result, "Cập nhật Cột thành công."));
         }
 
         /// <summary>
