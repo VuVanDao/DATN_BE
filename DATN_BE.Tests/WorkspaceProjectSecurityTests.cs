@@ -60,6 +60,60 @@ namespace DATN_BE.Tests;
 public class WorkspaceProjectSecurityTests
 {
     [Theory]
+    [InlineData("member", true)]
+    [InlineData("leader", true)]
+    [InlineData("owner", false)]
+    [InlineData("outsider", false)]
+    public async Task Delete_column_requires_project_membership_and_cascades(string actor, bool allowed)
+    {
+        await using var f = await Fixture.Create();
+        f.Current.UserId = f.Actor(actor);
+        var oldDate = DateTimeOffset.UtcNow.AddDays(-2);
+        var oldCard = new Card { ColumnId = f.Column.Id, Title = "Old", ReporterId = f.Leader.Id,
+            IsDeleted = true, DeletedAt = oldDate };
+        var otherColumn = new Column { BoardId = f.Board.Id, Title = "Other" };
+        var otherCard = new Card { ColumnId = otherColumn.Id, Title = "Other", ReporterId = f.Leader.Id };
+        f.Db.Columns.Add(otherColumn);
+        f.Db.Cards.AddRange(oldCard, otherCard);
+        await f.Db.SaveChangesAsync();
+        var handler = new DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteColumn.DeleteColumnCommandHandler(f.Db, f.Auth);
+        var command = new DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteColumn.DeleteColumnCommand
+            { BoardId = f.Board.Id, ColumnId = f.Column.Id };
+        if (!allowed)
+        {
+            await Assert.ThrowsAsync<ForbiddenException>(() => handler.Handle(command, default));
+            Assert.False((await f.Db.Columns.SingleAsync(c => c.Id == f.Column.Id)).IsDeleted);
+            Assert.False((await f.Db.Cards.SingleAsync(c => c.Id == f.Card.Id)).IsDeleted);
+            return;
+        }
+        Assert.True(await handler.Handle(command, default));
+        f.Db.ChangeTracker.Clear();
+        Assert.False(await f.Db.Columns.AnyAsync(c => c.Id == f.Column.Id));
+        Assert.False(await f.Db.Cards.AnyAsync(c => c.Id == f.Card.Id));
+        var column = await f.Db.Columns.IgnoreQueryFilters().SingleAsync(c => c.Id == f.Column.Id);
+        Assert.Equal(column.DeletedAt, (await f.Db.Cards.IgnoreQueryFilters().SingleAsync(c => c.Id == f.Card.Id)).DeletedAt);
+        Assert.Equal(oldDate, (await f.Db.Cards.IgnoreQueryFilters().SingleAsync(c => c.Id == oldCard.Id)).DeletedAt);
+        Assert.True(await f.Db.Cards.AnyAsync(c => c.Id == otherCard.Id));
+        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, default));
+    }
+
+    [Fact]
+    public async Task Delete_column_rejects_wrong_board_and_empty_ids()
+    {
+        await using var f = await Fixture.Create();
+        f.Current.UserId = f.Member.Id;
+        var board = new Board { ProjectId = f.Project.Id, Title = "Other", Slug = "other" };
+        f.Db.Boards.Add(board);
+        await f.Db.SaveChangesAsync();
+        var handler = new DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteColumn.DeleteColumnCommandHandler(f.Db, f.Auth);
+        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(new() { BoardId = board.Id, ColumnId = f.Column.Id }, default));
+        var validator = new DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteColumn.DeleteColumnCommandValidator();
+        Assert.False(validator.Validate(new DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteColumn.DeleteColumnCommand { ColumnId = f.Column.Id }).IsValid);
+        Assert.False(validator.Validate(new DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteColumn.DeleteColumnCommand { BoardId = f.Board.Id }).IsValid);
+        Assert.True(await f.Db.Cards.AnyAsync(c => c.Id == f.Card.Id));
+    }
+
+    [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public async Task Update_column_persists_fields_and_preserves_position(bool isDone)

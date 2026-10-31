@@ -1619,6 +1619,19 @@
           }
         },
         {
+          "name": "Delete Column",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardId}}/columns/{{columnId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "board", "{{boardId}}", "columns", "{{columnId}}"]
+            },
+            "description": "Soft deletes the column and all active cards in one save; preserves timestamps of already deleted cards. Requires direct project membership, including ProjectLeader; WorkspaceOwner without project membership is forbidden. No body. Returns ApiResponse<bool> with data: true. 400: empty IDs; 401: unauthenticated; 403: not a project member; 404: missing/deleted board hierarchy or column, or column belongs to another board. Use disposable boardId and columnId."
+          }
+        },
+        {
           "name": "Reorder Columns",
           "request": {
             "method": "PUT",

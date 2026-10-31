@@ -1,6 +1,7 @@
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateBoard;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteBoard;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteColumn;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.ReorderColumns;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoard;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoardPreference;
@@ -123,6 +124,21 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             command.ColumnId = columnId;
             var result = await _mediator.Send(command, cancellationToken);
             return Ok(ApiResponse<ColumnDto>.Ok(result, "Cập nhật Cột thành công."));
+        }
+
+        /// <summary>
+        /// Xoá mềm Cột và các Thẻ thuộc Cột. Yêu cầu thành viên trực tiếp của Dự án.
+        /// </summary>
+        [HttpDelete("{id:guid}/columns/{columnId:guid}")]
+        public async Task<ActionResult<ApiResponse<bool>>> DeleteColumn(
+            Guid id, Guid columnId, CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(new DeleteColumnCommand
+            {
+                BoardId = id,
+                ColumnId = columnId
+            }, cancellationToken);
+            return Ok(ApiResponse<bool>.Ok(result, "Đã xoá Cột và các Thẻ thuộc Cột."));
         }
 
         /// <summary>
