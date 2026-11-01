@@ -29,6 +29,24 @@ namespace DATN_BE.Modules.Task.Application.Commands.DeleteCard
 
             _context.Cards.Remove(targetedCard);
 
+            var cardComments = await _context.CardComments
+                .Where(c => c.CardId == targetedCard.Id)
+                .ToListAsync(cancellationToken);
+
+            if (cardComments.Count > 0)
+            {
+                _context.CardComments.RemoveRange(cardComments);
+            }
+
+            var dependencies = await _context.CardDependencies
+                .Where(cd => cd.BlockedCardId == targetedCard.Id || cd.BlockingCardId == targetedCard.Id)
+                .ToListAsync(cancellationToken);
+
+            if (dependencies.Count > 0)
+            {
+                _context.CardDependencies.RemoveRange(dependencies);
+            }
+
             var remainingCards = await _context.Cards
                 .Where(c => c.ColumnId == sourceColumnId && c.Id != targetedCard.Id)
                 .OrderBy(c => c.Position)
