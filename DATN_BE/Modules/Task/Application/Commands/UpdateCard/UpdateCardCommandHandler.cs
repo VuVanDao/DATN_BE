@@ -1,4 +1,5 @@
-﻿using DATN_BE.Modules.Task.Application.DTOs;
+using DATN_BE.Modules.Identity.Domain.Entities;
+using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -29,11 +30,29 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
             targetCard.CoverUrl = request.CoverUrl;
             targetCard.Type = request.Type;
             targetCard.Priority = request.Priority;
-            targetCard.AssigneeId = request.AssigneeId;
             targetCard.StartDate = request.StartDate;
             targetCard.DueDate = request.DueDate;
             targetCard.StoryPoints = request.StoryPoints;
             targetCard.ProgressPercentage = request.ProgressPercentage;
+
+            if (request.AssigneeId.HasValue)
+            {
+                if (targetCard.AssigneeId != request.AssigneeId.Value || targetCard.Assignee == null)
+                {
+                    var assignee = await _context.Users
+                        .FirstOrDefaultAsync(u => u.Id == request.AssigneeId.Value &&
+                            u.ProjectMembers.Any(pm => pm.ProjectId == targetCard.Column.Board.ProjectId), cancellationToken)
+                        ?? throw new BadRequestException("Người được gán thẻ không tồn tại hoặc không thuộc Project này.");
+
+                    targetCard.AssigneeId = request.AssigneeId;
+                    targetCard.Assignee = assignee;
+                }
+            }
+            else
+            {
+                targetCard.AssigneeId = null;
+                targetCard.Assignee = null;
+            }
 
             await _context.SaveChangesAsync(cancellationToken);
             
