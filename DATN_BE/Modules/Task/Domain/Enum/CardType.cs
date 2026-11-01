@@ -7,7 +7,7 @@ namespace DATN_BE.Modules.Task.Domain.Enum
     {
         Task,
         Bug,
-        Story,
+        Features,
         Epic
     }
 }
