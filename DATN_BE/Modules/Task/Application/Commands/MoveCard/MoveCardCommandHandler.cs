@@ -32,14 +32,14 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
                 throw new BadRequestException("Card và cột đích phải thuộc cùng một Board.");
             }
             // id của cột gốc của card đang được kéo thả
-            var sourceColumnId = targetCard.ColumnId;
+            var oldColumnId = targetCard.ColumnId;
 
-            if (sourceColumnId == request.TargetColumnId)
+            if (oldColumnId == request.TargetColumnId)
             {
                 // TH1: KÉO THẢ TRONG CÙNG 1 CỘT
-                // tìm tất cả các card trong cột gốc (sourceColumnId) ngoại trừ card đang được kéo thả (targetCard)
+                // tìm tất cả các card trong cột gốc (oldColumnId) ngoại trừ card đang được kéo thả (targetCard)
                 var cardsInColumn = await _context.Cards
-                    .Where(c => c.ColumnId == sourceColumnId && c.Id != targetCard.Id)
+                    .Where(c => c.ColumnId == oldColumnId && c.Id != targetCard.Id)
                     .OrderBy(c => c.Position)
                     .ToListAsync(cancellationToken);
 
@@ -56,14 +56,14 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
             {
                 // TH2: KÉO THẢ SANG CỘT KHÁC
                 // Tìm danh sách các card của CỘT gốc (loại bỏ targetCard)
-                var sourceCards = await _context.Cards
-                    .Where(c => c.ColumnId == sourceColumnId && c.Id != targetCard.Id)
+                var cardsInOldColumn = await _context.Cards
+                    .Where(c => c.ColumnId == oldColumnId && c.Id != targetCard.Id)
                     .OrderBy(c => c.Position)
                     .ToListAsync(cancellationToken);
                 // sắp xếp lại position của các card trong CỘT gốc
-                for (int i = 0; i < sourceCards.Count; i++)
+                for (int i = 0; i < cardsInOldColumn.Count; i++)
                 {
-                    sourceCards[i].Position = i;
+                    cardsInOldColumn[i].Position = i;
                 }
 
                 // Lấy danh sách các card của CỘT đích (chèn targetCard vào)
@@ -75,11 +75,10 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
                 // đổi colId của targetCard sang cột mới
                 targetCard.ColumnId = request.TargetColumnId;
 
-                // Nếu kéo sang Cột Done -> Tự động đánh dấu hoàn thành 100%
-                if (targetColumn.IsDoneColumn)
-                {
-                    targetCard.ProgressPercentage = 100;
-                }
+                // if (targetColumn.IsDoneColumn)
+                // {
+                //     targetCard.ProgressPercentage = 100;
+                // }
 
                 targetCards.Insert(Math.Clamp(request.NewPosition, 0, targetCards.Count), targetCard);
                 // sắp xếp lại position của các card trong CỘT đích, bao gồm cả targetCard
