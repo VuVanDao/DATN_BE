@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.Identity.Domain.Entities;
+using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
@@ -27,6 +27,10 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
             var targetColumn = await _context.Columns.Include(c => c.Board)
                 .FirstOrDefaultAsync(c => c.Id == request.ColumnId, cancellationToken)
                 ?? throw new NotFoundException("Cột không tồn tại.");
+            if (targetColumn.Board == null)
+            {
+                throw new NotFoundException("Bảng của cột này không tồn tại hoặc đã bị xoá.");
+            }
             await _authorizationService.EnsureCanModifyProjectAsync(targetColumn.Board.ProjectId, cancellationToken);
             // Kiểm tra xem người dùng hiện tại có tồn tại không
             var reporter = await _context.Users.FirstOrDefaultAsync(u => u.Id == currentUserId, cancellationToken)
