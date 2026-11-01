@@ -84,6 +84,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
                 AssigneeAvatarUrl = assignee?.AvatarUrl,
                 ReporterId = newCard.ReporterId,
                 ReporterName = reporter.Username,
+                ReporterAvatarUrl = reporter.AvatarUrl,
                 CreatedAt = newCard.CreatedAt
             };
         }

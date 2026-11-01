@@ -54,6 +54,7 @@ namespace DATN_BE.Modules.Task.Application.Queries.GetCardDetail
 
                     ReporterId = c.ReporterId,
                     ReporterName = c.Reporter.Username,
+                    ReporterAvatarUrl = c.Reporter.AvatarUrl,
 
                     SprintId = c.SprintId,
                     CreatedAt = c.CreatedAt,

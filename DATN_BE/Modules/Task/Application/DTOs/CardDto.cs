@@ -21,6 +21,7 @@ namespace DATN_BE.Modules.Task.Application.DTOs
         public string? AssigneeAvatarUrl { get; set; }
         public Guid ReporterId { get; set; }
         public string ReporterName { get; set; } = string.Empty;
+        public string? ReporterAvatarUrl { get; set; }
         public Guid? SprintId { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public int CommentsCount { get; set; }

@@ -98,6 +98,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                                 AssigneeAvatarUrl = card.Assignee?.AvatarUrl,
                                 ReporterId = card.ReporterId,
                                 ReporterName = card.Reporter != null ? card.Reporter.Username : string.Empty,
+                                ReporterAvatarUrl = card.Reporter?.AvatarUrl,
                                 SprintId = card.SprintId,
                                 CreatedAt = card.CreatedAt,
                                 CommentsCount = card.Comments.Count
