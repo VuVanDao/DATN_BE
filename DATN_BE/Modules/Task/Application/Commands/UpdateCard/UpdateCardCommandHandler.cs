@@ -11,11 +11,18 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
     {
         private readonly IApplicationDbContext _context;
         private readonly IProjectAuthorizationService _authorizationService;
-        public UpdateCardCommandHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService)
+        private readonly ICloudinaryService? _cloudinaryService;
+
+        public UpdateCardCommandHandler(
+            IApplicationDbContext context,
+            IProjectAuthorizationService authorizationService,
+            ICloudinaryService? cloudinaryService = null)
         {
             _context = context;
             _authorizationService = authorizationService;
+            _cloudinaryService = cloudinaryService;
         }
+
         public async Task<CardDto> Handle(UpdateCardCommand request, CancellationToken cancellationToken)
         {
             var targetCard = await _context.Cards.Include(c => c.Assignee).Include(c => c.Reporter)
@@ -27,7 +34,27 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
             
             targetCard.Title = request.Title.Trim();
             targetCard.Description = request.Description;
-            targetCard.CoverUrl = request.CoverUrl;
+
+            // Xử lý ảnh bìa tương tự Workspace: ưu tiên file upload lên Cloudinary, hoặc nhận URL trực tiếp
+            if (request.CoverImage is { Length: > 0 })
+            {
+                if (_cloudinaryService != null)
+                {
+                    targetCard.CoverUrl = await _cloudinaryService.UploadCardCoverAsync(request.CoverImage, targetCard.Id.ToString(), cancellationToken);
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(request.CoverUrl) && request.CoverUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+            {
+                if (_cloudinaryService != null)
+                {
+                    targetCard.CoverUrl = await _cloudinaryService.UploadCardCoverFromDataUriAsync(request.CoverUrl, targetCard.Id.ToString(), cancellationToken);
+                }
+            }
+            else
+            {
+                targetCard.CoverUrl = string.IsNullOrWhiteSpace(request.CoverUrl) ? null : request.CoverUrl;
+            }
+
             targetCard.Type = request.Type;
             targetCard.Priority = request.Priority;
             targetCard.StartDate = request.StartDate;

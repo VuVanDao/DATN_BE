@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet;
+using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -80,6 +80,59 @@ namespace DATN_BE.Shared.Infrastructure.Services
                                                 .Quality("auto")
                                                 .FetchFormat("auto")
                 
+            };
+            var uploadResult = await _cloudinary.UploadAsync(uploadparams, cancellationToken);
+            if (uploadResult.Error != null)
+            {
+                throw new BadRequestException($"Lỗi upload ảnh lên Cloudinary: {uploadResult.Error.Message}");
+            }
+            return uploadResult.SecureUrl.ToString();
+        }
+
+        public async Task<string> UploadCardCoverAsync(IFormFile file, string cardId, CancellationToken cancellationToken = default)
+        {
+            if (file == null || file.Length == 0)
+            {
+                throw new BadRequestException("File tải lên không hợp lệ hoặc rỗng.");
+            }
+            await using var stream = file.OpenReadStream();
+            var uploadparams = new ImageUploadParams
+            {
+                File = new FileDescription(file.FileName, stream),
+                Folder = "TrelloClone/CardCovers",
+                PublicId = $"card_cover_{cardId}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
+                Overwrite = true,
+                Transformation = new Transformation()
+                    .Width(1200)
+                    .Crop("limit")
+                    .Quality("auto")
+                    .FetchFormat("auto")
+            };
+            var uploadResult = await _cloudinary.UploadAsync(uploadparams, cancellationToken);
+            if (uploadResult.Error != null)
+            {
+                throw new BadRequestException($"Lỗi upload ảnh lên Cloudinary: {uploadResult.Error.Message}");
+            }
+            return uploadResult.SecureUrl.ToString();
+        }
+
+        public async Task<string> UploadCardCoverFromDataUriAsync(string dataUri, string cardId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(dataUri))
+            {
+                throw new BadRequestException("Dữ liệu ảnh không hợp lệ.");
+            }
+            var uploadparams = new ImageUploadParams
+            {
+                File = new FileDescription(dataUri),
+                Folder = "TrelloClone/CardCovers",
+                PublicId = $"card_cover_{cardId}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
+                Overwrite = true,
+                Transformation = new Transformation()
+                    .Width(1200)
+                    .Crop("limit")
+                    .Quality("auto")
+                    .FetchFormat("auto")
             };
             var uploadResult = await _cloudinary.UploadAsync(uploadparams, cancellationToken);
             if (uploadResult.Error != null)

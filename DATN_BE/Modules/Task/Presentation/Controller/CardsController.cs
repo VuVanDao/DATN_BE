@@ -41,10 +41,11 @@ namespace DATN_BE.Modules.Task.Presentation.Controller
             return Ok(ApiResponse<CardDetailDto>.Ok(result, "Lấy chi tiết card thành công"));
         }
         /// <summary>
-        /// Cập nhật thông tin Thẻ
+        /// Cập nhật thông tin Thẻ (hỗ trợ FormData và upload file ảnh bìa)
         /// </summary>
         [HttpPut("{cardId}")]
-        public async Task<ActionResult<ApiResponse<CardDto>>> UpdateCard(Guid cardId, [FromBody] UpdateCardCommand command)
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ApiResponse<CardDto>>> UpdateCard(Guid cardId, [FromForm] UpdateCardCommand command)
         {
             command.CardId = cardId;
             var result = await _mediator.Send(command);
