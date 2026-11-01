@@ -26,7 +26,7 @@ using DATN_BE.Modules.Task.Application.Commands.CreateCard;
 using DATN_BE.Modules.Task.Application.Commands.DeleteCard;
 using DATN_BE.Modules.Task.Application.Commands.MoveCard;
 using DATN_BE.Modules.Task.Application.Commands.UpdateCard;
-using DATN_BE.Modules.Task.Application.Queries.GetCardById;
+using DATN_BE.Modules.Task.Application.Queries.GetCardDetail;
 using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Modules.Workspaces.Application.Commands.DeleteWorkspace;
 using DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace;
@@ -319,7 +319,7 @@ public class WorkspaceProjectSecurityTests
         var detail = await new GetBoardDetailQueryHandler(f.Db, f.Auth)
             .Handle(new(f.Board.Slug, f.Project.Id), default);
         Assert.Single(detail.Columns);
-        var card = await new GetCardByIdQueryHandler(f.Db, f.Auth).Handle(new(f.Card.Id), default);
+        var card = await new GetCardDetailQueryHandler(f.Db, f.Auth).Handle(new(f.Card.Id), default);
         Assert.Equal(f.Card.Id, card.Id);
     }
 

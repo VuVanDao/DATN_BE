@@ -1,10 +1,10 @@
-﻿using DATN_BE.Modules.Task.Application.Commands.AddCardComment;
+using DATN_BE.Modules.Task.Application.Commands.AddCardComment;
 using DATN_BE.Modules.Task.Application.Commands.CreateCard;
 using DATN_BE.Modules.Task.Application.Commands.DeleteCard;
 using DATN_BE.Modules.Task.Application.Commands.MoveCard;
 using DATN_BE.Modules.Task.Application.Commands.UpdateCard;
 using DATN_BE.Modules.Task.Application.DTOs;
-using DATN_BE.Modules.Task.Application.Queries.GetCardById;
+using DATN_BE.Modules.Task.Application.Queries.GetCardDetail;
 using DATN_BE.Shared.Application.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -35,9 +35,9 @@ namespace DATN_BE.Modules.Task.Presentation.Controller
         /// Lấy chi tiết Thẻ kèm danh sách bình luận
         /// </summary>
         [HttpGet("{cardId}")]
-        public async Task<ActionResult<ApiResponse<CardDetailDto>>> GetCardById(Guid cardId)
+        public async Task<ActionResult<ApiResponse<CardDetailDto>>> GetCardDetail(Guid cardId)
         {
-            var result = await _mediator.Send(new GetCardByIdQuery(cardId));
+            var result = await _mediator.Send(new GetCardDetailQuery(cardId));
             return Ok(ApiResponse<CardDetailDto>.Ok(result, "Lấy chi tiết card thành công"));
         }
         /// <summary>

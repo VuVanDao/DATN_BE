@@ -1,21 +1,23 @@
-﻿using DATN_BE.Modules.Task.Application.DTOs;
+using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace DATN_BE.Modules.Task.Application.Queries.GetCardById
+namespace DATN_BE.Modules.Task.Application.Queries.GetCardDetail
 {
-    public class GetCardByIdQueryHandler : IRequestHandler<GetCardByIdQuery, CardDetailDto>
+    public class GetCardDetailQueryHandler : IRequestHandler<GetCardDetailQuery, CardDetailDto>
     {
         private readonly IApplicationDbContext _context;
         private readonly IProjectAuthorizationService _authorizationService;
-        public GetCardByIdQueryHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService)
+
+        public GetCardDetailQueryHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService)
         {
             _context = context;
             _authorizationService = authorizationService;
         }
-        public async Task<CardDetailDto> Handle(GetCardByIdQuery request, CancellationToken cancellationToken)
+
+        public async Task<CardDetailDto> Handle(GetCardDetailQuery request, CancellationToken cancellationToken)
         {
             var cardInfoToCheckAccessCanView = await _context.Cards
                 .AsNoTracking()
