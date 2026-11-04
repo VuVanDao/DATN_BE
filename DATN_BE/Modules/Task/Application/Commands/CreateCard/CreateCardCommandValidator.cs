@@ -10,7 +10,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
             .NotEmpty().WithMessage("Mã Cột (ColumnId) không hợp lệ.");
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("Tiêu đề Thẻ không được để trống.")
-            .MaximumLength(200).WithMessage("Tiêu đề Thẻ không được vượt quá 200 ký tự.");
+            .MaximumLength(20).WithMessage("Tiêu đề Thẻ không được vượt quá 200 ký tự.");
         RuleFor(x => x.StoryPoints)
             .GreaterThanOrEqualTo(0).When(x => x.StoryPoints.HasValue)
             .WithMessage("Điểm Story Points không được âm.");

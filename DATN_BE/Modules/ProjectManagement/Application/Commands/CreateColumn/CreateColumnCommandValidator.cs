@@ -10,7 +10,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn
                 .NotEmpty().WithMessage("Mã Bảng (BoardId) không hợp lệ.");
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Tiêu đề Cột không được để trống.")
-                .MaximumLength(100).WithMessage("Tiêu đề Cột không được vượt quá 100 ký tự.");
+                .MaximumLength(15).WithMessage("Tiêu đề Cột không được vượt quá 100 ký tự.");
         }
     }
 }
