@@ -61,21 +61,31 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.UpdateWorkspace
         }
         private async System.Threading.Tasks.Task GenerateNewUniqueSlugtoUpdate(Workspace workspace, string? requestedname, CancellationToken cancellationToken)
         {
-            if (!string.IsNullOrWhiteSpace(requestedname) &&!string.Equals(workspace.Name,requestedname,StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(requestedname) && !string.Equals(workspace.Name, requestedname, StringComparison.OrdinalIgnoreCase))
             {
                 var normalizeName = requestedname.Trim();
                 var baseSlug = SlugHelper.GenerateSlug(normalizeName);
-                var newSlug = baseSlug;
+                if (string.IsNullOrWhiteSpace(baseSlug))
+                {
+                    baseSlug = "workspace";
+                }
+                if (baseSlug.Length > 100)
+                {
+                    baseSlug = baseSlug[..100].TrimEnd('-');
+                }
+
                 var existingSlug = await _context.Workspaces
-                    .Where(w => (w.Slug.StartsWith(baseSlug + "-") || w.Slug == baseSlug) && w.Id != workspace.Id)
+                    .Where(w => (w.Slug == baseSlug || w.Slug.StartsWith(baseSlug + "-")) && w.Id != workspace.Id)
                     .Select(w => w.Slug)
                     .ToHashSetAsync(cancellationToken);
-                var count = 1;
+
+                var newSlug = baseSlug;
                 while (existingSlug.Contains(newSlug))
                 {
-                    newSlug = $"{baseSlug}-{count}";
-                    count++;
+                    var shortCode = SlugHelper.GenerateShortCode(6);
+                    newSlug = $"{baseSlug}-{shortCode}";
                 }
+
                 workspace.Name = normalizeName;
                 workspace.Slug = newSlug;
             }

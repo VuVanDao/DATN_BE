@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -7,6 +8,8 @@ namespace DATN_BE.Shared.Utils
     // Tiện ích chuyển tên tiếng Việt thành Slug URL
     public static class SlugHelper
     {
+        private const string AlphaNumericChars = "abcdefghijklmnopqrstuvwxyz0123456789";
+
         public static string GenerateSlug(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -32,6 +35,12 @@ namespace DATN_BE.Shared.Utils
             cleanText = Regex.Replace(cleanText, @"\s+", "-").Trim('-');
             
             return cleanText;
+        }
+
+        // Tạo chuỗi mã ngắn ngẫu nhiên gồm chữ thường và số (vd: "a8f3b2")
+        public static string GenerateShortCode(int length = 6)
+        {
+            return RandomNumberGenerator.GetString(AlphaNumericChars, length);
         }
     }
 }

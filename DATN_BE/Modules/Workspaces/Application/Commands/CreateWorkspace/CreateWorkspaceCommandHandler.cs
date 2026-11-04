@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.Workspaces.Application.DTOs;
+using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -22,20 +22,30 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace
         {
             var currentUserId = _currentUserService.UserId ?? throw new ForbiddenException("Bạn cần đăng nhập để tạo Workspace.");
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == currentUserId && !u.IsDeleted, cancellationToken) ?? throw new NotFoundException("Người dùng không tồn tại");
+
             // 1. Tự động sinh Slug và xử lý chống trùng Slug
             var baseSlug = SlugHelper.GenerateSlug(request.Name);
-            var existingSlugs = await _context.Workspaces
-                .Where(w => w.Slug.StartsWith(baseSlug))
-                .Select(w => w.Slug)
-                .ToListAsync(cancellationToken);
-            var slugSet = new HashSet<string>(existingSlugs);
-            var slug = baseSlug;
-            var counter = 1;
-            while (slugSet.Contains(slug))
+            if (string.IsNullOrWhiteSpace(baseSlug))
             {
-                slug = $"{baseSlug}-{counter}";
-                counter++;
+                baseSlug = "workspace";
             }
+            if (baseSlug.Length > 100)
+            {
+                baseSlug = baseSlug[..100].TrimEnd('-');
+            }
+
+            var existingSlugs = await _context.Workspaces
+                .Where(w => w.Slug == baseSlug || w.Slug.StartsWith(baseSlug + "-"))
+                .Select(w => w.Slug)
+                .ToHashSetAsync(cancellationToken);
+
+            var slug = baseSlug;
+            while (existingSlugs.Contains(slug))
+            {
+                var shortCode = SlugHelper.GenerateShortCode(6);
+                slug = $"{baseSlug}-{shortCode}";
+            }
+
             // 2. Tạo Workspace
             var workspace = new Workspace
             {
@@ -45,9 +55,11 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace
                 OwnerId = currentUserId
             };
             _context.Workspaces.Add(workspace);
+
             // 3. Tìm Role "WorkspaceOwner" để gán cho Người tạo
             var OwnerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == RoleConstants.WorkspaceOwner, cancellationToken) 
                 ?? throw new NotFoundException("Không tìm thấy vai trò WorkspaceOwner");
+
             // 4. Thêm người tạo vào danh sách WorkspaceMembers
             var member = new WorkspaceMember
             {
@@ -57,6 +69,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace
             };
             _context.WorkspaceMembers.Add(member);
             await _context.SaveChangesAsync(cancellationToken);
+
             return new WorkspaceDto
             {
                 Id = workspace.Id,
