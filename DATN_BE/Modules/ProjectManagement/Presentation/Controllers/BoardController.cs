@@ -39,13 +39,15 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         }
 
         /// <summary>
-        /// Lấy tối đa 3 Bảng gần đây và 3 Bảng đã ghim của người đăng nhập,
+        /// Lấy danh sách Bảng gần đây và Bảng đã ghim của người đăng nhập,
         /// mỗi nhóm sắp xếp theo lần xem mới nhất.
         /// </summary>
         [HttpGet("my-boards")]
-        public async Task<ActionResult<ApiResponse<MyBoardsDto>>> GetMyBoards(CancellationToken cancellationToken)
+        public async Task<ActionResult<ApiResponse<MyBoardsDto>>> GetMyBoards(
+            [FromQuery] int? limit,
+            CancellationToken cancellationToken)
         {
-            var result = await _mediator.Send(new GetMyBoardsQuery(), cancellationToken);
+            var result = await _mediator.Send(new GetMyBoardsQuery(limit), cancellationToken);
             return Ok(ApiResponse<MyBoardsDto>.Ok(result, "Lấy danh sách Bảng cá nhân thành công."));
         }
 

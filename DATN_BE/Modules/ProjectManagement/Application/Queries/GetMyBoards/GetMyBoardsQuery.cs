@@ -3,4 +3,4 @@ using MediatR;
 
 namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetMyBoards;
 
-public record GetMyBoardsQuery : IRequest<MyBoardsDto>;
+public record GetMyBoardsQuery(int? Limit = null) : IRequest<MyBoardsDto>;

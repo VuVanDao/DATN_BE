@@ -12,6 +12,9 @@ public class MyBoardItemDto
     public string Title { get; set; } = string.Empty;
     public string BoardSlug { get; set; } = string.Empty;
     public Guid ProjectId { get; set; }
+    public string ProjectName { get; set; } = string.Empty;
+    public string WorkspaceName { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
     public bool IsPinned { get; set; }
     public DateTimeOffset LastViewedAt { get; set; }
 }

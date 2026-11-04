@@ -14,6 +14,8 @@ public class GetMyBoardsQueryHandler(IApplicationDbContext context, ICurrentUser
         var userId = currentUserService.UserId
             ?? throw new ForbiddenException("Bạn cần đăng nhập để xem danh sách Bảng.");
 
+        var takeCount = request.Limit is > 0 ? request.Limit.Value : 3;
+
         // Recheck current view access: old preferences may survive membership removal.
         var boards = context.UserBoardPreferences.AsNoTracking()
             .Where(preference => preference.UserId == userId &&
@@ -28,15 +30,18 @@ public class GetMyBoardsQueryHandler(IApplicationDbContext context, ICurrentUser
                 Title = preference.Board.Title,
                 BoardSlug = preference.Board.Slug,
                 ProjectId = preference.Board.ProjectId,
+                ProjectName = preference.Board.Project.Name,
+                WorkspaceName = preference.Board.Project.Workspace.Name,
+                Type = preference.Board.Type.ToString(),
                 IsPinned = preference.IsPinned,
                 LastViewedAt = preference.LastViewedAt
             });
 
         var recent = await boards.OrderByDescending(board => board.LastViewedAt)
-            .ThenBy(board => board.BoardId).Take(3).ToListAsync(cancellationToken);
+            .ThenBy(board => board.BoardId).Take(takeCount).ToListAsync(cancellationToken);
         var pinned = await boards.Where(board => board.IsPinned)
             .OrderByDescending(board => board.LastViewedAt)
-            .ThenBy(board => board.BoardId).Take(3).ToListAsync(cancellationToken);
+            .ThenBy(board => board.BoardId).Take(takeCount).ToListAsync(cancellationToken);
 
         return new MyBoardsDto { RecentBoards = recent, PinnedBoards = pinned };
     }
