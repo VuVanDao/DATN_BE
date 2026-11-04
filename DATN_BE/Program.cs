@@ -111,10 +111,11 @@ namespace DATN_BE
 
             var app = builder.Build();
 
-            // 7. Chạy Data Seeder khi ứng dụng khởi động
+            // 7. Chạy Migration & Data Seeder khi ứng dụng khởi động
             using (var scope = app.Services.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                await context.Database.MigrateAsync();
                 await DataSeeder.SeedAsync(context);
             }
 

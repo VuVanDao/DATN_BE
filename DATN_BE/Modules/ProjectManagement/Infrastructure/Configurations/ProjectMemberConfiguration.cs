@@ -25,6 +25,10 @@ namespace DATN_BE.Modules.ProjectManagement.Infrastructure.Configurations
                 .WithMany()
                 .HasForeignKey(pm => pm.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Property(pm => pm.JobTitle)
+                .HasMaxLength(100)
+                .IsRequired(false);
         }
     }
 }

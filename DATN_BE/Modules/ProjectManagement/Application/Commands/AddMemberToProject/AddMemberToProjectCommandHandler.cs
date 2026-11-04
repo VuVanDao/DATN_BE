@@ -107,6 +107,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProe
                     ProjectId = project.Id,
                     UserId = member.UserId,
                     RoleId = targetRoleId,
+                    JobTitle = string.IsNullOrWhiteSpace(member.JobTitle) ? null : member.JobTitle.Trim(),
                     JoinedAt = DateTimeOffset.UtcNow
                 };
                 _context.ProjectMembers.Add(newMember);
@@ -132,6 +133,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProe
                     AvatarUrl = usersById[m.UserId].AvatarUrl,
                     RoleId = m.RoleId,
                     RoleName = roleNameById[m.RoleId],
+                    JobTitle = m.JobTitle,
                     JoinedAt = m.JoinedAt
                 }).ToList();
         }

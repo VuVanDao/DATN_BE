@@ -93,6 +93,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectMe
                 AvatarUrl = targetMember.User?.AvatarUrl,
                 RoleId = newRole.Id,
                 RoleName = newRole.Name,
+                JobTitle = targetMember.JobTitle,
                 JoinedAt = targetMember.JoinedAt
             };
         }

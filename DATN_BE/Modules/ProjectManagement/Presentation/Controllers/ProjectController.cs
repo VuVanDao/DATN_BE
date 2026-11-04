@@ -5,6 +5,7 @@ using DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteProject;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.RemoveMemberFromProject;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProject;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectLeader;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectMemberJobTitle;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetMyProjects;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectAuditLogs;
@@ -136,6 +137,21 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             command.UserId = userId;
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<ProjectMemberDto>.Ok(result, "Cập nhật vai trò thành viên thành công."));
+        }
+        /// <summary>
+        /// Cập nhật chức danh chuyên môn (JobTitle) cho thành viên dự án
+        /// </summary>
+        [HttpPut("{projectId:guid}/members/{userId:guid}/job-title")]
+        public async Task<ActionResult<ApiResponse<ProjectMemberDto>>> UpdateProjectMemberJobTitle(
+            Guid projectId,
+            Guid userId,
+            [FromBody] UpdateProjectMemberJobTitleCommand command,
+            CancellationToken cancellationToken)
+        {
+            command.ProjectId = projectId;
+            command.UserId = userId;
+            var result = await _mediator.Send(command, cancellationToken);
+            return Ok(ApiResponse<ProjectMemberDto>.Ok(result, "Cập nhật chức danh thành viên thành công."));
         }
         /// <summary>
         /// Xóa thành viên khỏi Dự án

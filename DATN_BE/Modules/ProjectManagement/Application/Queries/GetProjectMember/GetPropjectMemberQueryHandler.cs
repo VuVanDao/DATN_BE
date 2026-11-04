@@ -46,6 +46,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectMember
                     AvatarUrl = pm.User.AvatarUrl,
                     RoleId = pm.RoleId,
                     RoleName = pm.Role.Name,
+                    JobTitle = pm.JobTitle,
                     JoinedAt = pm.JoinedAt
                 })
                 .ToListAsync(cancellationToken);

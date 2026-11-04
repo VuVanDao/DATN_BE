@@ -13,6 +13,11 @@ namespace DATN_BE.Modules.ProjectManagement.Domain.Entities
         public Guid RoleId { get; set; }
         public Role Role { get; set; } = null!;
 
+        /// <summary>
+        /// Chức danh / Vị trí chuyên môn trong phạm vi dự án (VD: Frontend Dev, Content Writer, Kỹ sư giám sát...)
+        /// </summary>
+        public string? JobTitle { get; set; }
+
         public DateTimeOffset JoinedAt { get; set; } = DateTimeOffset.UtcNow;
     }
 }
