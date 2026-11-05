@@ -40,7 +40,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.Login
                 // Bắn Event thông báo tài khoản bị khóa
                 await _mediator.Publish(new UserLoginAttemptedEvent(
                    user.Id, request.Email, request.IpAddress, request.UserAgent, false, "Tài khoản đang bị khóa."), cancellationToken);
-                throw new BadRequestException("Tài khoản của bạn hiện đang bị khóa. Vui lòng liên hệ quản trị viên.");
+                throw new ForbiddenException("Tài khoản của bạn hiện đang bị khóa. Vui lòng liên hệ quản trị viên.");
             }
 
             // 5. Sinh JWT Token
