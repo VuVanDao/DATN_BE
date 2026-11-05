@@ -2,6 +2,8 @@ using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
+using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 
 namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
 {
@@ -9,11 +11,18 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
     {
         private readonly IApplicationDbContext _context;
         private readonly IProjectAuthorizationService _authorizationService;
+        private readonly IHubContext<BoardHub> _hubContext;
+        private readonly ICurrentUserService _currentUser;
+        private readonly ILogger<MoveCardCommandHandler> _logger;
 
-        public MoveCardCommandHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService)
+        public MoveCardCommandHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService,
+            IHubContext<BoardHub> hubContext, ICurrentUserService currentUser, ILogger<MoveCardCommandHandler> logger)
         {
             _context = context;
             _authorizationService = authorizationService;
+            _hubContext = hubContext;
+            _currentUser = currentUser;
+            _logger = logger;
         }
 
         public async Task<bool> Handle(MoveCardCommand request, CancellationToken cancellationToken)
@@ -89,6 +98,19 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
             }
 
             await _context.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _hubContext.Clients.Group(BoardHub.GroupName(targetColumn.BoardId))
+                    .SendAsync(BoardHub.CardMoved,
+                        new CardMovedMessage(targetColumn.BoardId, targetCard.Id, oldColumnId,
+                            targetCard.ColumnId, targetCard.Position, _currentUser.UserId, DateTimeOffset.UtcNow),
+                        CancellationToken.None);
+                _logger.LogInformation("Đã phát sự kiện move card cho board {BoardId}.", targetColumn.BoardId);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "Không thể phát sự kiện move card cho board {BoardId}.", targetColumn.BoardId);
+            }
             return true;
         }
     }

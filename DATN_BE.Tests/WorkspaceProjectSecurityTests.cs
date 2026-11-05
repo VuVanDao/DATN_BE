@@ -340,7 +340,7 @@ public class WorkspaceProjectSecurityTests
             () => new CreateCardCommandHandler(f.Db, f.Current, f.Auth).Handle(new() { ColumnId = f.Column.Id }, default),
             () => new UpdateCardCommandHandler(f.Db, f.Auth).Handle(new() { CardId = f.Card.Id }, default),
             () => new DeleteCardCommandHandler(f.Db, f.Auth).Handle(new(f.Card.Id), default),
-            () => new MoveCardCommandHandler(f.Db, f.Auth).Handle(new() { CardId = f.Card.Id }, default),
+            () => new MoveCardCommandHandler(f.Db, f.Auth, null!, f.Current, Microsoft.Extensions.Logging.Abstractions.NullLogger<MoveCardCommandHandler>.Instance).Handle(new() { CardId = f.Card.Id }, default),
             () => new AddCardCommentCommandHandler(f.Db, f.Current, f.Auth).Handle(new() { CardId = f.Card.Id }, default)
         };
         foreach (var write in writes)

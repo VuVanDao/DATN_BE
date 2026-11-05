@@ -11,6 +11,7 @@ public sealed class BoardHub : Hub
 {
     public const string Route = "/hubs/board";
     public const string ColumnsReordered = "ColumnsReordered";
+    public const string CardMoved = "CardMoved";
 
     private readonly IApplicationDbContext _context;
     private readonly IProjectAuthorizationService _authorizationService;
@@ -70,3 +71,7 @@ public sealed record ColumnsReorderedMessage(
     IReadOnlyList<Guid> OrderedColumnIds,
     Guid ChangedByUserId,
     DateTimeOffset OccurredAt);
+
+public sealed record CardMovedMessage(
+    Guid BoardId, Guid CardId, Guid SourceColumnId, Guid TargetColumnId,
+    int NewPosition, Guid? ChangedByUserId, DateTimeOffset OccurredAt);
