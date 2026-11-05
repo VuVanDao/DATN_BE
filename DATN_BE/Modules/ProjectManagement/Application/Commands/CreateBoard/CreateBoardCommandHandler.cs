@@ -41,18 +41,28 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateBoard
 
             await _authorizationService.EnsureProjectLeaderAsync(request.ProjectId, cancellationToken);
 
-            var slug = SlugHelper.GenerateSlug(request.Slug);
-            if (string.IsNullOrWhiteSpace(slug))
+            // 1. Tự động sinh Slug và xử lý chống trùng Slug trong Project
+            var sourceText = !string.IsNullOrWhiteSpace(request.Slug) ? request.Slug : request.Title;
+            var baseSlug = SlugHelper.GenerateSlug(sourceText);
+            if (string.IsNullOrWhiteSpace(baseSlug))
             {
-                throw new BadRequestException("Slug của Bảng không chứa ký tự hợp lệ.");
+                baseSlug = "board";
+            }
+            if (baseSlug.Length > 100)
+            {
+                baseSlug = baseSlug[..100].TrimEnd('-');
             }
 
-            var slugExists = await _context.Boards
-                .AnyAsync(board => board.ProjectId == request.ProjectId && board.Slug == slug, cancellationToken);
+            var existingSlugs = await _context.Boards
+                .Where(board => board.ProjectId == request.ProjectId && (board.Slug == baseSlug || board.Slug.StartsWith(baseSlug + "-")))
+                .Select(board => board.Slug)
+                .ToHashSetAsync(cancellationToken);
 
-            if (slugExists)
+            var slug = baseSlug;
+            while (existingSlugs.Contains(slug))
             {
-                throw new BadRequestException("Slug này đã được sử dụng trong Project.");
+                var shortCode = SlugHelper.GenerateShortCode(6);
+                slug = $"{baseSlug}-{shortCode}";
             }
 
             var board = new Board

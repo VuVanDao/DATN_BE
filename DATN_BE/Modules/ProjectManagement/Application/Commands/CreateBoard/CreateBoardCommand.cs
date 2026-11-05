@@ -8,7 +8,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateBoard
     {
         public Guid ProjectId { get; set; }
         public string Title { get; set; } = string.Empty;
-        public string Slug { get; set; } = string.Empty;
+        public string? Slug { get; set; }
         public BoardType Type { get; set; } = BoardType.Kanban;
     }
 }
