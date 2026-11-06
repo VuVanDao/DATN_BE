@@ -22,7 +22,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.ResetPassword
             // 2. Tìm Token xác nhận
             var resetToken = await _context.PasswordResetTokens
                 .FirstOrDefaultAsync(prt => prt.Token == request.Token && prt.UserId == user.Id, cancellationToken)
-                ?? throw new BadRequestException("Mã xác nhận không hợp lệ.");
+                ?? throw new NotFoundException("Mã xác nhận không hợp lệ.");
             if (resetToken.IsUsed)
             {
                 throw new BadRequestException("Mã xác nhận này đã được sử dụng.");
