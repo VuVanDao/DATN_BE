@@ -17,11 +17,13 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProe
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
+
         public AddMemberToProejctCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
             _currentUserService = currentUserService;
         }
+
         public async Task<List<ProjectMemberDto>> Handle(AddMemberToProejctCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
@@ -42,29 +44,17 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProe
                 throw new ForbiddenException("Chỉ Chủ sở hữu Workspace hoặc trưởng dự án mới có quyền thêm thành viên");
             }
 
-            // get valid role
-            var projectRolesAvailable = await _context.Roles
-                .Where(r => r.Scope == RoleScope.Project)
-                .ToListAsync(cancellationToken);
-
-            // role mac dinh neu FE khong gui role cho member nay len
-            var defaultMemberRole = projectRolesAvailable.FirstOrDefault(r => r.Name == RoleConstants.ProjectMember)
+            // Role mặc định cho thành viên mới khi thêm vào dự án
+            var projectMemberRole = await _context.Roles
+                .FirstOrDefaultAsync(r => r.Name == RoleConstants.ProjectMember && r.Scope == RoleScope.Project, cancellationToken)
                 ?? throw new NotFoundException($"Không tìm thấy vai trò {RoleConstants.ProjectMember} trong hệ thống");
-
-            // get leader role    
-            var leaderRole = projectRolesAvailable.FirstOrDefault(r => r.Name == RoleConstants.ProjectLeader)
-                ?? throw new NotFoundException($"Không tìm thấy vai trò {RoleConstants.ProjectLeader} trong hệ thống");
-
-            if (request.Members.Count(m => m.RoleId == leaderRole.Id) > 1)
-            {
-                throw new BadRequestException("Mỗi lần thêm thành viên chỉ được chỉ định một Trưởng dự án");
-            }
 
             // list valid userId in workspace
             var validWorkspaceUserIds = await _context.WorkspaceMembers
-                                                .Where(wm => wm.WorkspaceId == project.WorkspaceId)
-                                                .Select(wm => wm.UserId)
-                                                .ToHashSetAsync(cancellationToken);
+                .Where(wm => wm.WorkspaceId == project.WorkspaceId)
+                .Select(wm => wm.UserId)
+                .ToHashSetAsync(cancellationToken);
+
             // list member in current project
             var existingProjectUserIds = project.ProjectMembers.Select(pm => pm.UserId).ToHashSet();
 
@@ -74,42 +64,28 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProe
             foreach (var member in request.Members)
             {
                 // check user belong to workspace
-                var isUserBelongToWorkspace = validWorkspaceUserIds.Any(wsuID => wsuID == member.UserId);
+                var isUserBelongToWorkspace = validWorkspaceUserIds.Contains(member.UserId);
                 if (!isUserBelongToWorkspace)
                 {
                     throw new BadRequestException($"Người dùng với Id '{member.UserId}' không thuộc Không gian làm việc này");
                 }
+
                 // check if user already in project
                 var userAlreadyInProject = existingProjectUserIds.Contains(member.UserId);
                 if (userAlreadyInProject)
                 {
                     continue;
                 }
-                // define role
-                var targetRoleId = defaultMemberRole.Id;
-                if (member.RoleId.HasValue)
-                {
-                    var selectedRole = projectRolesAvailable.FirstOrDefault(r => r.Id == member.RoleId.Value)
-                        ?? throw new BadRequestException("Vai trò được chọn không hợp lệ cho phạm vi Dự án");
-                    targetRoleId = selectedRole.Id;
-                }
-                // if role is leader
-                // make oleProjectLeader down to member
-                if (targetRoleId == leaderRole.Id)
-                {
-                    foreach (var currentLeader in project.ProjectMembers.Where(pm => pm.RoleId == leaderRole.Id))
-                    {
-                        currentLeader.RoleId = defaultMemberRole.Id;
-                    }
-                }
+
                 var newMember = new ProjectMember
                 {
                     ProjectId = project.Id,
                     UserId = member.UserId,
-                    RoleId = targetRoleId,
+                    RoleId = projectMemberRole.Id,
                     JobTitle = string.IsNullOrWhiteSpace(member.JobTitle) ? null : member.JobTitle.Trim(),
                     JoinedAt = DateTimeOffset.UtcNow
                 };
+
                 _context.ProjectMembers.Add(newMember);
                 addedMembersResult.Add(newMember);
                 existingProjectUserIds.Add(member.UserId);
@@ -118,24 +94,22 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProe
             await _context.SaveChangesAsync(cancellationToken);
 
             // return list new member added
-            var roleNameById = projectRolesAvailable.ToDictionary(r => r.Id, r => r.Name);
-            
-            // ids list member requested to add
-            var requestedUserIds = request.Members.Select(m => m.UserId).ToHashSet();
+            var addedUserIds = addedMembersResult.Select(m => m.UserId).ToHashSet();
             var usersById = await _context.Users
-                .Where(u => requestedUserIds.Contains(u.Id))
+                .Where(u => addedUserIds.Contains(u.Id))
                 .ToDictionaryAsync(u => u.Id, cancellationToken);
-             return addedMembersResult.Select(m => new ProjectMemberDto
-                {
-                    UserId = m.UserId,
-                    Username = usersById[m.UserId].Username,
-                    Email = usersById[m.UserId].Email,
-                    AvatarUrl = usersById[m.UserId].AvatarUrl,
-                    RoleId = m.RoleId,
-                    RoleName = roleNameById[m.RoleId],
-                    JobTitle = m.JobTitle,
-                    JoinedAt = m.JoinedAt
-                }).ToList();
+
+            return addedMembersResult.Select(m => new ProjectMemberDto
+            {
+                UserId = m.UserId,
+                Username = usersById.TryGetValue(m.UserId, out var u) ? u.Username : string.Empty,
+                Email = usersById.TryGetValue(m.UserId, out var u2) ? u2.Email : string.Empty,
+                AvatarUrl = usersById.TryGetValue(m.UserId, out var u3) ? u3.AvatarUrl : null,
+                RoleId = projectMemberRole.Id,
+                RoleName = projectMemberRole.Name,
+                JobTitle = m.JobTitle,
+                JoinedAt = m.JoinedAt
+            }).ToList();
         }
     }
 }
