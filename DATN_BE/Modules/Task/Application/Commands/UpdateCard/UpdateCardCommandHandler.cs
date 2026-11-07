@@ -28,6 +28,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
             var targetCard = await _context.Cards.Include(c => c.Assignee).Include(c => c.Reporter)
                 .Include(c => c.Column)
                 .ThenInclude(c => c.Board)
+                .Include(c => c.Comments)
                 .FirstOrDefaultAsync(c => c.Id == request.CardId, cancellationToken)
                 ?? throw new NotFoundException($"Không tìm thấy card với id {request.CardId}");
             await _authorizationService.EnsureCanModifyProjectAsync(targetCard.Column.Board.ProjectId, cancellationToken);
@@ -61,6 +62,11 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
             targetCard.DueDate = request.DueDate;
             targetCard.StoryPoints = request.StoryPoints;
             targetCard.ProgressPercentage = request.ProgressPercentage;
+
+            if (request.SprintId.HasValue)
+            {
+                targetCard.SprintId = request.SprintId.Value;
+            }
 
             if (request.AssigneeId.HasValue)
             {
@@ -102,7 +108,10 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                 AssigneeAvatarUrl = targetCard.Assignee?.AvatarUrl,
                 ReporterId = targetCard.ReporterId,
                 ReporterName = targetCard.Reporter?.Username ?? string.Empty,
-                CreatedAt = targetCard.CreatedAt
+                ReporterAvatarUrl = targetCard.Reporter?.AvatarUrl,
+                SprintId = targetCard.SprintId,
+                CreatedAt = targetCard.CreatedAt,
+                CommentsCount = targetCard.Comments.Count
             };
         }
     }

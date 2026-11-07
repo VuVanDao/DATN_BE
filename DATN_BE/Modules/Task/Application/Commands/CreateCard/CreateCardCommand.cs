@@ -1,4 +1,4 @@
-﻿using DATN_BE.Modules.Task.Application.DTOs;
+using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Modules.Task.Domain.Enum;
 using MediatR;
 
@@ -15,5 +15,6 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
         public DateTimeOffset? StartDate { get; set; }
         public DateTimeOffset? DueDate { get; set; }
         public int? StoryPoints { get; set; }
+        public Guid? SprintId { get; set; }
     }
 }

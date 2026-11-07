@@ -98,9 +98,9 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         /// Lấy chi tiết Bảng kèm danh sách Cột theo thứ tự theo slug và projectId
         /// </summary>
         [HttpGet("{slug}/project/{projectId:guid}")]
-        public async Task<ActionResult<ApiResponse<BoardDetailDto>>> GetBoardDetail(string slug, Guid projectId)
+        public async Task<ActionResult<ApiResponse<BoardDetailDto>>> GetBoardDetail(string slug, Guid projectId, [FromQuery] Guid? sprintId = null)
         {
-            var result = await _mediator.Send(new GetBoardDetailQuery(slug, projectId));
+            var result = await _mediator.Send(new GetBoardDetailQuery(slug, projectId, sprintId));
             return Ok(ApiResponse<BoardDetailDto>.Ok(result, "Lấy thông tin Bảng thành công."));
         }
 

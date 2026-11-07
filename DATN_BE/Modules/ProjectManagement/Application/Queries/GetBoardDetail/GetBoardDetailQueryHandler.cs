@@ -1,5 +1,6 @@
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
+using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -57,6 +58,52 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                     .FirstOrDefaultAsync(cancellationToken);
             }
 
+            SprintDto? activeSprintDto = null;
+            Guid? targetSprintId = request.SprintId;
+
+            if (board.Type == BoardType.Scrum)
+            {
+                // Nếu chưa chỉ định sprintId, tìm Sprint đang Active của Dự án
+                Sprint? activeSprint = null;
+                if (targetSprintId.HasValue)
+                {
+                    activeSprint = await _context.Sprints
+                        .AsNoTracking()
+                        .Include(s => s.Cards)
+                            .ThenInclude(c => c.Column)
+                        .FirstOrDefaultAsync(s => s.Id == targetSprintId.Value && s.ProjectId == board.ProjectId, cancellationToken);
+                }
+                else
+                {
+                    activeSprint = await _context.Sprints
+                        .AsNoTracking()
+                        .Include(s => s.Cards)
+                            .ThenInclude(c => c.Column)
+                        .FirstOrDefaultAsync(s => s.ProjectId == board.ProjectId && s.Status == SprintStatus.Active, cancellationToken);
+
+                    targetSprintId = activeSprint?.Id;
+                }
+
+                if (activeSprint != null)
+                {
+                    activeSprintDto = new SprintDto
+                    {
+                        Id = activeSprint.Id,
+                        ProjectId = activeSprint.ProjectId,
+                        Name = activeSprint.Name,
+                        Goal = activeSprint.Goal,
+                        StartDate = activeSprint.StartDate,
+                        EndDate = activeSprint.EndDate,
+                        Status = activeSprint.Status,
+                        CreatedAt = activeSprint.CreatedAt,
+                        TotalCards = activeSprint.Cards.Count,
+                        CompletedCards = activeSprint.Cards.Count(c => c.Column != null && c.Column.IsDoneColumn),
+                        TotalStoryPoints = activeSprint.Cards.Sum(c => c.StoryPoints ?? 0),
+                        CompletedStoryPoints = activeSprint.Cards.Where(c => c.Column != null && c.Column.IsDoneColumn).Sum(c => c.StoryPoints ?? 0)
+                    };
+                }
+            }
+
             return new BoardDetailDto
             {
                 Id = board.Id,
@@ -68,6 +115,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                 ProjectKey = board.Project?.ProjectKey,
                 WorkspaceId = board.Project?.WorkspaceId,
                 IsPinned = isPinned,
+                ActiveSprint = activeSprintDto,
                 Columns = board.Columns
                     .OrderBy(c => c.Position)
                     .Select(c => new ColumnDto
@@ -78,6 +126,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                         IsDoneColumn = c.IsDoneColumn,
                         BoardId = c.BoardId,
                         Cards = c.Cards
+                            .Where(card => board.Type != BoardType.Scrum || (targetSprintId.HasValue && card.SprintId == targetSprintId.Value))
                             .OrderBy(card => card.Position)
                             .Select(card => new CardDto
                             {

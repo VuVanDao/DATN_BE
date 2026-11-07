@@ -62,6 +62,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
                 StartDate = request.StartDate,
                 DueDate = request.DueDate,
                 StoryPoints = request.StoryPoints,
+                SprintId = request.SprintId,
                 ProgressPercentage = 0
             };
             _context.Cards.Add(newCard);
@@ -85,7 +86,9 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
                 ReporterId = newCard.ReporterId,
                 ReporterName = reporter.Username,
                 ReporterAvatarUrl = reporter.AvatarUrl,
-                CreatedAt = newCard.CreatedAt
+                SprintId = newCard.SprintId,
+                CreatedAt = newCard.CreatedAt,
+                CommentsCount = 0
             };
         }
     }
