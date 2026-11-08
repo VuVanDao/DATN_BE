@@ -1,4 +1,5 @@
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
@@ -50,7 +51,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBacklo
                 .OrderBy(c => c.Position)
                 .ToListAsync(cancellationToken);
 
-            SprintDto MapSprintDto(Domain.Entities.Sprint s)
+            SprintDto MapSprintDto(Sprint s)
             {
                 var cardDtos = s.Cards
                     .OrderBy(c => c.Position)

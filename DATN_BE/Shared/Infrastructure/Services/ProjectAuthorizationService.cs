@@ -50,7 +50,7 @@ namespace DATN_BE.Shared.Infrastructure.Services
                         member.UserId == currentUserId &&
                         member.Role.Name == RoleConstants.ProjectLeader &&
                         member.Role.Scope == RoleScope.Project), cancellationToken),
-                "Chỉ Trưởng dự án mới được tạo, sửa hoặc xoá Bảng.");
+                "Chỉ Trưởng dự án mới có quyền thực hiện thao tác này.");
         }
 
         public Task EnsureCanManageProjectAsync(Guid projectId, CancellationToken cancellationToken = default)

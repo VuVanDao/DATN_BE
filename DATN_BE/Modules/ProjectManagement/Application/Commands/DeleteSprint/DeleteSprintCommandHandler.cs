@@ -31,7 +31,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteSprint
                 .FirstOrDefaultAsync(s => s.Id == request.SprintId, cancellationToken)
                 ?? throw new NotFoundException("Sprint", request.SprintId);
 
-            await _authorizationService.EnsureCanModifyProjectAsync(sprint.ProjectId, cancellationToken);
+            await _authorizationService.EnsureProjectLeaderAsync(sprint.ProjectId, cancellationToken);
 
             // Các thẻ trong Sprint được trả về Backlog (SprintId = null)
             foreach (var card in sprint.Cards)

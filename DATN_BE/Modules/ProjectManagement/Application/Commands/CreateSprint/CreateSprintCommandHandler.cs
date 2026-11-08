@@ -38,7 +38,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateSprint
                 throw new NotFoundException("Project", request.ProjectId);
             }
 
-            await _authorizationService.EnsureCanModifyProjectAsync(request.ProjectId, cancellationToken);
+            await _authorizationService.EnsureProjectLeaderAsync(request.ProjectId, cancellationToken);
 
             var startDate = request.StartDate ?? DateTimeOffset.UtcNow;
             var endDate = request.EndDate ?? startDate.AddDays(14);

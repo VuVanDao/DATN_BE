@@ -33,7 +33,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateSprint
                 .FirstOrDefaultAsync(s => s.Id == request.SprintId, cancellationToken)
                 ?? throw new NotFoundException("Sprint", request.SprintId);
 
-            await _authorizationService.EnsureCanModifyProjectAsync(sprint.ProjectId, cancellationToken);
+            await _authorizationService.EnsureProjectLeaderAsync(sprint.ProjectId, cancellationToken);
 
             sprint.Name = request.Name.Trim();
             sprint.Goal = request.Goal?.Trim();
