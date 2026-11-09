@@ -67,10 +67,10 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprin
                 isTargetActive = targetSprint.Status == SprintStatus.Active;
             }
 
-            // Nếu thêm/bớt thẻ làm thay đổi phạm vi của Sprint đang chạy -> Bắt buộc là ProjectLeader!
+            // Nếu thêm/bớt thẻ làm thay đổi phạm vi của Sprint đang chạy -> Bắt buộc là WorkspaceOwner hoặc ProjectLeader!
             if (isSourceActive || isTargetActive)
             {
-                await _authorizationService.EnsureProjectLeaderAsync(projectId, cancellationToken);
+                await _authorizationService.EnsureCanManageProjectAsync(projectId, cancellationToken);
             }
             else
             {
