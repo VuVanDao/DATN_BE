@@ -94,9 +94,9 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         /// Lấy danh sách Sprint của một Dự án
         /// </summary>
         [HttpGet("project/{projectId:guid}")]
-        public async Task<ActionResult<ApiResponse<List<SprintDto>>>> GetProjectSprints(Guid projectId)
+        public async Task<ActionResult<ApiResponse<List<SprintDto>>>> GetProjectSprints(Guid projectId, [FromQuery] bool includeClosed = false)
         {
-            var result = await _mediator.Send(new GetProjectSprintsQuery(projectId));
+            var result = await _mediator.Send(new GetProjectSprintsQuery(projectId, includeClosed));
             return Ok(ApiResponse<List<SprintDto>>.Ok(result, "Lấy danh sách Sprint thành công."));
         }
 

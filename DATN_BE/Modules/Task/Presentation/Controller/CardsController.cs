@@ -5,6 +5,7 @@ using DATN_BE.Modules.Task.Application.Commands.MoveCard;
 using DATN_BE.Modules.Task.Application.Commands.UpdateCard;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Modules.Task.Application.Queries.GetCardDetail;
+using DATN_BE.Modules.Task.Application.Queries.GetProjectBacklogCards;
 using DATN_BE.Shared.Application.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -79,6 +80,16 @@ namespace DATN_BE.Modules.Task.Presentation.Controller
         {
             var result = await _mediator.Send(new DeleteCardCommand(cardId));
             return Ok(ApiResponse<bool>.Ok(result, "Xoá card thành công"));
+        }
+
+        /// <summary>
+        /// Lấy danh sách thẻ trong kho Product Backlog của Dự án (những thẻ có SprintId == null)
+        /// </summary>
+        [HttpGet("project/{projectId:guid}/backlog")]
+        public async Task<ActionResult<ApiResponse<List<CardDto>>>> GetProjectBacklogCards(Guid projectId)
+        {
+            var result = await _mediator.Send(new GetProjectBacklogCardsQuery(projectId));
+            return Ok(ApiResponse<List<CardDto>>.Ok(result, "Lấy danh sách thẻ Backlog thành công."));
         }
     }
 }

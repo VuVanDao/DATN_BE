@@ -84,10 +84,10 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
                 // đổi colId của targetCard sang cột mới
                 targetCard.ColumnId = request.TargetColumnId;
 
-                // if (targetColumn.IsDoneColumn)
-                // {
-                //     targetCard.ProgressPercentage = 100;
-                // }
+                if (targetColumn.IsDoneColumn)
+                {
+                    targetCard.ProgressPercentage = 100;
+                }
 
                 targetCards.Insert(Math.Clamp(request.NewPosition, 0, targetCards.Count), targetCard);
                 // sắp xếp lại position của các card trong CỘT đích, bao gồm cả targetCard

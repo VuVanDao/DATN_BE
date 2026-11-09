@@ -27,7 +27,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.ChangePassword
             }
             // cập nhật mật khẩu đã được Hash
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-            // 3. THU HỒI TOÀN BỘ REFRESH TOKEN ĐANG HOẠT ĐỘNG (Bảo mật: bắt hacker/thiết bị khác đăng nhập lại)
+            // 3. THU HỒI TOÀN BỘ REFRESH TOKEN ĐANG HOẠT ĐỘNG
             var activeRefreshToken = await _context.RefreshTokens
                 .Where(rf => rf.UserId == userId && rf.RevokedAt == null)
                 .ToListAsync(cancellationToken);
