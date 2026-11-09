@@ -19,7 +19,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.ChangePassword
         public async Task<bool> Handle(ChangePasswordCommand request, CancellationToken cancellationToken)
         {
             var userId = _currentUserService.UserId ?? throw new UnauthorizedAccessException("Yêu cầu đăng nhập, người dùng chưa đăng nhập");
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken) ?? throw new NotFoundException("Không tìm thấy user tương ứng");
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId && u.IsActive, cancellationToken) ?? throw new NotFoundException("Không tìm thấy user tương ứng");
             // kiểm tra mật khẩu hiện tại có đúng không
             if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
             {
