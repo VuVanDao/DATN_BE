@@ -1,4 +1,5 @@
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Domain.Constants;
@@ -70,7 +71,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProject
                     CreatedByName = p.CreatedBy.Username,
                     BoardsCount = p.Boards.Count,
                     MembersCount = p.ProjectMembers.Count,
-                    SprintCount = p.Sprints.Count,
+                    SprintCount = p.Sprints.Count(s => !s.IsDeleted && s.Status != SprintStatus.Closed),
                     CardCount = _context.Cards.Count(card => card.Column.Board.ProjectId == p.Id),
                     CreatedAt = p.CreatedAt
                 })

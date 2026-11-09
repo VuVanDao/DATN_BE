@@ -2,6 +2,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Domain.Constants;
@@ -69,7 +70,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectDetail
                     CreatedByName = project.CreatedBy.Username,
                     BoardsCount = project.Boards.Count,
                     MembersCount = project.ProjectMembers.Count,
-                    SprintCount = project.Sprints.Count,
+                    SprintCount = project.Sprints.Count(s => !s.IsDeleted && s.Status != SprintStatus.Closed),
                     CardCount = cardBelongToProject,
                     CreatedAt = project.CreatedAt,
                 })

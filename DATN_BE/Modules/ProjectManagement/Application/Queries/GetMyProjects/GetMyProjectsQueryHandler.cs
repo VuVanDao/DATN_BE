@@ -1,4 +1,5 @@
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -59,7 +60,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetMyProjects
                             .FirstOrDefault() ?? string.Empty,
                         BoardsCount = project.Boards.Count,
                         MembersCount = project.ProjectMembers.Count,
-                        SprintCount = project.Sprints.Count,
+                        SprintCount = project.Sprints.Count(s => !s.IsDeleted && s.Status != SprintStatus.Closed),
                         CreatedAt = project.CreatedAt,
                         IsMember = true
                     }
