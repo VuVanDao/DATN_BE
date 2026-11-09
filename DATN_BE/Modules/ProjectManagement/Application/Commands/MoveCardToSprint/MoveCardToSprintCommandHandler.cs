@@ -40,19 +40,41 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprin
             var projectId = card.Column?.Board?.ProjectId
                 ?? throw new NotFoundException("Không tìm thấy Dự án của thẻ này.");
 
-            await _authorizationService.EnsureCanModifyProjectAsync(projectId, cancellationToken);
+            // Kiểm tra trạng thái của Sprint nguồn (nếu thẻ đang thuộc 1 Sprint)
+            bool isSourceActive = false;
+            if (card.SprintId.HasValue)
+            {
+                var sourceSprint = await _context.Sprints
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.Id == card.SprintId.Value, cancellationToken);
+                isSourceActive = sourceSprint?.Status == SprintStatus.Active;
+            }
 
+            // Kiểm tra trạng thái của Sprint đích (nếu chuyển vào 1 Sprint)
+            bool isTargetActive = false;
             if (request.SprintId.HasValue)
             {
-                var sprint = await _context.Sprints
+                var targetSprint = await _context.Sprints
                     .AsNoTracking()
                     .FirstOrDefaultAsync(s => s.Id == request.SprintId.Value && s.ProjectId == projectId, cancellationToken)
                     ?? throw new NotFoundException("Sprint", request.SprintId.Value);
 
-                if (sprint.Status == SprintStatus.Closed)
+                if (targetSprint.Status == SprintStatus.Closed)
                 {
                     throw new BadRequestException("Không thể đưa công việc vào một Sprint đã đóng.");
                 }
+
+                isTargetActive = targetSprint.Status == SprintStatus.Active;
+            }
+
+            // Nếu thêm/bớt thẻ làm thay đổi phạm vi của Sprint đang chạy -> Bắt buộc là ProjectLeader!
+            if (isSourceActive || isTargetActive)
+            {
+                await _authorizationService.EnsureProjectLeaderAsync(projectId, cancellationToken);
+            }
+            else
+            {
+                await _authorizationService.EnsureCanModifyProjectAsync(projectId, cancellationToken);
             }
 
             card.SprintId = request.SprintId;
