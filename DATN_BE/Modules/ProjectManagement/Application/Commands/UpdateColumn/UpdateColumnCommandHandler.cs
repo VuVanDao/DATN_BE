@@ -3,12 +3,18 @@ using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
+using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
+using Microsoft.Extensions.Logging;
 
 namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateColumn;
 
 public class UpdateColumnCommandHandler(
     IApplicationDbContext context,
-    IProjectAuthorizationService authorizationService) : IRequestHandler<UpdateColumnCommand, ColumnDto>
+    IProjectAuthorizationService authorizationService,
+    IHubContext<BoardHub>? hubContext = null,
+    ICurrentUserService? currentUserService = null,
+    ILogger<UpdateColumnCommandHandler>? logger = null) : IRequestHandler<UpdateColumnCommand, ColumnDto>
 {
     public async Task<ColumnDto> Handle(UpdateColumnCommand request, CancellationToken cancellationToken)
     {
@@ -25,6 +31,30 @@ public class UpdateColumnCommandHandler(
         column.Title = request.Title.Trim();
         column.IsDoneColumn = request.IsDoneColumn;
         await context.SaveChangesAsync(cancellationToken);
+
+        if (hubContext != null)
+        {
+            try
+            {
+                await hubContext.Clients
+                    .Group(BoardHub.GroupName(board.Id))
+                    .SendAsync(
+                        BoardHub.ColumnUpdated,
+                        new ColumnUpdatedMessage(
+                            column.BoardId,
+                            column.Id,
+                            column.Title,
+                            column.Position,
+                            column.IsDoneColumn,
+                            currentUserService?.UserId ?? Guid.Empty,
+                            DateTimeOffset.UtcNow),
+                        CancellationToken.None);
+            }
+            catch (Exception exception)
+            {
+                logger?.LogWarning(exception, "Không thể phát sự kiện ColumnUpdated cho board {BoardId}.", board.Id);
+            }
+        }
 
         return new ColumnDto
         {

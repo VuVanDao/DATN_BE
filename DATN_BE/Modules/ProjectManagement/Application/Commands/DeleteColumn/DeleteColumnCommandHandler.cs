@@ -2,12 +2,18 @@ using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
+using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
+using Microsoft.Extensions.Logging;
 
 namespace DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteColumn;
 
 public class DeleteColumnCommandHandler(
     IApplicationDbContext context,
-    IProjectAuthorizationService authorizationService) : IRequestHandler<DeleteColumnCommand, bool>
+    IProjectAuthorizationService authorizationService,
+    IHubContext<BoardHub>? hubContext = null,
+    ICurrentUserService? currentUserService = null,
+    ILogger<DeleteColumnCommandHandler>? logger = null) : IRequestHandler<DeleteColumnCommand, bool>
 {
     public async Task<bool> Handle(DeleteColumnCommand request, CancellationToken cancellationToken)
     {
@@ -38,6 +44,28 @@ public class DeleteColumnCommandHandler(
         }
 
         await context.SaveChangesAsync(cancellationToken);
+
+        if (hubContext != null)
+        {
+            try
+            {
+                await hubContext.Clients
+                    .Group(BoardHub.GroupName(board.Id))
+                    .SendAsync(
+                        BoardHub.ColumnDeleted,
+                        new ColumnDeletedMessage(
+                            board.Id,
+                            column.Id,
+                            currentUserService?.UserId ?? Guid.Empty,
+                            DateTimeOffset.UtcNow),
+                        CancellationToken.None);
+            }
+            catch (Exception exception)
+            {
+                logger?.LogWarning(exception, "Không thể phát sự kiện ColumnDeleted cho board {BoardId}.", board.Id);
+            }
+        }
+
         return true;
     }
 }

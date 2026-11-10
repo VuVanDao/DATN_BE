@@ -4,6 +4,9 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
+using Microsoft.AspNetCore.SignalR;
+using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
+using Microsoft.Extensions.Logging;
 
 namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn
 {
@@ -11,11 +14,24 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn
     {
         private readonly IApplicationDbContext _context;
         private readonly IProjectAuthorizationService _authorizationService;
-        public CreateColumnCommandHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService)
+        private readonly IHubContext<BoardHub>? _hubContext;
+        private readonly ICurrentUserService? _currentUserService;
+        private readonly ILogger<CreateColumnCommandHandler>? _logger;
+
+        public CreateColumnCommandHandler(
+            IApplicationDbContext context,
+            IProjectAuthorizationService authorizationService,
+            IHubContext<BoardHub>? hubContext = null,
+            ICurrentUserService? currentUserService = null,
+            ILogger<CreateColumnCommandHandler>? logger = null)
         {
             _context = context;
             _authorizationService = authorizationService;
+            _hubContext = hubContext;
+            _currentUserService = currentUserService;
+            _logger = logger;
         }
+
         public async Task<ColumnDto> Handle(CreateColumnCommand request, CancellationToken cancellationToken)
         {
             var targetBoard = await _context.Boards
@@ -41,6 +57,30 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn
 
             _context.Columns.Add(newColumn);
             await _context.SaveChangesAsync(cancellationToken);
+
+            if (_hubContext != null)
+            {
+                try
+                {
+                    await _hubContext.Clients
+                        .Group(BoardHub.GroupName(request.BoardId))
+                        .SendAsync(
+                            BoardHub.ColumnCreated,
+                            new ColumnCreatedMessage(
+                                newColumn.BoardId,
+                                newColumn.Id,
+                                newColumn.Title,
+                                newColumn.Position,
+                                newColumn.IsDoneColumn,
+                                _currentUserService?.UserId ?? Guid.Empty,
+                                DateTimeOffset.UtcNow),
+                            CancellationToken.None);
+                }
+                catch (Exception exception)
+                {
+                    _logger?.LogWarning(exception, "Không thể phát sự kiện ColumnCreated cho board {BoardId}.", request.BoardId);
+                }
+            }
 
             return new ColumnDto
             {

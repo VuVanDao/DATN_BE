@@ -12,6 +12,9 @@ public sealed class BoardHub : Hub
     public const string Route = "/hubs/board";
     public const string ColumnsReordered = "ColumnsReordered";
     public const string CardMoved = "CardMoved";
+    public const string ColumnCreated = "ColumnCreated";
+    public const string ColumnUpdated = "ColumnUpdated";
+    public const string ColumnDeleted = "ColumnDeleted";
 
     private readonly IApplicationDbContext _context;
     private readonly IProjectAuthorizationService _authorizationService;
@@ -75,3 +78,27 @@ public sealed record ColumnsReorderedMessage(
 public sealed record CardMovedMessage(
     Guid BoardId, Guid CardId, Guid SourceColumnId, Guid TargetColumnId,
     int NewPosition, Guid? ChangedByUserId, DateTimeOffset OccurredAt);
+
+public sealed record ColumnCreatedMessage(
+    Guid BoardId,
+    Guid ColumnId,
+    string Title,
+    int Position,
+    bool IsDoneColumn,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record ColumnUpdatedMessage(
+    Guid BoardId,
+    Guid ColumnId,
+    string Title,
+    int Position,
+    bool IsDoneColumn,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record ColumnDeletedMessage(
+    Guid BoardId,
+    Guid ColumnId,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
