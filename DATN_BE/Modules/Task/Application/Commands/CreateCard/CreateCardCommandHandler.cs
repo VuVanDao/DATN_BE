@@ -79,7 +79,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
                 DueDate = request.DueDate,
                 StoryPoints = request.StoryPoints,
                 SprintId = finalSprintId,
-                ProgressPercentage = 0
+                ProgressPercentage = targetColumn.IsDoneColumn ? 100 : 0
             };
             _context.Cards.Add(newCard);
             await _context.SaveChangesAsync(cancellationToken);
