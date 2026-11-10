@@ -81,9 +81,11 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
                     .OrderBy(c => c.Position)
                     .ToListAsync(cancellationToken);
 
-                // đổi colId của targetCard sang cột mới
+                // Đổi colId của targetCard sang cột mới
                 targetCard.ColumnId = request.TargetColumnId;
 
+                // Khi kéo vào cột hoàn thành thì tự động đánh dấu hoàn thành (100%),
+                // khi kéo ra khỏi cột hoàn thành thì vẫn giữ nguyên trạng thái của thẻ
                 if (targetColumn.IsDoneColumn)
                 {
                     targetCard.ProgressPercentage = 100;

@@ -109,9 +109,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                             Status = activeSprint.Status,
                             CreatedAt = activeSprint.CreatedAt,
                             TotalCards = sprintCards.Count,
-                            CompletedCards = sprintCards.Count(c => c.Column != null && c.Column.IsDoneColumn),
+                            CompletedCards = sprintCards.Count(c => (c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100),
                             TotalStoryPoints = sprintCards.Sum(c => c.StoryPoints ?? 0),
-                            CompletedStoryPoints = sprintCards.Where(c => c.Column != null && c.Column.IsDoneColumn).Sum(c => c.StoryPoints ?? 0)
+                            CompletedStoryPoints = sprintCards.Where(c => (c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100).Sum(c => c.StoryPoints ?? 0)
                         };
                     }
                 }

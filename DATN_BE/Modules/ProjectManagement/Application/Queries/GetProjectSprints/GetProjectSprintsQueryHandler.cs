@@ -105,9 +105,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectSprint
                     Status = s.Status,
                     CreatedAt = s.CreatedAt,
                     TotalCards = s.Cards.Count,
-                    CompletedCards = s.Cards.Count(c => c.Column != null && c.Column.IsDoneColumn),
+                    CompletedCards = s.Cards.Count(c => (c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100),
                     TotalStoryPoints = s.Cards.Sum(c => c.StoryPoints ?? 0),
-                    CompletedStoryPoints = s.Cards.Where(c => c.Column != null && c.Column.IsDoneColumn).Sum(c => c.StoryPoints ?? 0),
+                    CompletedStoryPoints = s.Cards.Where(c => (c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100).Sum(c => c.StoryPoints ?? 0),
                     Cards = cardDtos
                 };
             }).ToList();
