@@ -104,8 +104,15 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
             {
                 await _hubContext.Clients.Group(BoardHub.GroupName(targetColumn.BoardId))
                     .SendAsync(BoardHub.CardMoved,
-                        new CardMovedMessage(targetColumn.BoardId, targetCard.Id, oldColumnId,
-                            targetCard.ColumnId, targetCard.Position, _currentUser.UserId, DateTimeOffset.UtcNow),
+                        new CardMovedMessage(
+                            targetColumn.BoardId,
+                            targetCard.Id,
+                            oldColumnId,
+                            targetCard.ColumnId,
+                            targetCard.Position,
+                            targetCard.ProgressPercentage,
+                            _currentUser.UserId,
+                            DateTimeOffset.UtcNow),
                         CancellationToken.None);
                 _logger.LogInformation("Đã phát sự kiện move card cho board {BoardId}.", targetColumn.BoardId);
             }

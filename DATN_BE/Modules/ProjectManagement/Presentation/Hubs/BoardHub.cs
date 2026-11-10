@@ -80,8 +80,14 @@ public sealed record ColumnsReorderedMessage(
     DateTimeOffset OccurredAt);
 
 public sealed record CardMovedMessage(
-    Guid BoardId, Guid CardId, Guid SourceColumnId, Guid TargetColumnId,
-    int NewPosition, Guid? ChangedByUserId, DateTimeOffset OccurredAt);
+    Guid BoardId,
+    Guid CardId,
+    Guid SourceColumnId,
+    Guid TargetColumnId,
+    int NewPosition,
+    int ProgressPercentage,
+    Guid? ChangedByUserId,
+    DateTimeOffset OccurredAt);
 
 public sealed record ColumnCreatedMessage(
     Guid BoardId,
