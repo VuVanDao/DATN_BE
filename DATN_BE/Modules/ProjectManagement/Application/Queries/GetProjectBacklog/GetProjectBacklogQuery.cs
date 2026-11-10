@@ -6,10 +6,12 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBacklo
     public class GetProjectBacklogQuery : IRequest<ProjectBacklogDto>
     {
         public Guid ProjectId { get; set; }
+        public Guid? BoardId { get; set; }
 
-        public GetProjectBacklogQuery(Guid projectId)
+        public GetProjectBacklogQuery(Guid projectId, Guid? boardId = null)
         {
             ProjectId = projectId;
+            BoardId = boardId;
         }
     }
 }

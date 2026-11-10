@@ -1,3 +1,4 @@
+using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Modules.Task.Domain.Entities;
@@ -36,11 +37,20 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateBacklogCard
                 ?? throw new NotFoundException("Người dùng không tồn tại.");
 
             // 1. Tìm Bảng Scrum trong Dự án để gán Cột cho thẻ
-            var scrumBoard = await _context.Boards
+            var scrumBoardQuery = _context.Boards
                 .Include(b => b.Columns)
-                .Where(b => b.ProjectId == request.ProjectId && b.Type == BoardType.Scrum)
-                .OrderBy(b => b.CreatedAt)
-                .FirstOrDefaultAsync(cancellationToken);
+                .Where(b => b.ProjectId == request.ProjectId && b.Type == BoardType.Scrum);
+
+            Board? scrumBoard = null;
+            if (request.BoardId.HasValue)
+            {
+                scrumBoard = await scrumBoardQuery.FirstOrDefaultAsync(b => b.Id == request.BoardId.Value, cancellationToken);
+            }
+
+            if (scrumBoard == null)
+            {
+                scrumBoard = await scrumBoardQuery.OrderBy(b => b.CreatedAt).FirstOrDefaultAsync(cancellationToken);
+            }
 
             if (scrumBoard == null || !scrumBoard.Columns.Any())
             {
@@ -57,8 +67,8 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateBacklogCard
             {
                 var sprint = await _context.Sprints
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(s => s.Id == request.SprintId.Value && s.ProjectId == request.ProjectId, cancellationToken)
-                    ?? throw new NotFoundException("Sprint", request.SprintId.Value);
+                    .FirstOrDefaultAsync(s => s.Id == request.SprintId.Value && s.BoardId == scrumBoard.Id, cancellationToken)
+                    ?? throw new NotFoundException("Sprint không tồn tại trên Bảng Scrum này.");
 
                 if (sprint.Status == SprintStatus.Closed)
                 {

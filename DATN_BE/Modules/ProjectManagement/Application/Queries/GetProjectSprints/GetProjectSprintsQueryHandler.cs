@@ -25,24 +25,14 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectSprint
         {
             await _authorizationService.EnsureCanViewProjectAsync(request.ProjectId, cancellationToken);
 
-            // Tự động gỡ SprintId khỏi các thẻ thuộc Bảng Kanban nếu có
-            var misplacedKanbanCards = await _context.Cards
-                .Include(c => c.Column).ThenInclude(col => col.Board)
-                .Where(c => c.SprintId != null && c.Column.Board.ProjectId == request.ProjectId && c.Column.Board.Type != BoardType.Scrum)
-                .ToListAsync(cancellationToken);
-
-            if (misplacedKanbanCards.Any())
-            {
-                foreach (var card in misplacedKanbanCards)
-                {
-                    card.SprintId = null;
-                }
-                await _context.SaveChangesAsync(cancellationToken);
-            }
-
             var query = _context.Sprints
                 .AsNoTracking()
                 .Where(s => s.ProjectId == request.ProjectId);
+
+            if (request.BoardId.HasValue)
+            {
+                query = query.Where(s => s.BoardId == request.BoardId.Value);
+            }
 
             if (!request.IncludeClosed)
             {
@@ -95,6 +85,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectSprint
                 {
                     Id = s.Id,
                     ProjectId = s.ProjectId,
+                    BoardId = s.BoardId,
                     Name = s.Name,
                     Goal = s.Goal,
                     StartDate = s.StartDate,

@@ -9,6 +9,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateSprint
             RuleFor(x => x.ProjectId)
                 .NotEmpty().WithMessage("Mã Dự án không hợp lệ.");
 
+            RuleFor(x => x.BoardId)
+                .NotEmpty().WithMessage("Mã Bảng Scrum không hợp lệ.");
+
             RuleFor(x => x.Name)
                 .NotEmpty().WithMessage("Tên Sprint không được để trống.")
                 .MaximumLength(100).WithMessage("Tên Sprint không được vượt quá 100 ký tự.");

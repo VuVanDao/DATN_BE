@@ -40,12 +40,23 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateSprint
 
             await _authorizationService.EnsureCanManageProjectAsync(request.ProjectId, cancellationToken);
 
+            var board = await _context.Boards
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == request.BoardId && b.ProjectId == request.ProjectId, cancellationToken)
+                ?? throw new NotFoundException("Bảng Scrum không tồn tại trong Dự án này.");
+
+            if (board.Type != BoardType.Scrum)
+            {
+                throw new BadRequestException("Chỉ có thể tạo Sprint cho Bảng có loại Scrum.");
+            }
+
             var startDate = request.StartDate ?? DateTimeOffset.UtcNow;
             var endDate = request.EndDate ?? startDate.AddDays(14);
 
             var sprint = new Sprint
             {
                 ProjectId = request.ProjectId,
+                BoardId = request.BoardId,
                 Name = request.Name.Trim(),
                 Goal = request.Goal?.Trim(),
                 StartDate = startDate,
@@ -60,6 +71,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateSprint
             {
                 Id = sprint.Id,
                 ProjectId = sprint.ProjectId,
+                BoardId = sprint.BoardId,
                 Name = sprint.Name,
                 Goal = sprint.Goal,
                 StartDate = sprint.StartDate,

@@ -64,6 +64,11 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprin
                     .FirstOrDefaultAsync(s => s.Id == request.SprintId.Value && s.ProjectId == projectId, cancellationToken)
                     ?? throw new NotFoundException("Sprint", request.SprintId.Value);
 
+                if (targetSprint.BoardId != card.Column!.BoardId)
+                {
+                    throw new BadRequestException("Không thể đưa thẻ vào Sprint của một Bảng Scrum khác.");
+                }
+
                 if (targetSprint.Status == SprintStatus.Closed)
                 {
                     throw new BadRequestException("Không thể đưa công việc vào một Sprint đã đóng.");

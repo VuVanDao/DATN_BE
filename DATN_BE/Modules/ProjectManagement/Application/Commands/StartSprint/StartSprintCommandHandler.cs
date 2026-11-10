@@ -46,14 +46,14 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.StartSprint
                 throw new BadRequestException("Sprint này đã hoàn thành, không thể bắt đầu lại.");
             }
 
-            // Kiểm tra trong Project đã có Sprint nào đang Active chưa
+            // Kiểm tra trong Bảng Scrum này đã có Sprint nào đang Active chưa
             var hasActiveSprint = await _context.Sprints
                 .AsNoTracking()
-                .AnyAsync(s => s.ProjectId == sprint.ProjectId && s.Status == SprintStatus.Active && s.Id != sprint.Id, cancellationToken);
+                .AnyAsync(s => s.BoardId == sprint.BoardId && s.Status == SprintStatus.Active && s.Id != sprint.Id, cancellationToken);
 
             if (hasActiveSprint)
             {
-                throw new BadRequestException("Dự án hiện đã có một Sprint đang chạy. Vui lòng hoàn thành Sprint hiện tại trước khi bắt đầu Sprint mới.");
+                throw new BadRequestException("Bảng Scrum này hiện đã có một Sprint đang chạy. Vui lòng hoàn thành Sprint hiện tại trước khi bắt đầu Sprint mới.");
             }
 
             var startDate = request.StartDate ?? (sprint.StartDate != default ? sprint.StartDate : DateTimeOffset.UtcNow);
@@ -80,6 +80,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.StartSprint
             {
                 Id = sprint.Id,
                 ProjectId = sprint.ProjectId,
+                BoardId = sprint.BoardId,
                 Name = sprint.Name,
                 Goal = sprint.Goal,
                 StartDate = sprint.StartDate,

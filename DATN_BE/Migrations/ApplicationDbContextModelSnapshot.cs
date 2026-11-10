@@ -527,6 +527,9 @@ namespace DATN_BE.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("BoardId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -562,6 +565,8 @@ namespace DATN_BE.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BoardId");
 
                     b.HasIndex("ProjectId");
 
@@ -1053,11 +1058,19 @@ namespace DATN_BE.Migrations
 
             modelBuilder.Entity("DATN_BE.Modules.ProjectManagement.Domain.Entities.Sprint", b =>
                 {
+                    b.HasOne("DATN_BE.Modules.ProjectManagement.Domain.Entities.Board", "Board")
+                        .WithMany("Sprints")
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("DATN_BE.Modules.ProjectManagement.Domain.Entities.Project", "Project")
                         .WithMany("Sprints")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Board");
 
                     b.Navigation("Project");
                 });
@@ -1255,6 +1268,8 @@ namespace DATN_BE.Migrations
             modelBuilder.Entity("DATN_BE.Modules.ProjectManagement.Domain.Entities.Board", b =>
                 {
                     b.Navigation("Columns");
+
+                    b.Navigation("Sprints");
 
                     b.Navigation("UserBoardPreferences");
                 });

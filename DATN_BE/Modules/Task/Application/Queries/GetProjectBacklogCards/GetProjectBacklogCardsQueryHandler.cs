@@ -23,26 +23,27 @@ namespace DATN_BE.Modules.Task.Application.Queries.GetProjectBacklogCards
         {
             await _authorizationService.EnsureCanViewProjectAsync(request.ProjectId, cancellationToken);
 
-            // Tự động gỡ SprintId khỏi các thẻ thuộc Bảng Kanban nếu có (bảo toàn nguyên tắc thẻ Kanban độc lập với Scrum)
-            var misplacedKanbanCards = await _context.Cards
-                .Include(c => c.Column).ThenInclude(col => col.Board)
-                .Where(c => c.SprintId != null && c.Column.Board.ProjectId == request.ProjectId && c.Column.Board.Type != BoardType.Scrum)
-                .ToListAsync(cancellationToken);
-
-            if (misplacedKanbanCards.Any())
+            // Xác định Bảng Scrum
+            Guid? targetBoardId = request.BoardId;
+            if (!targetBoardId.HasValue)
             {
-                foreach (var card in misplacedKanbanCards)
-                {
-                    card.SprintId = null;
-                }
-                await _context.SaveChangesAsync(cancellationToken);
+                targetBoardId = await _context.Boards
+                    .AsNoTracking()
+                    .Where(b => b.ProjectId == request.ProjectId && b.Type == BoardType.Scrum)
+                    .OrderBy(b => b.CreatedAt)
+                    .Select(b => (Guid?)b.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
             }
 
-            // Chỉ lấy các thẻ thuộc Bảng Scrum và chưa gán vào Sprint (SprintId == null)
+            if (!targetBoardId.HasValue)
+            {
+                return new List<CardDto>();
+            }
+
+            // Chỉ lấy các thẻ thuộc Bảng Scrum mục tiêu và chưa gán vào Sprint (SprintId == null)
             var cards = await _context.Cards
                 .AsNoTracking()
-                .Where(c => c.Column.Board.ProjectId == request.ProjectId 
-                         && c.Column.Board.Type == BoardType.Scrum 
+                .Where(c => c.Column.BoardId == targetBoardId.Value 
                          && c.SprintId == null)
                 .Include(c => c.Assignee)
                 .Include(c => c.Reporter)

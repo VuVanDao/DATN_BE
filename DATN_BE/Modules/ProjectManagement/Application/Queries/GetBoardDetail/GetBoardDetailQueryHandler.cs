@@ -66,56 +66,34 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
             // Tìm activeSprint (nếu có) chỉ khi board là Scrum
             if (board.Type == BoardType.Scrum)
             {
-                // Nếu chưa chỉ định sprintId, tìm Sprint đang Active của Dự án
+                // Nếu chưa chỉ định sprintId, tìm Sprint đang Active của chính Bảng Scrum này
                 Sprint? activeSprint = null;
                 if (targetActiveSprintId.HasValue)
                 {
                     activeSprint = await _context.Sprints
                         .AsNoTracking()
-                        .FirstOrDefaultAsync(s => s.Id == targetActiveSprintId.Value && s.ProjectId == board.ProjectId, cancellationToken);
+                        .FirstOrDefaultAsync(s => s.Id == targetActiveSprintId.Value && s.BoardId == board.Id, cancellationToken);
                 }
                 else
                 {
                     activeSprint = await _context.Sprints
                         .AsNoTracking()
-                        .FirstOrDefaultAsync(s => s.ProjectId == board.ProjectId && s.Status == SprintStatus.Active, cancellationToken);
+                        .FirstOrDefaultAsync(s => s.BoardId == board.Id && s.Status == SprintStatus.Active, cancellationToken);
 
                     targetActiveSprintId = activeSprint?.Id;
                 }
 
                 if (targetActiveSprintId.HasValue)
                 {
-                    // Lấy TẤT CẢ các thẻ thuộc Sprint này trong Dự án
                     sprintCards = await _context.Cards
+                        .AsNoTracking()
                         .Include(c => c.Assignee)
                         .Include(c => c.Reporter)
                         .Include(c => c.Comments)
                         .Include(c => c.Column)
-                        .Where(c => c.SprintId == targetActiveSprintId.Value && c.Column.Board.ProjectId == board.ProjectId)
+                        .Where(c => c.SprintId == targetActiveSprintId.Value && c.Column.BoardId == board.Id)
                         .OrderBy(c => c.Position)
                         .ToListAsync(cancellationToken);
-
-                    var boardColumnIds = board.Columns.Select(c => c.Id).ToHashSet();
-                    var startColumn = board.Columns.OrderBy(c => c.Position).FirstOrDefault(c => !c.IsDoneColumn)
-                                   ?? board.Columns.OrderBy(c => c.Position).FirstOrDefault();
-
-                    // Nếu có thẻ thuộc Sprint nhưng đang mang ColumnId của Bảng khác (ví dụ từ Kanban)
-                    // Tự động đồng bộ chúng về Cột đầu tiên (To Do) của Bảng Scrum này
-                    if (startColumn != null)
-                    {
-                        var unmappedCards = sprintCards.Where(c => !boardColumnIds.Contains(c.ColumnId)).ToList();
-                        if (unmappedCards.Any())
-                        {
-                            var maxPos = sprintCards.Where(c => c.ColumnId == startColumn.Id).Select(c => (int?)c.Position).Max() ?? -1;
-                            foreach (var card in unmappedCards)
-                            {
-                                card.ColumnId = startColumn.Id;
-                                card.Column = startColumn;
-                                card.Position = ++maxPos;
-                            }
-                            await _context.SaveChangesAsync(cancellationToken);
-                        }
-                    }
 
                     if (activeSprint != null)
                     {
@@ -123,6 +101,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                         {
                             Id = activeSprint.Id,
                             ProjectId = activeSprint.ProjectId,
+                            BoardId = activeSprint.BoardId,
                             Name = activeSprint.Name,
                             Goal = activeSprint.Goal,
                             StartDate = activeSprint.StartDate,

@@ -1,4 +1,5 @@
 using DATN_BE.Modules.Identity.Domain.Entities;
+using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
@@ -48,6 +49,21 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
             // 1. Tự động tính Position của card tiếp theo trong Cột đó
             var maxPosition = await _context.Cards.Where(c => c.ColumnId == request.ColumnId)
                 .MaxAsync(c => (int?)c.Position, cancellationToken) ?? -1;
+
+            // Nếu Bảng thuộc loại Scrum và chưa chỉ định SprintId:
+            // Tự động gán SprintId là Sprint đang Active của chính Bảng Scrum này (nếu có)
+            Guid? finalSprintId = request.SprintId;
+            if (targetColumn.Board.Type == BoardType.Scrum && !finalSprintId.HasValue)
+            {
+                var activeSprint = await _context.Sprints
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.BoardId == targetColumn.BoardId && s.Status == SprintStatus.Active, cancellationToken);
+                if (activeSprint != null)
+                {
+                    finalSprintId = activeSprint.Id;
+                }
+            }
+
             // 2. Tạo Thẻ mới
             var newCard = new Card
             {
@@ -62,7 +78,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
                 StartDate = request.StartDate,
                 DueDate = request.DueDate,
                 StoryPoints = request.StoryPoints,
-                SprintId = request.SprintId,
+                SprintId = finalSprintId,
                 ProgressPercentage = 0
             };
             _context.Cards.Add(newCard);

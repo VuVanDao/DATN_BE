@@ -80,6 +80,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CompleteSprint
             {
                 Id = sprint.Id,
                 ProjectId = sprint.ProjectId,
+                BoardId = sprint.BoardId,
                 Name = sprint.Name,
                 Goal = sprint.Goal,
                 StartDate = sprint.StartDate,

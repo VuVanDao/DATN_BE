@@ -6,11 +6,13 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectSprint
     public class GetProjectSprintsQuery : IRequest<List<SprintDto>>
     {
         public Guid ProjectId { get; set; }
+        public Guid? BoardId { get; set; }
         public bool IncludeClosed { get; set; }
 
-        public GetProjectSprintsQuery(Guid projectId, bool includeClosed = false)
+        public GetProjectSprintsQuery(Guid projectId, Guid? boardId = null, bool includeClosed = false)
         {
             ProjectId = projectId;
+            BoardId = boardId;
             IncludeClosed = includeClosed;
         }
     }

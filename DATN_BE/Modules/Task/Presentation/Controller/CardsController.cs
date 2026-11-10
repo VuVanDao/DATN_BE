@@ -96,9 +96,11 @@ namespace DATN_BE.Modules.Task.Presentation.Controller
         /// Lấy danh sách thẻ trong kho Product Backlog của Dự án (những thẻ có SprintId == null)
         /// </summary>
         [HttpGet("project/{projectId:guid}/backlog")]
-        public async Task<ActionResult<ApiResponse<List<CardDto>>>> GetProjectBacklogCards(Guid projectId)
+        public async Task<ActionResult<ApiResponse<List<CardDto>>>> GetProjectBacklogCards(
+            Guid projectId,
+            [FromQuery] Guid? boardId = null)
         {
-            var result = await _mediator.Send(new GetProjectBacklogCardsQuery(projectId));
+            var result = await _mediator.Send(new GetProjectBacklogCardsQuery(projectId, boardId));
             return Ok(ApiResponse<List<CardDto>>.Ok(result, "Lấy danh sách thẻ Backlog thành công."));
         }
     }

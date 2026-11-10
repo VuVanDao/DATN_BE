@@ -16,6 +16,10 @@ namespace DATN_BE.Modules.ProjectManagement.Domain.Entities
         public Guid ProjectId { get; set; }
         public Project Project { get; set; } = null!;
 
+        // Thuộc Bảng Scrum nào (Mỗi Bảng Scrum sở hữu chuỗi Sprint riêng)
+        public Guid BoardId { get; set; }
+        public Board Board { get; set; } = null!;
+
         // Soft Delete
         public bool IsDeleted { get; set; } = false;
         public DateTimeOffset? DeletedAt { get; set; }

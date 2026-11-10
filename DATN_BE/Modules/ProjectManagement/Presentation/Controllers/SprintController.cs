@@ -91,22 +91,27 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         }
 
         /// <summary>
-        /// Lấy danh sách Sprint của một Dự án
+        /// Lấy danh sách Sprint của một Dự án (hoặc theo Bảng Scrum)
         /// </summary>
         [HttpGet("project/{projectId:guid}")]
-        public async Task<ActionResult<ApiResponse<List<SprintDto>>>> GetProjectSprints(Guid projectId, [FromQuery] bool includeClosed = false)
+        public async Task<ActionResult<ApiResponse<List<SprintDto>>>> GetProjectSprints(
+            Guid projectId,
+            [FromQuery] Guid? boardId = null,
+            [FromQuery] bool includeClosed = false)
         {
-            var result = await _mediator.Send(new GetProjectSprintsQuery(projectId, includeClosed));
+            var result = await _mediator.Send(new GetProjectSprintsQuery(projectId, boardId, includeClosed));
             return Ok(ApiResponse<List<SprintDto>>.Ok(result, "Lấy danh sách Sprint thành công."));
         }
 
         /// <summary>
-        /// Lấy toàn bộ dữ liệu Backlog và Sprints chưa đóng phục vụ màn hình Backlog
+        /// Lấy toàn bộ dữ liệu Backlog và Sprints chưa đóng phục vụ màn hình Backlog (hoặc theo Bảng Scrum)
         /// </summary>
         [HttpGet("project/{projectId:guid}/backlog")]
-        public async Task<ActionResult<ApiResponse<ProjectBacklogDto>>> GetProjectBacklog(Guid projectId)
+        public async Task<ActionResult<ApiResponse<ProjectBacklogDto>>> GetProjectBacklog(
+            Guid projectId,
+            [FromQuery] Guid? boardId = null)
         {
-            var result = await _mediator.Send(new GetProjectBacklogQuery(projectId));
+            var result = await _mediator.Send(new GetProjectBacklogQuery(projectId, boardId));
             return Ok(ApiResponse<ProjectBacklogDto>.Ok(result, "Lấy dữ liệu Backlog thành công."));
         }
     }

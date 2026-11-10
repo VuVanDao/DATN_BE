@@ -25,6 +25,11 @@ namespace DATN_BE.Modules.ProjectManagement.Infrastructure.Configurations
                 .WithMany(p => p.Sprints)
                 .HasForeignKey(s => s.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(s => s.Board)
+                .WithMany(b => b.Sprints)
+                .HasForeignKey(s => s.BoardId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
