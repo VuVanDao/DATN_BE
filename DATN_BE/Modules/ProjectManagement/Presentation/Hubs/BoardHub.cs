@@ -1,3 +1,4 @@
+using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -19,6 +20,12 @@ public sealed class BoardHub : Hub
     public const string CardCreated = "CardCreated";
     public const string CardUpdated = "CardUpdated";
     public const string CardDeleted = "CardDeleted";
+    public const string SprintCreated = "SprintCreated";
+    public const string SprintStarted = "SprintStarted";
+    public const string SprintUpdated = "SprintUpdated";
+    public const string SprintCompleted = "SprintCompleted";
+    public const string SprintDeleted = "SprintDeleted";
+    public const string CardSprintChanged = "CardSprintChanged";
 
     private readonly IApplicationDbContext _context;
     private readonly IProjectAuthorizationService _authorizationService;
@@ -129,5 +136,43 @@ public sealed record CardDeletedMessage(
     Guid BoardId,
     Guid CardId,
     Guid ColumnId,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record SprintCreatedMessage(
+    Guid BoardId,
+    SprintDto Sprint,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record SprintStartedMessage(
+    Guid BoardId,
+    SprintDto Sprint,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record SprintUpdatedMessage(
+    Guid BoardId,
+    SprintDto Sprint,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record SprintCompletedMessage(
+    Guid BoardId,
+    Guid SprintId,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record SprintDeletedMessage(
+    Guid BoardId,
+    Guid SprintId,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record CardSprintChangedMessage(
+    Guid BoardId,
+    CardDto Card,
+    Guid? OldSprintId,
+    Guid? NewSprintId,
     Guid ChangedByUserId,
     DateTimeOffset OccurredAt);
