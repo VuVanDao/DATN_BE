@@ -1,3 +1,4 @@
+using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -15,6 +16,9 @@ public sealed class BoardHub : Hub
     public const string ColumnCreated = "ColumnCreated";
     public const string ColumnUpdated = "ColumnUpdated";
     public const string ColumnDeleted = "ColumnDeleted";
+    public const string CardCreated = "CardCreated";
+    public const string CardUpdated = "CardUpdated";
+    public const string CardDeleted = "CardDeleted";
 
     private readonly IApplicationDbContext _context;
     private readonly IProjectAuthorizationService _authorizationService;
@@ -99,6 +103,25 @@ public sealed record ColumnUpdatedMessage(
 
 public sealed record ColumnDeletedMessage(
     Guid BoardId,
+    Guid ColumnId,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record CardCreatedMessage(
+    Guid BoardId,
+    CardDto Card,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record CardUpdatedMessage(
+    Guid BoardId,
+    CardDto Card,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record CardDeletedMessage(
+    Guid BoardId,
+    Guid CardId,
     Guid ColumnId,
     Guid ChangedByUserId,
     DateTimeOffset OccurredAt);

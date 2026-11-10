@@ -1,7 +1,10 @@
+using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DATN_BE.Modules.Task.Application.Commands.DeleteCard
 {
@@ -9,11 +12,22 @@ namespace DATN_BE.Modules.Task.Application.Commands.DeleteCard
     {
         private readonly IApplicationDbContext _context;
         private readonly IProjectAuthorizationService _authorizationService;
+        private readonly IHubContext<BoardHub>? _hubContext;
+        private readonly ICurrentUserService? _currentUserService;
+        private readonly ILogger<DeleteCardCommandHandler>? _logger;
 
-        public DeleteCardCommandHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService)
+        public DeleteCardCommandHandler(
+            IApplicationDbContext context,
+            IProjectAuthorizationService authorizationService,
+            IHubContext<BoardHub>? hubContext = null,
+            ICurrentUserService? currentUserService = null,
+            ILogger<DeleteCardCommandHandler>? logger = null)
         {
             _context = context;
             _authorizationService = authorizationService;
+            _hubContext = hubContext;
+            _currentUserService = currentUserService;
+            _logger = logger;
         }
 
         public async Task<bool> Handle(DeleteCardCommand request, CancellationToken cancellationToken)
@@ -25,6 +39,8 @@ namespace DATN_BE.Modules.Task.Application.Commands.DeleteCard
 
             await _authorizationService.EnsureCanModifyProjectAsync(targetedCard.Column.Board.ProjectId, cancellationToken);
 
+            var boardId = targetedCard.Column.BoardId;
+            var cardId = targetedCard.Id;
             var sourceColumnId = targetedCard.ColumnId;
 
             _context.Cards.Remove(targetedCard);
@@ -58,6 +74,29 @@ namespace DATN_BE.Modules.Task.Application.Commands.DeleteCard
             }
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            if (_hubContext != null)
+            {
+                try
+                {
+                    await _hubContext.Clients
+                        .Group(BoardHub.GroupName(boardId))
+                        .SendAsync(
+                            BoardHub.CardDeleted,
+                            new CardDeletedMessage(
+                                boardId,
+                                cardId,
+                                sourceColumnId,
+                                _currentUserService?.UserId ?? Guid.Empty,
+                                DateTimeOffset.UtcNow),
+                            CancellationToken.None);
+                }
+                catch (Exception exception)
+                {
+                    _logger?.LogWarning(exception, "Không thể phát sự kiện CardDeleted cho board {BoardId}.", boardId);
+                }
+            }
+
             return true;
         }
     }

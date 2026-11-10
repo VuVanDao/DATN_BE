@@ -1,11 +1,14 @@
 using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Enum;
+using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
 {
@@ -14,11 +17,21 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
         private readonly IProjectAuthorizationService _authorizationService;
-        public CreateCardCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService, IProjectAuthorizationService authorizationService)
+        private readonly IHubContext<BoardHub>? _hubContext;
+        private readonly ILogger<CreateCardCommandHandler>? _logger;
+
+        public CreateCardCommandHandler(
+            IApplicationDbContext context,
+            ICurrentUserService currentUserService,
+            IProjectAuthorizationService authorizationService,
+            IHubContext<BoardHub>? hubContext = null,
+            ILogger<CreateCardCommandHandler>? logger = null)
         {
             _context = context;
             _currentUserService = currentUserService;
             _authorizationService = authorizationService;
+            _hubContext = hubContext;
+            _logger = logger;
         }
         public async Task<CardDto> Handle(CreateCardCommand request, CancellationToken cancellationToken)
         {
@@ -83,12 +96,14 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
             };
             _context.Cards.Add(newCard);
             await _context.SaveChangesAsync(cancellationToken);
-             return new CardDto
+
+            var result = new CardDto
             {
                 Id = newCard.Id,
                 Title = newCard.Title,
                 Description = newCard.Description,
                 Position = newCard.Position,
+                CoverUrl = newCard.CoverUrl,
                 Type = newCard.Type,
                 Priority = newCard.Priority,
                 StoryPoints = newCard.StoryPoints,
@@ -106,6 +121,29 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
                 CreatedAt = newCard.CreatedAt,
                 CommentsCount = 0
             };
+
+            if (_hubContext != null)
+            {
+                try
+                {
+                    await _hubContext.Clients
+                        .Group(BoardHub.GroupName(targetColumn.BoardId))
+                        .SendAsync(
+                            BoardHub.CardCreated,
+                            new CardCreatedMessage(
+                                targetColumn.BoardId,
+                                result,
+                                currentUserId,
+                                DateTimeOffset.UtcNow),
+                            CancellationToken.None);
+                }
+                catch (Exception exception)
+                {
+                    _logger?.LogWarning(exception, "Không thể phát sự kiện CardCreated cho board {BoardId}.", targetColumn.BoardId);
+                }
+            }
+
+            return result;
         }
     }
 }

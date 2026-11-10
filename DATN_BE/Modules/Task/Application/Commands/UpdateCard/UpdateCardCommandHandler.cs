@@ -1,9 +1,12 @@
 using DATN_BE.Modules.Identity.Domain.Entities;
+using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
 {
@@ -12,15 +15,24 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
         private readonly IApplicationDbContext _context;
         private readonly IProjectAuthorizationService _authorizationService;
         private readonly ICloudinaryService? _cloudinaryService;
+        private readonly IHubContext<BoardHub>? _hubContext;
+        private readonly ICurrentUserService? _currentUserService;
+        private readonly ILogger<UpdateCardCommandHandler>? _logger;
 
         public UpdateCardCommandHandler(
             IApplicationDbContext context,
             IProjectAuthorizationService authorizationService,
-            ICloudinaryService? cloudinaryService = null)
+            ICloudinaryService? cloudinaryService = null,
+            IHubContext<BoardHub>? hubContext = null,
+            ICurrentUserService? currentUserService = null,
+            ILogger<UpdateCardCommandHandler>? logger = null)
         {
             _context = context;
             _authorizationService = authorizationService;
             _cloudinaryService = cloudinaryService;
+            _hubContext = hubContext;
+            _currentUserService = currentUserService;
+            _logger = logger;
         }
 
         public async Task<CardDto> Handle(UpdateCardCommand request, CancellationToken cancellationToken)
@@ -89,7 +101,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
 
             await _context.SaveChangesAsync(cancellationToken);
             
-            return new CardDto
+            var result = new CardDto
             {
                 Id = targetCard.Id,
                 Title = targetCard.Title,
@@ -113,6 +125,30 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                 CreatedAt = targetCard.CreatedAt,
                 CommentsCount = targetCard.Comments.Count
             };
+
+            if (_hubContext != null && targetCard.Column?.Board != null)
+            {
+                try
+                {
+                    var boardId = targetCard.Column.BoardId;
+                    await _hubContext.Clients
+                        .Group(BoardHub.GroupName(boardId))
+                        .SendAsync(
+                            BoardHub.CardUpdated,
+                            new CardUpdatedMessage(
+                                boardId,
+                                result,
+                                _currentUserService?.UserId ?? Guid.Empty,
+                                DateTimeOffset.UtcNow),
+                            CancellationToken.None);
+                }
+                catch (Exception exception)
+                {
+                    _logger?.LogWarning(exception, "Không thể phát sự kiện CardUpdated cho board {BoardId}.", targetCard.Column.BoardId);
+                }
+            }
+
+            return result;
         }
     }
 }
