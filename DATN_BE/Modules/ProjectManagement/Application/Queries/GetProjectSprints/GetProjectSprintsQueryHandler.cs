@@ -25,14 +25,26 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectSprint
         {
             await _authorizationService.EnsureCanViewProjectAsync(request.ProjectId, cancellationToken);
 
+            // Xác định Bảng Scrum mục tiêu
+            Guid? targetBoardId = request.BoardId;
+            if (!targetBoardId.HasValue)
+            {
+                targetBoardId = await _context.Boards
+                    .AsNoTracking()
+                    .Where(b => b.ProjectId == request.ProjectId && b.Type == BoardType.Scrum)
+                    .OrderBy(b => b.CreatedAt)
+                    .Select(b => (Guid?)b.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            if (!targetBoardId.HasValue)
+            {
+                return new List<SprintDto>();
+            }
+
             var query = _context.Sprints
                 .AsNoTracking()
-                .Where(s => s.ProjectId == request.ProjectId);
-
-            if (request.BoardId.HasValue)
-            {
-                query = query.Where(s => s.BoardId == request.BoardId.Value);
-            }
+                .Where(s => s.ProjectId == request.ProjectId && s.BoardId == targetBoardId.Value);
 
             if (!request.IncludeClosed)
             {
