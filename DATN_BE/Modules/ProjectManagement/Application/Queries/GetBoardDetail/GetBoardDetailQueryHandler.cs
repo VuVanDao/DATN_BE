@@ -138,7 +138,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                         {
                             columnCards = sprintCards != null
                                 ? sprintCards.Where(card => card.ColumnId == c.Id).OrderBy(card => card.Position)
-                                : Enumerable.Empty<DATN_BE.Modules.Task.Domain.Entities.Card>();
+                                : Enumerable.Empty<Card>();
                         }
                         else
                         {
