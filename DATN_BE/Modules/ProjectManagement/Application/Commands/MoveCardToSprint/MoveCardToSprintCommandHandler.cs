@@ -40,6 +40,11 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprin
             var projectId = card.Column?.Board?.ProjectId
                 ?? throw new NotFoundException("Không tìm thấy Dự án của thẻ này.");
 
+            if (card.Column?.Board?.Type != BoardType.Scrum)
+            {
+                throw new BadRequestException("Chỉ các thẻ thuộc mô hình Scrum mới có thể đưa vào Sprint hoặc Backlog.");
+            }
+
             // Kiểm tra trạng thái của Sprint nguồn (nếu thẻ đang thuộc 1 Sprint)
             bool isSourceActive = false;
             if (card.SprintId.HasValue)

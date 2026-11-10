@@ -70,7 +70,13 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateBoard
                 ProjectId = request.ProjectId,
                 Title = request.Title.Trim(),
                 Slug = slug,
-                Type = request.Type
+                Type = request.Type,
+                Columns = new List<Column>
+                {
+                    new Column { Title = "To Do", Position = 0, IsDoneColumn = false },
+                    new Column { Title = "In Progress", Position = 1, IsDoneColumn = false },
+                    new Column { Title = "Done", Position = 2, IsDoneColumn = true }
+                }
             };
 
             _context.Boards.Add(board);

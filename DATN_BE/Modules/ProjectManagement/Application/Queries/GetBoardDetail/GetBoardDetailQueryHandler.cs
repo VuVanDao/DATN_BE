@@ -2,6 +2,7 @@ using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.Task.Application.DTOs;
+using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -59,48 +60,81 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
             }
 
             SprintDto? activeSprintDto = null;
-            Guid? targetSprintId = request.SprintId;
+            Guid? targetActiveSprintId = request.SprintId;
+            List<Card>? sprintCards = null;
 
+            // Tìm activeSprint (nếu có) chỉ khi board là Scrum
             if (board.Type == BoardType.Scrum)
             {
                 // Nếu chưa chỉ định sprintId, tìm Sprint đang Active của Dự án
                 Sprint? activeSprint = null;
-                if (targetSprintId.HasValue)
+                if (targetActiveSprintId.HasValue)
                 {
                     activeSprint = await _context.Sprints
                         .AsNoTracking()
-                        .Include(s => s.Cards)
-                            .ThenInclude(c => c.Column)
-                        .FirstOrDefaultAsync(s => s.Id == targetSprintId.Value && s.ProjectId == board.ProjectId, cancellationToken);
+                        .FirstOrDefaultAsync(s => s.Id == targetActiveSprintId.Value && s.ProjectId == board.ProjectId, cancellationToken);
                 }
                 else
                 {
                     activeSprint = await _context.Sprints
                         .AsNoTracking()
-                        .Include(s => s.Cards)
-                            .ThenInclude(c => c.Column)
                         .FirstOrDefaultAsync(s => s.ProjectId == board.ProjectId && s.Status == SprintStatus.Active, cancellationToken);
 
-                    targetSprintId = activeSprint?.Id;
+                    targetActiveSprintId = activeSprint?.Id;
                 }
 
-                if (activeSprint != null)
+                if (targetActiveSprintId.HasValue)
                 {
-                    activeSprintDto = new SprintDto
+                    // Lấy TẤT CẢ các thẻ thuộc Sprint này trong Dự án
+                    sprintCards = await _context.Cards
+                        .Include(c => c.Assignee)
+                        .Include(c => c.Reporter)
+                        .Include(c => c.Comments)
+                        .Include(c => c.Column)
+                        .Where(c => c.SprintId == targetActiveSprintId.Value && c.Column.Board.ProjectId == board.ProjectId)
+                        .OrderBy(c => c.Position)
+                        .ToListAsync(cancellationToken);
+
+                    var boardColumnIds = board.Columns.Select(c => c.Id).ToHashSet();
+                    var startColumn = board.Columns.OrderBy(c => c.Position).FirstOrDefault(c => !c.IsDoneColumn)
+                                   ?? board.Columns.OrderBy(c => c.Position).FirstOrDefault();
+
+                    // Nếu có thẻ thuộc Sprint nhưng đang mang ColumnId của Bảng khác (ví dụ từ Kanban)
+                    // Tự động đồng bộ chúng về Cột đầu tiên (To Do) của Bảng Scrum này
+                    if (startColumn != null)
                     {
-                        Id = activeSprint.Id,
-                        ProjectId = activeSprint.ProjectId,
-                        Name = activeSprint.Name,
-                        Goal = activeSprint.Goal,
-                        StartDate = activeSprint.StartDate,
-                        EndDate = activeSprint.EndDate,
-                        Status = activeSprint.Status,
-                        CreatedAt = activeSprint.CreatedAt,
-                        TotalCards = activeSprint.Cards.Count,
-                        CompletedCards = activeSprint.Cards.Count(c => c.Column != null && c.Column.IsDoneColumn),
-                        TotalStoryPoints = activeSprint.Cards.Sum(c => c.StoryPoints ?? 0),
-                        CompletedStoryPoints = activeSprint.Cards.Where(c => c.Column != null && c.Column.IsDoneColumn).Sum(c => c.StoryPoints ?? 0)
-                    };
+                        var unmappedCards = sprintCards.Where(c => !boardColumnIds.Contains(c.ColumnId)).ToList();
+                        if (unmappedCards.Any())
+                        {
+                            var maxPos = sprintCards.Where(c => c.ColumnId == startColumn.Id).Select(c => (int?)c.Position).Max() ?? -1;
+                            foreach (var card in unmappedCards)
+                            {
+                                card.ColumnId = startColumn.Id;
+                                card.Column = startColumn;
+                                card.Position = ++maxPos;
+                            }
+                            await _context.SaveChangesAsync(cancellationToken);
+                        }
+                    }
+
+                    if (activeSprint != null)
+                    {
+                        activeSprintDto = new SprintDto
+                        {
+                            Id = activeSprint.Id,
+                            ProjectId = activeSprint.ProjectId,
+                            Name = activeSprint.Name,
+                            Goal = activeSprint.Goal,
+                            StartDate = activeSprint.StartDate,
+                            EndDate = activeSprint.EndDate,
+                            Status = activeSprint.Status,
+                            CreatedAt = activeSprint.CreatedAt,
+                            TotalCards = sprintCards.Count,
+                            CompletedCards = sprintCards.Count(c => c.Column != null && c.Column.IsDoneColumn),
+                            TotalStoryPoints = sprintCards.Sum(c => c.StoryPoints ?? 0),
+                            CompletedStoryPoints = sprintCards.Where(c => c.Column != null && c.Column.IsDoneColumn).Sum(c => c.StoryPoints ?? 0)
+                        };
+                    }
                 }
             }
 
@@ -118,17 +152,28 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                 ActiveSprint = activeSprintDto,
                 Columns = board.Columns
                     .OrderBy(c => c.Position)
-                    .Select(c => new ColumnDto
+                    .Select(c =>
                     {
-                        Id = c.Id,
-                        Title = c.Title,
-                        Position = c.Position,
-                        IsDoneColumn = c.IsDoneColumn,
-                        BoardId = c.BoardId,
-                        Cards = c.Cards
-                            .Where(card => board.Type != BoardType.Scrum || (targetSprintId.HasValue && card.SprintId == targetSprintId.Value))
-                            .OrderBy(card => card.Position)
-                            .Select(card => new CardDto
+                        IEnumerable<Card> columnCards;
+                        if (board.Type == BoardType.Scrum)
+                        {
+                            columnCards = sprintCards != null
+                                ? sprintCards.Where(card => card.ColumnId == c.Id).OrderBy(card => card.Position)
+                                : Enumerable.Empty<DATN_BE.Modules.Task.Domain.Entities.Card>();
+                        }
+                        else
+                        {
+                            columnCards = c.Cards.OrderBy(card => card.Position);
+                        }
+
+                        return new ColumnDto
+                        {
+                            Id = c.Id,
+                            Title = c.Title,
+                            Position = c.Position,
+                            IsDoneColumn = c.IsDoneColumn,
+                            BoardId = c.BoardId,
+                            Cards = columnCards.Select(card => new CardDto
                             {
                                 Id = card.Id,
                                 Title = card.Title,
@@ -152,6 +197,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                                 CreatedAt = card.CreatedAt,
                                 CommentsCount = card.Comments.Count
                             }).ToList()
+                        };
                     }).ToList()
             };
         }

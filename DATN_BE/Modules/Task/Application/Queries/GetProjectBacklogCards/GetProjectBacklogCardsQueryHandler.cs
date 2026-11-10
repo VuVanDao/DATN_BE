@@ -1,3 +1,4 @@
+using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -22,9 +23,27 @@ namespace DATN_BE.Modules.Task.Application.Queries.GetProjectBacklogCards
         {
             await _authorizationService.EnsureCanViewProjectAsync(request.ProjectId, cancellationToken);
 
+            // Tự động gỡ SprintId khỏi các thẻ thuộc Bảng Kanban nếu có (bảo toàn nguyên tắc thẻ Kanban độc lập với Scrum)
+            var misplacedKanbanCards = await _context.Cards
+                .Include(c => c.Column).ThenInclude(col => col.Board)
+                .Where(c => c.SprintId != null && c.Column.Board.ProjectId == request.ProjectId && c.Column.Board.Type != BoardType.Scrum)
+                .ToListAsync(cancellationToken);
+
+            if (misplacedKanbanCards.Any())
+            {
+                foreach (var card in misplacedKanbanCards)
+                {
+                    card.SprintId = null;
+                }
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            // Chỉ lấy các thẻ thuộc Bảng Scrum và chưa gán vào Sprint (SprintId == null)
             var cards = await _context.Cards
                 .AsNoTracking()
-                .Where(c => c.Column.Board.ProjectId == request.ProjectId && c.SprintId == null)
+                .Where(c => c.Column.Board.ProjectId == request.ProjectId 
+                         && c.Column.Board.Type == BoardType.Scrum 
+                         && c.SprintId == null)
                 .Include(c => c.Assignee)
                 .Include(c => c.Reporter)
                 .Include(c => c.Comments)

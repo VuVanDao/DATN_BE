@@ -62,13 +62,19 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
             };
             _context.Projects.Add(newProject);
 
-            // 5. Tự động tạo 1 Board Kanban mặc định cho Project
+            // 5. Tự động tạo 1 Board Kanban mặc định cho Project kèm 3 cột cơ bản
             var defaultBoard = new Board
             {
                 Title = "New Kanban board",
                 Slug = "new-kanban-board of "+normalizedKey,
                 Type = BoardType.Kanban,
-                ProjectId = newProject.Id
+                ProjectId = newProject.Id,
+                Columns = new List<Column>
+                {
+                    new Column { Title = "To Do", Position = 0, IsDoneColumn = false },
+                    new Column { Title = "In Progress", Position = 1, IsDoneColumn = false },
+                    new Column { Title = "Done", Position = 2, IsDoneColumn = true }
+                }
             };
             _context.Boards.Add(defaultBoard);
 

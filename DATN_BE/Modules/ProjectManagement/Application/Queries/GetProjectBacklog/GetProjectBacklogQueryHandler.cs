@@ -26,6 +26,21 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBacklo
         {
             await _authorizationService.EnsureCanViewProjectAsync(request.ProjectId, cancellationToken);
 
+            // Tự động dọn dẹp các thẻ Kanban lỡ bị gán SprintId trước đây
+            var misplacedKanbanCards = await _context.Cards
+                .Include(c => c.Column).ThenInclude(col => col.Board)
+                .Where(c => c.SprintId != null && c.Column.Board.ProjectId == request.ProjectId && c.Column.Board.Type != BoardType.Scrum)
+                .ToListAsync(cancellationToken);
+
+            if (misplacedKanbanCards.Any())
+            {
+                foreach (var card in misplacedKanbanCards)
+                {
+                    card.SprintId = null;
+                }
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
             // 1. Lấy tất cả các Sprint chưa đóng (Active và Future)
             var sprints = await _context.Sprints
                 .AsNoTracking()
@@ -38,18 +53,32 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBacklo
                     .ThenInclude(c => c.Comments)
                 .Include(s => s.Cards)
                     .ThenInclude(c => c.Column)
+                        .ThenInclude(col => col.Board)
                 .OrderBy(s => s.CreatedAt)
                 .ToListAsync(cancellationToken);
 
-            // 2. Lấy các Cards thuộc Backlog (SprintId == null)
+            // 2. Lấy các Cards thuộc Backlog của Scrum (c.Column.Board.Type == BoardType.Scrum và SprintId == null)
             var backlogCards = await _context.Cards
                 .AsNoTracking()
-                .Where(c => c.Column.Board.ProjectId == request.ProjectId && c.SprintId == null)
+                .Where(c => c.Column.Board.ProjectId == request.ProjectId 
+                         && c.Column.Board.Type == BoardType.Scrum 
+                         && c.SprintId == null)
                 .Include(c => c.Assignee)
                 .Include(c => c.Reporter)
                 .Include(c => c.Comments)
                 .OrderBy(c => c.Position)
                 .ToListAsync(cancellationToken);
+
+            // 3. Tìm cột mặc định của Bảng Scrum trong dự án để hỗ trợ tạo thẻ nhanh
+            var scrumBoard = await _context.Boards
+                .AsNoTracking()
+                .Include(b => b.Columns)
+                .Where(b => b.ProjectId == request.ProjectId && b.Type == BoardType.Scrum)
+                .OrderBy(b => b.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            var defaultColumn = scrumBoard?.Columns.OrderBy(c => c.Position).FirstOrDefault(c => !c.IsDoneColumn)
+                             ?? scrumBoard?.Columns.OrderBy(c => c.Position).FirstOrDefault();
 
             SprintDto MapSprintDto(Sprint s)
             {
@@ -129,6 +158,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBacklo
             return new ProjectBacklogDto
             {
                 ProjectId = request.ProjectId,
+                DefaultScrumColumnId = defaultColumn?.Id,
                 ActiveSprint = activeSprintEntity != null ? MapSprintDto(activeSprintEntity) : null,
                 FutureSprints = futureSprintEntities.Select(MapSprintDto).ToList(),
                 BacklogCards = backlogCardDtos,

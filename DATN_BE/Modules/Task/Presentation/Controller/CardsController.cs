@@ -83,6 +83,16 @@ namespace DATN_BE.Modules.Task.Presentation.Controller
         }
 
         /// <summary>
+        /// Tạo Thẻ công việc mới trong Backlog hoặc Sprint của Dự án (Tự động gán vào Cột đầu tiên của Bảng Scrum)
+        /// </summary>
+        [HttpPost("backlog")]
+        public async Task<ActionResult<ApiResponse<CardDto>>> CreateBacklogCard([FromBody] DATN_BE.Modules.Task.Application.Commands.CreateBacklogCard.CreateBacklogCardCommand command)
+        {
+            var result = await _mediator.Send(command);
+            return Ok(ApiResponse<CardDto>.Ok(result, "Tạo công việc trong Backlog thành công."));
+        }
+
+        /// <summary>
         /// Lấy danh sách thẻ trong kho Product Backlog của Dự án (những thẻ có SprintId == null)
         /// </summary>
         [HttpGet("project/{projectId:guid}/backlog")]
