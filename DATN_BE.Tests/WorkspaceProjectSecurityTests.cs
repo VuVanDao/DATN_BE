@@ -384,6 +384,34 @@ public class WorkspaceProjectSecurityTests
     }
 
     [Fact]
+    public async Task UpdateBoard_WhenSlugCollidesWithAnotherBoard_GeneratesNewUniqueSlug()
+    {
+        await using var f = await Fixture.Create();
+        f.Current.UserId = f.Leader.Id;
+
+        var board1 = await new CreateBoardCommandHandler(f.Db, f.Current, f.Auth)
+            .Handle(new() { ProjectId = f.Project.Id, Title = "Board 1", Slug = "common-slug" }, default);
+
+        var board2 = await new CreateBoardCommandHandler(f.Db, f.Current, f.Auth)
+            .Handle(new() { ProjectId = f.Project.Id, Title = "Board 2", Slug = "board-two" }, default);
+
+        Assert.Equal("common-slug", board1.Slug);
+        Assert.Equal("board-two", board2.Slug);
+
+        // Update board2 to have the same slug as board1
+        var updatedBoard2 = await new UpdateBoardCommandHandler(f.Db, f.Current, f.Auth)
+            .Handle(new() { BoardId = board2.Id, Title = "Board 2 Updated", Slug = "common-slug" }, default);
+
+        Assert.NotEqual("board-two", updatedBoard2.Slug);
+        Assert.NotEqual("common-slug", updatedBoard2.Slug);
+        Assert.StartsWith("common-slug-", updatedBoard2.Slug);
+
+        // Ensure board1 slug is still intact
+        var refreshedBoard1 = await f.Db.Boards.FindAsync(board1.Id);
+        Assert.Equal("common-slug", refreshedBoard1!.Slug);
+    }
+
+    [Fact]
     public async Task Leader_role_from_another_project_or_scope_cannot_manage_this_project()
     {
         await using var f = await Fixture.Create();

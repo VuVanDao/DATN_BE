@@ -29,43 +29,51 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoard
             var currentUserId = _currentUserService.UserId
                 ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này.");
 
-            var board = await _context.Boards
+            var targetBoard = await _context.Boards
                 .FirstOrDefaultAsync(item => item.Id == request.BoardId, cancellationToken)
                 ?? throw new NotFoundException("Board", request.BoardId);
 
-            await _authorizationService.EnsureProjectLeaderAsync(board.ProjectId, cancellationToken);
+            await _authorizationService.EnsureProjectLeaderAsync(targetBoard.ProjectId, cancellationToken);
 
-            var slug = SlugHelper.GenerateSlug(request.Slug);
-            if (string.IsNullOrWhiteSpace(slug))
+            var sourceSlug = !string.IsNullOrWhiteSpace(request.Slug) ? request.Slug : request.Title;
+            var baseSlug = SlugHelper.GenerateSlug(sourceSlug);
+            if (string.IsNullOrWhiteSpace(baseSlug))
             {
-                throw new BadRequestException("Slug của Bảng không chứa ký tự hợp lệ.");
+                baseSlug = "board";
+            }
+            if (baseSlug.Length > 100)
+            {
+                baseSlug = baseSlug[..100].TrimEnd('-');
             }
 
-            var slugExists = await _context.Boards
-                .AnyAsync(item =>
-                    item.ProjectId == board.ProjectId &&
-                    item.Slug == slug &&
-                    item.Id != board.Id, cancellationToken);
+            var existingSlugs = await _context.Boards
+                .Where(b => b.ProjectId == targetBoard.ProjectId
+                            && b.Id != targetBoard.Id
+                            && (b.Slug == baseSlug || b.Slug.StartsWith(baseSlug + "-")))
+                .Select(item => item.Slug)
+                .ToHashSetAsync(cancellationToken);
 
-            if (slugExists)
+            var slug = baseSlug;
+            while (existingSlugs.Contains(slug))
             {
-                throw new BadRequestException("Slug này đã được sử dụng trong Project.");
+                var shortCode = SlugHelper.GenerateShortCode(6);
+                slug = $"{baseSlug}-{shortCode}";
             }
 
-            board.Title = request.Title.Trim();
-            board.Slug = slug;
-            board.Type = request.Type;
+            targetBoard.Title = request.Title.Trim();
+            targetBoard.Slug = slug;
+            targetBoard.Type = request.Type;
 
             await _context.SaveChangesAsync(cancellationToken);
 
             return new BoardDto
             {
-                Id = board.Id,
-                ProjectId = board.ProjectId,
-                Title = board.Title,
-                Slug = board.Slug,
-                Type = board.Type.ToString(),
-                CreatedAt = board.CreatedAt
+                Id = targetBoard.Id,
+                ProjectId = targetBoard.ProjectId,
+                Title = targetBoard.Title,
+                Slug = targetBoard.Slug,
+                Type = targetBoard.Type.ToString(),
+                CreatedAt = targetBoard.CreatedAt
             };
         }
     }
