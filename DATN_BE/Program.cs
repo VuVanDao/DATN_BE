@@ -6,7 +6,6 @@ using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 using DATN_BE.Shared.Application.Behaviors;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Infrastructure.Persistence;
-using DATN_BE.Shared.Infrastructure.Security;
 using DATN_BE.Shared.Infrastructure.Services;
 using DATN_BE.Shared.Presentation.Middlewares;
 using FluentValidation;
@@ -104,9 +103,6 @@ namespace DATN_BE
                         }
                     };
                 });
-            // Cấu hình Custom Permission RBAC Authorization
-            builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
-            builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
             builder.Services.AddAuthorization();
 
             var app = builder.Build();

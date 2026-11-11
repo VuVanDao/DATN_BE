@@ -12,6 +12,5 @@ namespace DATN_BE.Modules.Identity.Domain.Entities
 
         // Navigation Properties
         public ICollection<User> Users { get; set; } = new List<User>();
-        public ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
     }
 }

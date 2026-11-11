@@ -13,8 +13,6 @@ namespace DATN_BE.Shared.Application.Interfaces
     {
         DbSet<User> Users { get; }
         DbSet<Role> Roles { get; }
-        DbSet<Permission> Permissions { get; }
-        DbSet<RolePermission> RolePermissions { get; }
         DbSet<Workspace> Workspaces { get; }
         DbSet<WorkspaceMember> WorkspaceMembers { get; }
         DbSet<Project> Projects { get; }
@@ -31,7 +29,7 @@ namespace DATN_BE.Shared.Application.Interfaces
         DbSet<RefreshToken> RefreshTokens { get; }
         DbSet<PasswordResetToken> PasswordResetTokens { get; }
         DbSet<LoginHistory> LoginHistories { get; }
-        DbSet <PasswordResetSendBytEmailJob> PasswordResetEmailJob { get; }
+        DbSet<PasswordResetSendBytEmailJob> PasswordResetEmailJob { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

@@ -26,7 +26,8 @@ namespace DATN_BE.Shared.Infrastructure.Services
                 _context.Projects.AnyAsync(project =>
                     project.Id == projectId &&
                     (project.Workspace.OwnerId == currentUserId ||
-                     project.Workspace.Members.Any(member => member.UserId == currentUserId)), cancellationToken),
+                     project.Workspace.Members.Any(member => member.UserId == currentUserId) ||
+                     project.ProjectMembers.Any(member => member.UserId == currentUserId)), cancellationToken),
                 "Bạn không phải thành viên của workspace của dự án này nên không thể xem thông tin này");
         }
 
@@ -37,8 +38,11 @@ namespace DATN_BE.Shared.Infrastructure.Services
                 _context.Projects.AnyAsync(project =>
                     project.Id == projectId &&
                     (project.Workspace.OwnerId == currentUserId ||
-                     project.ProjectMembers.Any(member => member.UserId == currentUserId)), cancellationToken),
-                "Bạn không có quyền thay đổi dữ liệu trong dự án này.");
+                     project.ProjectMembers.Any(member =>
+                        member.UserId == currentUserId &&
+                        (member.Role.Name == RoleConstants.ProjectLeader ||
+                         member.Role.Name == RoleConstants.ProjectMember))), cancellationToken),
+                "Bạn chưa tham gia dự án này hoặc không có quyền thay đổi dữ liệu.");
         }
 
         public Task EnsureProjectLeaderAsync(Guid projectId, CancellationToken cancellationToken = default)
@@ -50,8 +54,8 @@ namespace DATN_BE.Shared.Infrastructure.Services
                     (project.Workspace.OwnerId == currentUserId ||
                      project.ProjectMembers.Any(member =>
                          member.UserId == currentUserId &&
-                         member.Role.Name == RoleConstants.ProjectLeader &&
-                         member.Role.Scope == RoleScope.Project)), cancellationToken),
+                         member.Role.Scope == RoleScope.Project &&
+                         member.Role.Name == RoleConstants.ProjectLeader)), cancellationToken),
                 "Chỉ chủ sở hữu Workspace hoặc Trưởng dự án mới có quyền thực hiện thao tác này.");
         }
 
@@ -71,8 +75,8 @@ namespace DATN_BE.Shared.Infrastructure.Services
                     (project.Workspace.OwnerId == currentUserId ||
                      project.ProjectMembers.Any(member =>
                          member.UserId == currentUserId &&
-                         member.Role.Name == RoleConstants.ProjectLeader &&
-                         member.Role.Scope == RoleScope.Project)), cancellationToken),
+                         member.Role.Scope == RoleScope.Project &&
+                         member.Role.Name == RoleConstants.ProjectLeader)), cancellationToken),
                 "Chỉ chủ sở hữu Workspace hoặc Trưởng dự án mới được quản lý dự án.");
         }
 

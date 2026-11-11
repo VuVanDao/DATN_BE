@@ -60,41 +60,6 @@ namespace DATN_BE.Migrations
                     b.ToTable("PasswordResetTokens", (string)null);
                 });
 
-            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.Permission", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Module")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.ToTable("Permissions", (string)null);
-                });
-
             modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -180,21 +145,6 @@ namespace DATN_BE.Migrations
                         .IsUnique();
 
                     b.ToTable("Roles", (string)null);
-                });
-
-            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.RolePermission", b =>
-                {
-                    b.Property<Guid>("RoleId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("PermissionId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("RoleId", "PermissionId");
-
-                    b.HasIndex("PermissionId");
-
-                    b.ToTable("RolePermissions", (string)null);
                 });
 
             modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.User", b =>
@@ -931,25 +881,6 @@ namespace DATN_BE.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.RolePermission", b =>
-                {
-                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.Permission", "Permission")
-                        .WithMany("RolePermissions")
-                        .HasForeignKey("PermissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.Role", "Role")
-                        .WithMany("RolePermissions")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Permission");
-
-                    b.Navigation("Role");
-                });
-
             modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.User", b =>
                 {
                     b.HasOne("DATN_BE.Modules.Identity.Domain.Entities.Role", "Role")
@@ -1224,15 +1155,8 @@ namespace DATN_BE.Migrations
                     b.Navigation("Workspace");
                 });
 
-            modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.Permission", b =>
-                {
-                    b.Navigation("RolePermissions");
-                });
-
             modelBuilder.Entity("DATN_BE.Modules.Identity.Domain.Entities.Role", b =>
                 {
-                    b.Navigation("RolePermissions");
-
                     b.Navigation("Users");
                 });
 
