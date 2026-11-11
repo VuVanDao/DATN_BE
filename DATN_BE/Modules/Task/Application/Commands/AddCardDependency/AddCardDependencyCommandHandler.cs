@@ -57,12 +57,13 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardDependency
             var blockedCard = cards.First(c => c.Id == blockedCardId);
             var blockingCard = cards.First(c => c.Id == blockingCardId);
 
-            if (blockedCard.Column.Board.ProjectId != blockingCard.Column.Board.ProjectId)
+            if (blockedCard.Column.BoardId != blockingCard.Column.BoardId)
             {
-                throw new BadRequestException("Không thể tạo quan hệ phụ thuộc giữa các thẻ thuộc các dự án khác nhau.");
+                throw new BadRequestException("Không thể tạo quan hệ phụ thuộc giữa các thẻ thuộc các bảng (Board) khác nhau.");
             }
 
             var projectId = blockedCard.Column.Board.ProjectId;
+            var boardId = blockedCard.Column.BoardId;
             await _authorizationService.EnsureCanModifyProjectAsync(projectId, cancellationToken);
 
             var existing = await _context.CardDependencies
@@ -73,8 +74,8 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardDependency
                 throw new BadRequestException("Mối quan hệ phụ thuộc giữa 2 thẻ này đã tồn tại.");
             }
 
-            // Kiểm tra chu trình lặp vô hạn (Cycle Detection)
-            var hasCycle = await CheckCircularDependencyAsync(blockedCardId, blockingCardId, projectId, cancellationToken);
+            // Kiểm tra chu trình lặp vô hạn (Cycle Detection) trong phạm vi Board
+            var hasCycle = await CheckCircularDependencyAsync(blockedCardId, blockingCardId, boardId, cancellationToken);
             if (hasCycle)
             {
                 throw new BadRequestException("Không thể tạo liên kết vì sẽ tạo thành chu trình phụ thuộc vòng (Circular Dependency), gây tắc nghẽn công việc.");
@@ -144,14 +145,14 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardDependency
         private async Task<bool> CheckCircularDependencyAsync(
             Guid blockedCardId,
             Guid blockingCardId,
-            Guid projectId,
+            Guid boardId,
             CancellationToken cancellationToken)
         {
             // Nếu ta thêm cạnh: blockingCardId -> blockedCardId
             // Chu trình xảy ra nếu ĐÃ CÓ đường đi từ blockedCardId tới blockingCardId
             var allDependencies = await _context.CardDependencies
                 .AsNoTracking()
-                .Where(cd => cd.BlockedCard.Column.Board.ProjectId == projectId)
+                .Where(cd => cd.BlockedCard.Column.BoardId == boardId)
                 .Select(cd => new { cd.BlockingCardId, cd.BlockedCardId })
                 .ToListAsync(cancellationToken);
 

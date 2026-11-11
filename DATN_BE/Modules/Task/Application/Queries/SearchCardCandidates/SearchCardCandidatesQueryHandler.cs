@@ -27,6 +27,7 @@ namespace DATN_BE.Modules.Task.Application.Queries.SearchCardCandidates
                 .FirstOrDefaultAsync(c => c.Id == request.CardId, cancellationToken)
                 ?? throw new NotFoundException("Thẻ công việc không tồn tại.");
 
+            var boardId = card.Column.BoardId;
             var projectId = card.Column.Board.ProjectId;
             await _authorizationService.EnsureCanViewProjectAsync(projectId, cancellationToken);
 
@@ -41,7 +42,7 @@ namespace DATN_BE.Modules.Task.Application.Queries.SearchCardCandidates
                 .AsNoTracking()
                 .Include(c => c.Column)
                 .Include(c => c.Assignee)
-                .Where(c => c.Column.Board.ProjectId == projectId &&
+                .Where(c => c.Column.BoardId == boardId &&
                             c.Id != request.CardId &&
                             !linkedCardIds.Contains(c.Id));
 
