@@ -29,6 +29,9 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
         {
             var targetCard = await _context.Cards
                 .Include(c => c.Column).ThenInclude(c => c.Board)
+                .Include(c => c.BlockedByDependencies)
+                    .ThenInclude(d => d.BlockingCard)
+                        .ThenInclude(bc => bc.Column)
                 .FirstOrDefaultAsync(c => c.Id == request.CardId, cancellationToken)
                 ?? throw new NotFoundException("Card", request.CardId);
             await _authorizationService.EnsureCanModifyProjectAsync(targetCard.Column.Board.ProjectId, cancellationToken);
@@ -39,6 +42,22 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
             if (targetCard.Column.BoardId != targetColumn.BoardId)
             {
                 throw new BadRequestException("Không thể di chuyển thẻ giữa các Bảng khác nhau.");
+            }
+
+            if (targetColumn.IsDoneColumn)
+            {
+                var unfinishedBlockers = targetCard.BlockedByDependencies
+                    .Where(d => d.BlockingCard != null
+                             && !d.BlockingCard.IsDeleted
+                             && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100))
+                    .Select(d => d.BlockingCard.Title)
+                    .ToList();
+
+                if (unfinishedBlockers.Count > 0)
+                {
+                    var names = string.Join(", ", unfinishedBlockers.Take(3).Select(t => $"\"{t}\""));
+                    throw new BadRequestException($"Không thể chuyển thẻ vào cột Hoàn thành vì đang bị chặn bởi công việc chưa xong: {names}.");
+                }
             }
             // id của cột gốc của card đang được kéo thả
             var oldColumnId = targetCard.ColumnId;

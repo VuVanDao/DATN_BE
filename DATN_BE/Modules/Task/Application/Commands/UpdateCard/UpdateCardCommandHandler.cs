@@ -41,10 +41,29 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                 .Include(c => c.Column)
                 .ThenInclude(c => c.Board)
                 .Include(c => c.Comments)
+                .Include(c => c.BlockedByDependencies)
+                    .ThenInclude(d => d.BlockingCard)
+                        .ThenInclude(bc => bc.Column)
                 .FirstOrDefaultAsync(c => c.Id == request.CardId, cancellationToken)
                 ?? throw new NotFoundException($"Không tìm thấy card với id {request.CardId}");
             await _authorizationService.EnsureCanModifyProjectAsync(targetCard.Column.Board.ProjectId, cancellationToken);
             
+            if (request.ProgressPercentage == 100)
+            {
+                var unfinishedBlockers = targetCard.BlockedByDependencies
+                    .Where(d => d.BlockingCard != null
+                             && !d.BlockingCard.IsDeleted
+                             && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100))
+                    .Select(d => d.BlockingCard.Title)
+                    .ToList();
+
+                if (unfinishedBlockers.Count > 0)
+                {
+                    var names = string.Join(", ", unfinishedBlockers.Take(3).Select(t => $"\"{t}\""));
+                    throw new BadRequestException($"Không thể đánh dấu hoàn thành thẻ vì đang bị chặn bởi công việc chưa xong: {names}.");
+                }
+            }
+
             targetCard.Title = request.Title.Trim();
             targetCard.Description = request.Description;
 
@@ -123,7 +142,9 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                 ReporterAvatarUrl = targetCard.Reporter?.AvatarUrl,
                 SprintId = targetCard.SprintId,
                 CreatedAt = targetCard.CreatedAt,
-                CommentsCount = targetCard.Comments.Count
+                CommentsCount = targetCard.Comments.Count,
+                IsBlocked = targetCard.BlockedByDependencies.Any(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100)),
+                BlockedByCount = targetCard.BlockedByDependencies.Count(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100))
             };
 
             if (_hubContext != null && targetCard.Column?.Board != null)
