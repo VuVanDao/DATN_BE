@@ -47,6 +47,11 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                 .FirstOrDefaultAsync(c => c.Id == request.CardId, cancellationToken)
                 ?? throw new NotFoundException($"Không tìm thấy card với id {request.CardId}");
             await _authorizationService.EnsureCanModifyProjectAsync(targetCard.Column.Board.ProjectId, cancellationToken);
+
+            if (request.StartDate.HasValue && request.DueDate.HasValue && request.DueDate.Value < request.StartDate.Value)
+            {
+                throw new BadRequestException("Hạn chót (DueDate) phải lớn hơn hoặc bằng Ngày bắt đầu (StartDate).");
+            }
             
             if (request.ProgressPercentage == 100)
             {

@@ -384,6 +384,62 @@ public class WorkspaceProjectSecurityTests
     }
 
     [Fact]
+    public async Task Update_card_rejects_due_date_before_start_date_and_allows_valid_dates()
+    {
+        await using var f = await Fixture.Create();
+        f.Current.UserId = f.Member.Id;
+        var handler = new UpdateCardCommandHandler(f.Db, f.Auth);
+
+        var startDate = new DateTimeOffset(2026, 11, 12, 0, 0, 0, TimeSpan.Zero);
+        var earlierDueDate = new DateTimeOffset(2026, 11, 3, 0, 0, 0, TimeSpan.Zero);
+
+        var ex = await Assert.ThrowsAsync<BadRequestException>(() => handler.Handle(new()
+        {
+            CardId = f.Card.Id,
+            Title = "Invalid dates",
+            StartDate = startDate,
+            DueDate = earlierDueDate
+        }, default));
+        Assert.Contains("DueDate", ex.Message);
+
+        var persisted = await f.Db.Cards.AsNoTracking().SingleAsync(c => c.Id == f.Card.Id);
+        Assert.Equal("Card", persisted.Title);
+        Assert.Null(persisted.StartDate);
+        Assert.Null(persisted.DueDate);
+
+        var sameDay = await handler.Handle(new()
+        {
+            CardId = f.Card.Id,
+            Title = "Same day",
+            StartDate = startDate,
+            DueDate = startDate
+        }, default);
+        Assert.Equal(startDate, sameDay.StartDate);
+        Assert.Equal(startDate, sameDay.DueDate);
+
+        var laterDueDate = startDate.AddDays(3);
+        var validRange = await handler.Handle(new()
+        {
+            CardId = f.Card.Id,
+            Title = "Valid range",
+            StartDate = startDate,
+            DueDate = laterDueDate
+        }, default);
+        Assert.Equal(startDate, validRange.StartDate);
+        Assert.Equal(laterDueDate, validRange.DueDate);
+
+        var onlyStart = await handler.Handle(new()
+        {
+            CardId = f.Card.Id,
+            Title = "Only start",
+            StartDate = startDate,
+            DueDate = null
+        }, default);
+        Assert.Equal(startDate, onlyStart.StartDate);
+        Assert.Null(onlyStart.DueDate);
+    }
+
+    [Fact]
     public async Task UpdateBoard_WhenSlugCollidesWithAnotherBoard_GeneratesNewUniqueSlug()
     {
         await using var f = await Fixture.Create();
