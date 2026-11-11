@@ -36,8 +36,9 @@ namespace DATN_BE.Shared.Infrastructure.Services
             return EnsureAsync(
                 _context.Projects.AnyAsync(project =>
                     project.Id == projectId &&
-                    project.ProjectMembers.Any(member => member.UserId == currentUserId), cancellationToken),
-                "Bạn chưa tham gia dự án này nên không thể thay đổi dữ liệu.");
+                    (project.Workspace.OwnerId == currentUserId ||
+                     project.ProjectMembers.Any(member => member.UserId == currentUserId)), cancellationToken),
+                "Bạn không có quyền thay đổi dữ liệu trong dự án này.");
         }
 
         public Task EnsureProjectLeaderAsync(Guid projectId, CancellationToken cancellationToken = default)
@@ -46,11 +47,12 @@ namespace DATN_BE.Shared.Infrastructure.Services
             return EnsureAsync(
                 _context.Projects.AnyAsync(project =>
                     project.Id == projectId &&
-                    project.ProjectMembers.Any(member =>
-                        member.UserId == currentUserId &&
-                        member.Role.Name == RoleConstants.ProjectLeader &&
-                        member.Role.Scope == RoleScope.Project), cancellationToken),
-                "Chỉ Trưởng dự án mới có quyền thực hiện thao tác này.");
+                    (project.Workspace.OwnerId == currentUserId ||
+                     project.ProjectMembers.Any(member =>
+                         member.UserId == currentUserId &&
+                         member.Role.Name == RoleConstants.ProjectLeader &&
+                         member.Role.Scope == RoleScope.Project)), cancellationToken),
+                "Chỉ chủ sở hữu Workspace hoặc Trưởng dự án mới có quyền thực hiện thao tác này.");
         }
 
         public Task EnsureCanManageProjectAsync(Guid projectId, CancellationToken cancellationToken = default)

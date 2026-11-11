@@ -29,7 +29,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         }
 
         /// <summary>
-        /// Tạo mới Bảng trong một Dự án. Chỉ Trưởng dự án được phép thực hiện.
+        /// Tạo mới Bảng trong một Dự án. WorkspaceOwner hoặc Trưởng dự án được phép thực hiện.
         /// </summary>
         [HttpPost]
         public async Task<ActionResult<ApiResponse<BoardDto>>> CreateBoard([FromBody] CreateBoardCommand command)
@@ -52,7 +52,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         }
 
         /// <summary>
-        /// Cập nhật tiêu đề, slug và loại Bảng. Chỉ Trưởng dự án được phép thực hiện.
+        /// Cập nhật tiêu đề, slug và loại Bảng. WorkspaceOwner hoặc Trưởng dự án được phép thực hiện.
         /// </summary>
         [HttpPut("{id:guid}")]
         public async Task<ActionResult<ApiResponse<BoardDto>>> UpdateBoard(Guid id, [FromBody] UpdateBoardCommand command)
@@ -63,7 +63,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         }
 
         /// <summary>
-        /// Cập nhật ghim/lượt xem của người đăng nhập. Yêu cầu thành viên trực tiếp của Dự án.
+        /// Cập nhật ghim/lượt xem của người đăng nhập. Yêu cầu WorkspaceOwner hoặc thành viên của Dự án.
         /// </summary>
         [HttpPatch("{id:guid}/preferences")]
         public async Task<ActionResult<ApiResponse<BoardPreferenceDto>>> UpdatePreference(
@@ -75,7 +75,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         }
 
         /// <summary>
-        /// Xoá mềm Bảng và toàn bộ Cột, Thẻ thuộc Bảng. Chỉ Trưởng dự án được phép thực hiện.
+        /// Xoá mềm Bảng và toàn bộ Cột, Thẻ thuộc Bảng. WorkspaceOwner hoặc Trưởng dự án được phép thực hiện.
         /// </summary>
         [HttpDelete("{id:guid}")]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteBoard(Guid id)
@@ -116,7 +116,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         }
 
         /// <summary>
-        /// Cập nhật tiêu đề và cấu hình hoàn thành của Cột. Yêu cầu thành viên trực tiếp của Dự án.
+        /// Cập nhật tiêu đề và cấu hình hoàn thành của Cột. Yêu cầu WorkspaceOwner hoặc thành viên của Dự án.
         /// </summary>
         [HttpPut("{id:guid}/columns/{columnId:guid}")]
         public async Task<ActionResult<ApiResponse<ColumnDto>>> UpdateColumn(
@@ -129,7 +129,7 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         }
 
         /// <summary>
-        /// Xoá mềm Cột và các Thẻ thuộc Cột. Yêu cầu thành viên trực tiếp của Dự án.
+        /// Xoá mềm Cột và các Thẻ thuộc Cột. Yêu cầu WorkspaceOwner hoặc thành viên của Dự án.
         /// </summary>
         [HttpDelete("{id:guid}/columns/{columnId:guid}")]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteColumn(
