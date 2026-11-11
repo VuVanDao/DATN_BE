@@ -78,6 +78,49 @@ namespace DATN_BE.Modules.Task.Application.Queries.GetCardDetail
 
             targetCard.Comments = cardComments;
 
+            var blockedBy = await _context.CardDependencies
+                .AsNoTracking()
+                .Where(cd => cd.BlockedCardId == targetCard.Id)
+                .OrderByDescending(cd => cd.CreatedAt)
+                .Select(cd => new CardDependencyItemDto
+                {
+                    DependencyId = cd.Id,
+                    CardId = cd.BlockingCard.Id,
+                    Title = cd.BlockingCard.Title,
+                    ColumnTitle = cd.BlockingCard.Column != null ? cd.BlockingCard.Column.Title : null,
+                    IsDone = (cd.BlockingCard.Column != null && cd.BlockingCard.Column.IsDoneColumn) || cd.BlockingCard.ProgressPercentage == 100,
+                    Type = cd.BlockingCard.Type,
+                    Priority = cd.BlockingCard.Priority,
+                    AssigneeName = cd.BlockingCard.Assignee != null ? cd.BlockingCard.Assignee.Username : null,
+                    AssigneeAvatarUrl = cd.BlockingCard.Assignee != null ? cd.BlockingCard.Assignee.AvatarUrl : null,
+                    DependencyType = cd.DependencyType,
+                    CreatedAt = cd.CreatedAt
+                }).ToListAsync(cancellationToken);
+
+            var blocking = await _context.CardDependencies
+                .AsNoTracking()
+                .Where(cd => cd.BlockingCardId == targetCard.Id)
+                .OrderByDescending(cd => cd.CreatedAt)
+                .Select(cd => new CardDependencyItemDto
+                {
+                    DependencyId = cd.Id,
+                    CardId = cd.BlockedCard.Id,
+                    Title = cd.BlockedCard.Title,
+                    ColumnTitle = cd.BlockedCard.Column != null ? cd.BlockedCard.Column.Title : null,
+                    IsDone = (cd.BlockedCard.Column != null && cd.BlockedCard.Column.IsDoneColumn) || cd.BlockedCard.ProgressPercentage == 100,
+                    Type = cd.BlockedCard.Type,
+                    Priority = cd.BlockedCard.Priority,
+                    AssigneeName = cd.BlockedCard.Assignee != null ? cd.BlockedCard.Assignee.Username : null,
+                    AssigneeAvatarUrl = cd.BlockedCard.Assignee != null ? cd.BlockedCard.Assignee.AvatarUrl : null,
+                    DependencyType = cd.DependencyType,
+                    CreatedAt = cd.CreatedAt
+                }).ToListAsync(cancellationToken);
+
+            targetCard.BlockedBy = blockedBy;
+            targetCard.Blocking = blocking;
+            targetCard.BlockedByCount = blockedBy.Count(d => !d.IsDone);
+            targetCard.IsBlocked = targetCard.BlockedByCount > 0;
+
             return targetCard;
         }
     }

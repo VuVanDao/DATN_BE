@@ -1,11 +1,15 @@
 using DATN_BE.Modules.Task.Application.Commands.AddCardComment;
+using DATN_BE.Modules.Task.Application.Commands.AddCardDependency;
 using DATN_BE.Modules.Task.Application.Commands.CreateCard;
 using DATN_BE.Modules.Task.Application.Commands.DeleteCard;
 using DATN_BE.Modules.Task.Application.Commands.MoveCard;
+using DATN_BE.Modules.Task.Application.Commands.RemoveCardDependency;
 using DATN_BE.Modules.Task.Application.Commands.UpdateCard;
 using DATN_BE.Modules.Task.Application.DTOs;
+using DATN_BE.Modules.Task.Application.Queries.GetCardDependencies;
 using DATN_BE.Modules.Task.Application.Queries.GetCardDetail;
 using DATN_BE.Modules.Task.Application.Queries.GetProjectBacklogCards;
+using DATN_BE.Modules.Task.Application.Queries.SearchCardCandidates;
 using DATN_BE.Shared.Application.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -102,6 +106,56 @@ namespace DATN_BE.Modules.Task.Presentation.Controller
         {
             var result = await _mediator.Send(new GetProjectBacklogCardsQuery(projectId, boardId));
             return Ok(ApiResponse<List<CardDto>>.Ok(result, "Lấy danh sách thẻ Backlog thành công."));
+        }
+
+        /// <summary>
+        /// Thêm liên kết phụ thuộc giữa 2 thẻ (BlockedBy hoặc Blocking)
+        /// </summary>
+        [HttpPost("{cardId:guid}/dependencies")]
+        public async Task<ActionResult<ApiResponse<CardDependencyItemDto>>> AddDependency(
+            Guid cardId,
+            [FromBody] AddCardDependencyRequest request)
+        {
+            var command = new AddCardDependencyCommand
+            {
+                CardId = cardId,
+                TargetCardId = request.TargetCardId,
+                Direction = request.Direction
+            };
+            var result = await _mediator.Send(command);
+            return Ok(ApiResponse<CardDependencyItemDto>.Ok(result, "Thêm liên kết phụ thuộc thành công."));
+        }
+
+        /// <summary>
+        /// Xóa liên kết phụ thuộc giữa 2 thẻ theo Id của quan hệ phụ thuộc
+        /// </summary>
+        [HttpDelete("dependencies/{dependencyId:guid}")]
+        public async Task<ActionResult<ApiResponse<bool>>> RemoveDependency(Guid dependencyId)
+        {
+            var result = await _mediator.Send(new RemoveCardDependencyCommand(dependencyId));
+            return Ok(ApiResponse<bool>.Ok(result, "Xóa liên kết phụ thuộc thành công."));
+        }
+
+        /// <summary>
+        /// Lấy danh sách các liên kết phụ thuộc của thẻ (thẻ đang bị chặn bởi ai và đang chặn ai)
+        /// </summary>
+        [HttpGet("{cardId:guid}/dependencies")]
+        public async Task<ActionResult<ApiResponse<CardDependenciesResultDto>>> GetDependencies(Guid cardId)
+        {
+            var result = await _mediator.Send(new GetCardDependenciesQuery(cardId));
+            return Ok(ApiResponse<CardDependenciesResultDto>.Ok(result, "Lấy danh sách phụ thuộc thành công."));
+        }
+
+        /// <summary>
+        /// Tìm kiếm các thẻ ứng viên trong cùng Dự án để thiết lập liên kết phụ thuộc
+        /// </summary>
+        [HttpGet("{cardId:guid}/dependency-candidates")]
+        public async Task<ActionResult<ApiResponse<List<CardCandidateDto>>>> SearchCandidates(
+            Guid cardId,
+            [FromQuery] string? query = null)
+        {
+            var result = await _mediator.Send(new SearchCardCandidatesQuery(cardId, query));
+            return Ok(ApiResponse<List<CardCandidateDto>>.Ok(result, "Lấy danh sách gợi ý liên kết thành công."));
         }
     }
 }

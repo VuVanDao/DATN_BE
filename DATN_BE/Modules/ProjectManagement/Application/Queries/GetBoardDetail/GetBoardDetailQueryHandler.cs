@@ -40,7 +40,12 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                         .ThenInclude(card => card.Reporter)
                 .Include(b => b.Columns)
                     .ThenInclude(c => c.Cards)
-                        .ThenInclude(card => card.Comments);
+                        .ThenInclude(card => card.Comments)
+                .Include(b => b.Columns)
+                    .ThenInclude(c => c.Cards)
+                        .ThenInclude(card => card.BlockedByDependencies)
+                            .ThenInclude(dep => dep.BlockingCard)
+                                .ThenInclude(bc => bc.Column);
 
             var board = await query.FirstOrDefaultAsync(
                 b => b.Slug == request.BoardSlug && b.ProjectId == request.ProjectId,
@@ -91,6 +96,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                         .Include(c => c.Reporter)
                         .Include(c => c.Comments)
                         .Include(c => c.Column)
+                        .Include(c => c.BlockedByDependencies)
+                            .ThenInclude(dep => dep.BlockingCard)
+                                .ThenInclude(bc => bc.Column)
                         .Where(c => c.SprintId == targetActiveSprintId.Value && c.Column.BoardId == board.Id)
                         .OrderBy(c => c.Position)
                         .ToListAsync(cancellationToken);
@@ -174,7 +182,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                                 ReporterAvatarUrl = card.Reporter?.AvatarUrl,
                                 SprintId = card.SprintId,
                                 CreatedAt = card.CreatedAt,
-                                CommentsCount = card.Comments.Count
+                                CommentsCount = card.Comments.Count,
+                                IsBlocked = card.BlockedByDependencies.Any(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100)),
+                                BlockedByCount = card.BlockedByDependencies.Count(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100))
                             }).ToList()
                         };
                     }).ToList()

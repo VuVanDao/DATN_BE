@@ -25,5 +25,7 @@ namespace DATN_BE.Modules.Task.Application.DTOs
         public Guid? SprintId { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public int CommentsCount { get; set; }
+        public bool IsBlocked { get; set; }
+        public int BlockedByCount { get; set; }
     }
 }

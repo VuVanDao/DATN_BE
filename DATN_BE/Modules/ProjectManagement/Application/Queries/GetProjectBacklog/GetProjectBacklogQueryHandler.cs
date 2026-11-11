@@ -61,6 +61,10 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBacklo
                         .ThenInclude(c => c.Comments)
                     .Include(s => s.Cards)
                         .ThenInclude(c => c.Column)
+                    .Include(s => s.Cards)
+                        .ThenInclude(c => c.BlockedByDependencies)
+                            .ThenInclude(dep => dep.BlockingCard)
+                                .ThenInclude(bc => bc.Column)
                     .OrderBy(s => s.CreatedAt)
                     .ToListAsync(cancellationToken);
             }
@@ -75,6 +79,10 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBacklo
                     .Include(c => c.Assignee)
                     .Include(c => c.Reporter)
                     .Include(c => c.Comments)
+                    .Include(c => c.Column)
+                    .Include(c => c.BlockedByDependencies)
+                        .ThenInclude(dep => dep.BlockingCard)
+                            .ThenInclude(bc => bc.Column)
                     .OrderBy(c => c.Position)
                     .ToListAsync(cancellationToken);
             }
@@ -105,7 +113,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBacklo
                         ReporterAvatarUrl = c.Reporter?.AvatarUrl,
                         SprintId = c.SprintId,
                         CreatedAt = c.CreatedAt,
-                        CommentsCount = c.Comments.Count
+                        CommentsCount = c.Comments.Count,
+                        IsBlocked = c.BlockedByDependencies.Any(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100)),
+                        BlockedByCount = c.BlockedByDependencies.Count(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100))
                     }).ToList();
 
                 return new SprintDto
@@ -152,7 +162,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBacklo
                 ReporterAvatarUrl = c.Reporter?.AvatarUrl,
                 SprintId = c.SprintId,
                 CreatedAt = c.CreatedAt,
-                CommentsCount = c.Comments.Count
+                CommentsCount = c.Comments.Count,
+                IsBlocked = c.BlockedByDependencies.Any(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100)),
+                BlockedByCount = c.BlockedByDependencies.Count(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100))
             }).ToList();
 
             return new ProjectBacklogDto

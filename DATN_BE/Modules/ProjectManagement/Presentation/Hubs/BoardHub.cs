@@ -26,6 +26,8 @@ public sealed class BoardHub : Hub
     public const string SprintCompleted = "SprintCompleted";
     public const string SprintDeleted = "SprintDeleted";
     public const string CardSprintChanged = "CardSprintChanged";
+    public const string CardDependencyAdded = "CardDependencyAdded";
+    public const string CardDependencyRemoved = "CardDependencyRemoved";
 
     private readonly IApplicationDbContext _context;
     private readonly IProjectAuthorizationService _authorizationService;
@@ -174,5 +176,21 @@ public sealed record CardSprintChangedMessage(
     CardDto Card,
     Guid? OldSprintId,
     Guid? NewSprintId,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record CardDependencyAddedMessage(
+    Guid BoardId,
+    Guid DependencyId,
+    Guid BlockedCardId,
+    Guid BlockingCardId,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record CardDependencyRemovedMessage(
+    Guid BoardId,
+    Guid DependencyId,
+    Guid BlockedCardId,
+    Guid BlockingCardId,
     Guid ChangedByUserId,
     DateTimeOffset OccurredAt);

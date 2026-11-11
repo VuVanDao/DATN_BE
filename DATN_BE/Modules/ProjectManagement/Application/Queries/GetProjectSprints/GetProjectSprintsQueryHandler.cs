@@ -60,6 +60,10 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectSprint
                     .ThenInclude(c => c.Comments)
                 .Include(s => s.Cards)
                     .ThenInclude(c => c.Column)
+                .Include(s => s.Cards)
+                    .ThenInclude(c => c.BlockedByDependencies)
+                        .ThenInclude(dep => dep.BlockingCard)
+                            .ThenInclude(bc => bc.Column)
                 .OrderBy(s => s.Status == SprintStatus.Active ? 0 : s.Status == SprintStatus.Future ? 1 : 2)
                 .ThenBy(s => s.CreatedAt)
                 .ToListAsync(cancellationToken);
@@ -90,7 +94,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectSprint
                         ReporterAvatarUrl = c.Reporter?.AvatarUrl,
                         SprintId = c.SprintId,
                         CreatedAt = c.CreatedAt,
-                        CommentsCount = c.Comments.Count
+                        CommentsCount = c.Comments.Count,
+                        IsBlocked = c.BlockedByDependencies.Any(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100)),
+                        BlockedByCount = c.BlockedByDependencies.Count(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100))
                     }).ToList();
 
                 return new SprintDto
