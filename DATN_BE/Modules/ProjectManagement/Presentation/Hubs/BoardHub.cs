@@ -28,6 +28,7 @@ public sealed class BoardHub : Hub
     public const string CardSprintChanged = "CardSprintChanged";
     public const string CardDependencyAdded = "CardDependencyAdded";
     public const string CardDependencyRemoved = "CardDependencyRemoved";
+    public const string CardCommentAdded = "CardCommentAdded";
 
     private readonly IApplicationDbContext _context;
     private readonly IProjectAuthorizationService _authorizationService;
@@ -192,5 +193,11 @@ public sealed record CardDependencyRemovedMessage(
     Guid DependencyId,
     Guid BlockedCardId,
     Guid BlockingCardId,
+    Guid ChangedByUserId,
+    DateTimeOffset OccurredAt);
+
+public sealed record CardCommentAddedMessage(
+    Guid BoardId,
+    CardCommentDto Comment,
     Guid ChangedByUserId,
     DateTimeOffset OccurredAt);

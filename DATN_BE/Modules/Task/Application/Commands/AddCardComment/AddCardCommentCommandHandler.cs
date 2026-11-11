@@ -1,9 +1,12 @@
-﻿using DATN_BE.Modules.Task.Application.DTOs;
+﻿using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
+using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DATN_BE.Modules.Task.Application.Commands.AddCardComment
 {
@@ -12,11 +15,21 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardComment
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
         private readonly IProjectAuthorizationService _authorizationService;
-        public AddCardCommentCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService, IProjectAuthorizationService authorizationService)
+        private readonly IHubContext<BoardHub>? _hubContext;
+        private readonly ILogger<AddCardCommentCommandHandler>? _logger;
+
+        public AddCardCommentCommandHandler(
+            IApplicationDbContext context,
+            ICurrentUserService currentUserService,
+            IProjectAuthorizationService authorizationService,
+            IHubContext<BoardHub>? hubContext = null,
+            ILogger<AddCardCommentCommandHandler>? logger = null)
         {
             _context = context;
             _currentUserService = currentUserService;
             _authorizationService = authorizationService;
+            _hubContext = hubContext;
+            _logger = logger;
         }
 
         public async Task<CardCommentDto> Handle(AddCardCommentCommand request, CancellationToken cancellationToken)
@@ -37,7 +50,8 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardComment
             };
             _context.CardComments.Add(comment);
             await _context.SaveChangesAsync(cancellationToken);
-            return new CardCommentDto
+
+            var result = new CardCommentDto
             {
                 Id = comment.Id,
                 CardId = comment.CardId,
@@ -47,6 +61,30 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardComment
                 ContentText = comment.ContentText,
                 CreatedAt = comment.CreatedAt
             };
+
+            if (_hubContext != null)
+            {
+                try
+                {
+                    var boardId = card.Column.BoardId;
+                    await _hubContext.Clients
+                        .Group(BoardHub.GroupName(boardId))
+                        .SendAsync(
+                            BoardHub.CardCommentAdded,
+                            new CardCommentAddedMessage(
+                                boardId,
+                                result,
+                                currentUserId,
+                                DateTimeOffset.UtcNow),
+                            CancellationToken.None);
+                }
+                catch (Exception exception)
+                {
+                    _logger?.LogWarning(exception, "Không thể phát sự kiện CardCommentAdded cho board {BoardId}.", card.Column.BoardId);
+                }
+            }
+
+            return result;
         }
     }
 }
