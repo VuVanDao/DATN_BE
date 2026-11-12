@@ -2,6 +2,8 @@
 using DATN_BE.Modules.Identity.Application.Interfaces;
 using DATN_BE.Modules.Identity.infrastructure.Services;
 using DATN_BE.Modules.Identity.Presentation.BackgroundJob;
+using DATN_BE.Modules.Notifications.Infrastructure.Services;
+using DATN_BE.Modules.Notifications.Presentation.Hubs;
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 using DATN_BE.Shared.Application.Behaviors;
 using DATN_BE.Shared.Application.Interfaces;
@@ -49,6 +51,7 @@ namespace DATN_BE
             builder.Services.AddScoped<IProjectAuthorizationService, ProjectAuthorizationService>();
             builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
             builder.Services.AddScoped<IEmailService, GmailSmtpEmailService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddHostedService<SendPasswordResetTokenByEmailWorker>();
 
             // 3. Register Identity Services
@@ -94,7 +97,8 @@ namespace DATN_BE
                             var accessToken = context.Request.Query["access_token"];
 
                             if (!string.IsNullOrEmpty(accessToken) &&
-                                context.HttpContext.Request.Path.StartsWithSegments(BoardHub.Route))
+                                (context.HttpContext.Request.Path.StartsWithSegments(BoardHub.Route) ||
+                                 context.HttpContext.Request.Path.StartsWithSegments(NotificationHub.Route)))
                             {
                                 context.Token = accessToken;
                             }
@@ -133,6 +137,7 @@ namespace DATN_BE
             app.UseAuthorization();
 
             app.MapHub<BoardHub>(BoardHub.Route);
+            app.MapHub<NotificationHub>(NotificationHub.Route);
             app.MapControllers();
 
             await app.RunAsync();
