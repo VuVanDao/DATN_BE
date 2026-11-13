@@ -1,4 +1,5 @@
 using DATN_BE.Modules.Identity.Domain.Entities;
+using DATN_BE.Modules.Notifications.Application.Helpers;
 using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 using DATN_BE.Modules.Task.Application.DTOs;
@@ -19,19 +20,22 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
         private readonly IProjectAuthorizationService _authorizationService;
         private readonly IHubContext<BoardHub>? _hubContext;
         private readonly ILogger<CreateCardCommandHandler>? _logger;
+        private readonly INotificationService? _notificationService;
 
         public CreateCardCommandHandler(
             IApplicationDbContext context,
             ICurrentUserService currentUserService,
             IProjectAuthorizationService authorizationService,
             IHubContext<BoardHub>? hubContext = null,
-            ILogger<CreateCardCommandHandler>? logger = null)
+            ILogger<CreateCardCommandHandler>? logger = null,
+            INotificationService? notificationService = null)
         {
             _context = context;
             _currentUserService = currentUserService;
             _authorizationService = authorizationService;
             _hubContext = hubContext;
             _logger = logger;
+            _notificationService = notificationService;
         }
         public async Task<CardDto> Handle(CreateCardCommand request, CancellationToken cancellationToken)
         {
@@ -141,6 +145,21 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
                 {
                     _logger?.LogWarning(exception, "Không thể phát sự kiện CardCreated cho board {BoardId}.", targetColumn.BoardId);
                 }
+            }
+
+            if (_notificationService != null && newCard.AssigneeId.HasValue && newCard.AssigneeId.Value != currentUserId)
+            {
+                var notificationItem = NotificationMapper.BuildCardAssignedItem(
+                    receiverId: newCard.AssigneeId.Value,
+                    senderId: currentUserId,
+                    senderName: reporter.Username,
+                    senderAvatarUrl: reporter.AvatarUrl,
+                    cardId: newCard.Id,
+                    cardTitle: newCard.Title,
+                    boardSlug: targetColumn.Board.Slug,
+                    projectId: targetColumn.Board.ProjectId);
+
+                await _notificationService.CreateAndSendManyAsync([notificationItem], cancellationToken);
             }
 
             return result;

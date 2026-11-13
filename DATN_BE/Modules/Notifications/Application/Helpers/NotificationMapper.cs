@@ -1,5 +1,6 @@
 using DATN_BE.Modules.Notifications.Application.DTOs;
 using DATN_BE.Modules.Notifications.Domain.Entities;
+using DATN_BE.Modules.Notifications.Domain.Enum;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Enum;
 using Microsoft.EntityFrameworkCore;
@@ -99,20 +100,56 @@ namespace DATN_BE.Modules.Notifications.Application.Helpers
             {
                 var cards = await context.Cards
                     .AsNoTracking()
-                    .Where(c => cardIds.Contains(c.Id))
-                    .Select(c => new { c.Id, BoardSlug = c.Column.Board.Slug })
+                    .Where(c => cardIds.Contains(c.Id) && !c.Column.IsDeleted && !c.Column.Board.IsDeleted)
+                    .Select(c => new
+                    {
+                        c.Id,
+                        BoardSlug = c.Column.Board.Slug,
+                        ProjectId = c.Column.Board.ProjectId
+                    })
                     .ToListAsync(cancellationToken);
 
                 foreach (var card in cards)
                 {
                     if (!string.IsNullOrWhiteSpace(card.BoardSlug))
                     {
-                        urls[(EntityType.Card, card.Id)] = $"/boards/{card.BoardSlug}";
+                        urls[(EntityType.Card, card.Id)] = BuildCardTargetUrl(card.BoardSlug, card.ProjectId, card.Id);
                     }
                 }
             }
 
             return urls;
+        }
+
+        public static string BuildCardTargetUrl(string boardSlug, Guid projectId, Guid cardId)
+            => $"/boards/{boardSlug}?projectId={projectId}&cardId={cardId}";
+
+        public static NotificationDispatchItem BuildCardAssignedItem(
+            Guid receiverId,
+            Guid senderId,
+            string? senderName,
+            string? senderAvatarUrl,
+            Guid cardId,
+            string cardTitle,
+            string boardSlug,
+            Guid projectId)
+        {
+            var actorName = string.IsNullOrWhiteSpace(senderName) ? "Thành viên" : senderName;
+            var targetUrl = !string.IsNullOrWhiteSpace(boardSlug)
+                ? BuildCardTargetUrl(boardSlug, projectId, cardId)
+                : null;
+
+            return new NotificationDispatchItem(
+                ReceiverId: receiverId,
+                SenderId: senderId,
+                SenderName: actorName,
+                SenderAvatarUrl: senderAvatarUrl,
+                Type: NotificationType.CardAssigned,
+                Title: "Bạn được giao công việc mới",
+                Content: $"{actorName} đã giao thẻ \"{cardTitle}\" cho bạn",
+                EntityType: EntityType.Card,
+                EntityId: cardId,
+                TargetUrl: targetUrl);
         }
 
         public static NotificationDto ToDto(

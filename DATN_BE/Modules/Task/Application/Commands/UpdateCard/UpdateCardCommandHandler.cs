@@ -1,4 +1,5 @@
 using DATN_BE.Modules.Identity.Domain.Entities;
+using DATN_BE.Modules.Notifications.Application.Helpers;
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
@@ -18,6 +19,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
         private readonly IHubContext<BoardHub>? _hubContext;
         private readonly ICurrentUserService? _currentUserService;
         private readonly ILogger<UpdateCardCommandHandler>? _logger;
+        private readonly INotificationService? _notificationService;
 
         public UpdateCardCommandHandler(
             IApplicationDbContext context,
@@ -25,7 +27,8 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
             ICloudinaryService? cloudinaryService = null,
             IHubContext<BoardHub>? hubContext = null,
             ICurrentUserService? currentUserService = null,
-            ILogger<UpdateCardCommandHandler>? logger = null)
+            ILogger<UpdateCardCommandHandler>? logger = null,
+            INotificationService? notificationService = null)
         {
             _context = context;
             _authorizationService = authorizationService;
@@ -33,6 +36,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
             _hubContext = hubContext;
             _currentUserService = currentUserService;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
         public async Task<CardDto> Handle(UpdateCardCommand request, CancellationToken cancellationToken)
@@ -104,6 +108,8 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                 targetCard.SprintId = request.SprintId.Value;
             }
 
+            var previousAssigneeId = targetCard.AssigneeId;
+
             if (request.AssigneeId.HasValue)
             {
                 if (targetCard.AssigneeId != request.AssigneeId.Value || targetCard.Assignee == null)
@@ -172,6 +178,49 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                 {
                     _logger?.LogWarning(exception, "Không thể phát sự kiện CardUpdated cho board {BoardId}.", targetCard.Column.BoardId);
                 }
+            }
+
+            if (_notificationService != null
+                && _currentUserService?.UserId is Guid actorId
+                && targetCard.AssigneeId.HasValue
+                && targetCard.AssigneeId.Value != previousAssigneeId
+                && targetCard.AssigneeId.Value != actorId
+                && targetCard.Column?.Board != null)
+            {
+                string? actorName = _currentUserService.Username;
+                string? actorAvatarUrl = null;
+
+                if (actorId == targetCard.ReporterId && targetCard.Reporter != null)
+                {
+                    actorName = targetCard.Reporter.Username;
+                    actorAvatarUrl = targetCard.Reporter.AvatarUrl;
+                }
+                else
+                {
+                    var actor = await _context.Users
+                        .AsNoTracking()
+                        .Where(u => u.Id == actorId)
+                        .Select(u => new { u.Username, u.AvatarUrl })
+                        .FirstOrDefaultAsync(cancellationToken);
+
+                    if (actor != null)
+                    {
+                        actorName = actor.Username;
+                        actorAvatarUrl = actor.AvatarUrl;
+                    }
+                }
+
+                var notificationItem = NotificationMapper.BuildCardAssignedItem(
+                    receiverId: targetCard.AssigneeId.Value,
+                    senderId: actorId,
+                    senderName: actorName,
+                    senderAvatarUrl: actorAvatarUrl,
+                    cardId: targetCard.Id,
+                    cardTitle: targetCard.Title,
+                    boardSlug: targetCard.Column.Board.Slug,
+                    projectId: targetCard.Column.Board.ProjectId);
+
+                await _notificationService.CreateAndSendManyAsync([notificationItem], cancellationToken);
             }
 
             return result;

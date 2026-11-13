@@ -10,6 +10,10 @@ using DATN_BE.Modules.Notifications.Infrastructure.Services;
 using DATN_BE.Modules.Notifications.Presentation.Hubs;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProejct;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
+using DATN_BE.Modules.Task.Application.Commands.CreateCard;
+using DATN_BE.Modules.Task.Application.Commands.UpdateCard;
+using DATN_BE.Modules.Task.Domain.Entities;
+using DATN_BE.Modules.Task.Domain.Enum;
 using DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember;
 using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
@@ -17,6 +21,7 @@ using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Domain.Constants;
 using DATN_BE.Shared.Enum;
 using DATN_BE.Shared.Infrastructure.Persistence;
+using DATN_BE.Shared.Infrastructure.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -262,6 +267,109 @@ public class NotificationTests
         Assert.Equal("Must still persist", saved.Content);
     }
 
+    [Fact]
+    public async Task Create_card_with_assignee_persists_and_pushes_card_assigned_notification()
+    {
+        await using var f = await NotificationFixture.Create();
+        await f.SeedBoardWithMembersAsync();
+        f.Current.UserId = f.Owner.Id;
+
+        var handler = new CreateCardCommandHandler(
+            f.Db,
+            f.Current,
+            f.Auth,
+            notificationService: f.NotificationService);
+
+        var created = await handler.Handle(new CreateCardCommand
+        {
+            ColumnId = f.Column.Id,
+            Title = "Implement Login API",
+            AssigneeId = f.InviteTarget.Id
+        }, CancellationToken.None);
+
+        var persisted = await f.Db.Notifications.SingleAsync(n => n.ReceiverId == f.InviteTarget.Id);
+        Assert.Equal(f.Owner.Id, persisted.SenderId);
+        Assert.Equal(NotificationType.CardAssigned, persisted.Type);
+        Assert.Equal(EntityType.Card, persisted.EntityType);
+        Assert.Equal(created.Id, persisted.EntityId);
+        Assert.Contains("Implement Login API", persisted.Content);
+
+        var pushed = Assert.Single(f.FakeHub.SentMessages);
+        Assert.Equal(NotificationHub.UserGroupName(f.InviteTarget.Id), pushed.GroupName);
+        var dto = Assert.IsType<NotificationDto>(pushed.Payload);
+        Assert.Equal($"/boards/{f.Board.Slug}?projectId={f.Project.Id}&cardId={created.Id}", dto.TargetUrl);
+
+        // Kiểm tra GetNotificationsQuery resolve đúng TargetUrl cho EntityType.Card
+        f.Current.UserId = f.InviteTarget.Id;
+        var feed = await new GetNotificationsQueryHandler(f.Db, f.Current)
+            .Handle(new GetNotificationsQuery(), CancellationToken.None);
+        var fetched = Assert.Single(feed.Items);
+        Assert.Equal($"/boards/{f.Board.Slug}?projectId={f.Project.Id}&cardId={created.Id}", fetched.TargetUrl);
+    }
+
+    [Fact]
+    public async Task Update_card_assignee_notifies_only_when_assignee_changes_to_another_user()
+    {
+        await using var f = await NotificationFixture.Create();
+        await f.SeedBoardWithMembersAsync();
+
+        var card = new Card
+        {
+            ColumnId = f.Column.Id,
+            Title = "Build Kanban UI",
+            ReporterId = f.Owner.Id,
+            AssigneeId = null
+        };
+        f.Db.Cards.Add(card);
+        await f.Db.SaveChangesAsync();
+
+        f.Current.UserId = f.Owner.Id;
+        var handler = new UpdateCardCommandHandler(
+            f.Db,
+            f.Auth,
+            currentUserService: f.Current,
+            notificationService: f.NotificationService);
+
+        // 1. Gán mới từ null -> InviteTarget => phải gửi 1 thông báo
+        await handler.Handle(new UpdateCardCommand
+        {
+            CardId = card.Id,
+            Title = "Build Kanban UI",
+            Type = CardType.Task,
+            Priority = CardPriority.Medium,
+            AssigneeId = f.InviteTarget.Id
+        }, CancellationToken.None);
+
+        Assert.Equal(1, await f.Db.Notifications.CountAsync(n => n.ReceiverId == f.InviteTarget.Id));
+        Assert.Single(f.FakeHub.SentMessages);
+
+        // 2. Cập nhật tiêu đề nhưng giữ nguyên AssigneeId => không spam thông báo lặp
+        await handler.Handle(new UpdateCardCommand
+        {
+            CardId = card.Id,
+            Title = "Build Kanban UI v2",
+            Type = CardType.Task,
+            Priority = CardPriority.High,
+            AssigneeId = f.InviteTarget.Id
+        }, CancellationToken.None);
+
+        Assert.Equal(1, await f.Db.Notifications.CountAsync(n => n.ReceiverId == f.InviteTarget.Id));
+        Assert.Single(f.FakeHub.SentMessages);
+
+        // 3. Tự gán cho chính mình (Owner) => không tự gửi thông báo
+        await handler.Handle(new UpdateCardCommand
+        {
+            CardId = card.Id,
+            Title = "Build Kanban UI v2",
+            Type = CardType.Task,
+            Priority = CardPriority.High,
+            AssigneeId = f.Owner.Id
+        }, CancellationToken.None);
+
+        Assert.Equal(0, await f.Db.Notifications.CountAsync(n => n.ReceiverId == f.Owner.Id));
+        Assert.Single(f.FakeHub.SentMessages);
+    }
+
     private sealed class CurrentUser : ICurrentUserService
     {
         public Guid? UserId { get; set; }
@@ -324,6 +432,44 @@ public class NotificationTests
 
         public Workspace Workspace { get; private set; } = null!;
         public Project Project { get; private set; } = null!;
+        public Board Board { get; private set; } = null!;
+        public Column Column { get; private set; } = null!;
+        public ProjectAuthorizationService Auth => new(Db, Current);
+
+        public async System.Threading.Tasks.Task SeedBoardWithMembersAsync()
+        {
+            Db.ProjectMembers.AddRange(
+                new ProjectMember
+                {
+                    ProjectId = Project.Id,
+                    UserId = Owner.Id,
+                    RoleId = ProjectMemberRole.Id
+                },
+                new ProjectMember
+                {
+                    ProjectId = Project.Id,
+                    UserId = InviteTarget.Id,
+                    RoleId = ProjectMemberRole.Id
+                });
+
+            Board = new Board
+            {
+                Title = "Sprint Board",
+                Slug = "sprint-board",
+                ProjectId = Project.Id
+            };
+            Db.Boards.Add(Board);
+
+            Column = new Column
+            {
+                Title = "To Do",
+                Position = 0,
+                BoardId = Board.Id
+            };
+            Db.Columns.Add(Column);
+
+            await Db.SaveChangesAsync();
+        }
 
         public static async Task<NotificationFixture> Create(bool throwOnHubSend = false)
         {
