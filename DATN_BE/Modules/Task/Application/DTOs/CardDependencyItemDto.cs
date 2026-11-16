@@ -13,7 +13,7 @@ namespace DATN_BE.Modules.Task.Application.DTOs
         public CardPriority Priority { get; set; }
         public string? AssigneeName { get; set; }
         public string? AssigneeAvatarUrl { get; set; }
-        public DependencyType DependencyType { get; set; }
+        public string? Direction { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
     }
 

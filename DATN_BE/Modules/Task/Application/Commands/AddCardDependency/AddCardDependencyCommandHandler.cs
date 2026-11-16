@@ -84,8 +84,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardDependency
             var dependency = new CardDependency
             {
                 BlockedCardId = blockedCardId,
-                BlockingCardId = blockingCardId,
-                DependencyType = DependencyType.Blocks
+                BlockingCardId = blockingCardId
             };
 
             _context.CardDependencies.Add(dependency);
@@ -105,7 +104,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardDependency
                 Priority = targetCard.Priority,
                 AssigneeName = targetCard.Assignee?.Username,
                 AssigneeAvatarUrl = targetCard.Assignee?.AvatarUrl,
-                DependencyType = dependency.DependencyType,
+                Direction = request.Direction.ToString(),
                 CreatedAt = dependency.CreatedAt
             };
 

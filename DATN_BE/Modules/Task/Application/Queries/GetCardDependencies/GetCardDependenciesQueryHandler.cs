@@ -44,7 +44,7 @@ namespace DATN_BE.Modules.Task.Application.Queries.GetCardDependencies
                     Priority = cd.BlockingCard.Priority,
                     AssigneeName = cd.BlockingCard.Assignee != null ? cd.BlockingCard.Assignee.Username : null,
                     AssigneeAvatarUrl = cd.BlockingCard.Assignee != null ? cd.BlockingCard.Assignee.AvatarUrl : null,
-                    DependencyType = cd.DependencyType,
+                    Direction = "BlockedBy",
                     CreatedAt = cd.CreatedAt
                 })
                 .ToListAsync(cancellationToken);
@@ -64,7 +64,7 @@ namespace DATN_BE.Modules.Task.Application.Queries.GetCardDependencies
                     Priority = cd.BlockedCard.Priority,
                     AssigneeName = cd.BlockedCard.Assignee != null ? cd.BlockedCard.Assignee.Username : null,
                     AssigneeAvatarUrl = cd.BlockedCard.Assignee != null ? cd.BlockedCard.Assignee.AvatarUrl : null,
-                    DependencyType = cd.DependencyType,
+                    Direction = "Blocking",
                     CreatedAt = cd.CreatedAt
                 })
                 .ToListAsync(cancellationToken);
