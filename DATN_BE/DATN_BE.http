@@ -1,6 +1,24 @@
 @DATN_BE_HostAddress = http://localhost:5025
+@authToken = YOUR_JWT_TOKEN_HERE
+@cardId = YOUR_CARD_GUID_HERE
+@columnId = YOUR_COLUMN_GUID_HERE
 
-GET {{DATN_BE_HostAddress}}/weatherforecast/
+### 1. Đăng nhập để lấy Token
+# POST {{DATN_BE_HostAddress}}/api/auth/login
+# Content-Type: application/json
+#
+# {
+#   "email": "admin@example.com",
+#   "password": "YourPassword123@"
+# }
+
+### 2. Xem lịch sử hoạt động của Thẻ (Card Activities)
+GET {{DATN_BE_HostAddress}}/api/cards/{{cardId}}/activities?pageIndex=1&pageSize=20
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
-###
+### 3. Xem lịch sử hoạt động của Cột (Column Activities)
+GET {{DATN_BE_HostAddress}}/api/board/columns/{{columnId}}/activities?pageIndex=1&pageSize=20
+Authorization: Bearer {{authToken}}
+Accept: application/json
+

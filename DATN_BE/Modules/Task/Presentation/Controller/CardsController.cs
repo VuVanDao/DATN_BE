@@ -1,3 +1,4 @@
+using DATN_BE.Modules.Security.Application.DTOs;
 using DATN_BE.Modules.Task.Application.Commands.AddCardComment;
 using DATN_BE.Modules.Task.Application.Commands.AddCardDependency;
 using DATN_BE.Modules.Task.Application.Commands.CreateCard;
@@ -6,6 +7,7 @@ using DATN_BE.Modules.Task.Application.Commands.MoveCard;
 using DATN_BE.Modules.Task.Application.Commands.RemoveCardDependency;
 using DATN_BE.Modules.Task.Application.Commands.UpdateCard;
 using DATN_BE.Modules.Task.Application.DTOs;
+using DATN_BE.Modules.Task.Application.Queries.GetCardActivities;
 using DATN_BE.Modules.Task.Application.Queries.GetCardDependencies;
 using DATN_BE.Modules.Task.Application.Queries.GetCardDetail;
 using DATN_BE.Modules.Task.Application.Queries.GetProjectBacklogCards;
@@ -84,6 +86,20 @@ namespace DATN_BE.Modules.Task.Presentation.Controller
         {
             var result = await _mediator.Send(new DeleteCardCommand(cardId));
             return Ok(ApiResponse<bool>.Ok(result, "Xoá card thành công"));
+        }
+
+        /// <summary>
+        /// Lấy lịch sử hoạt động của Thẻ (Audit Log / Activity Stream)
+        /// </summary>
+        [HttpGet("{cardId:guid}/activities")]
+        public async Task<ActionResult<ApiResponse<PagedResult<ActivityLogDto>>>> GetCardActivities(
+            Guid cardId,
+            CancellationToken cancellationToken,
+            [FromQuery] int pageIndex = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            var result = await _mediator.Send(new GetCardActivitiesQuery(cardId, pageIndex, pageSize), cancellationToken);
+            return Ok(ApiResponse<PagedResult<ActivityLogDto>>.Ok(result, "Lấy lịch sử hoạt động của thẻ thành công."));
         }
 
         /// <summary>

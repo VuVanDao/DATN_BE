@@ -8,8 +8,10 @@ using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoardPreferen
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateColumn;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail;
+using DATN_BE.Modules.ProjectManagement.Application.Queries.GetColumnActivities;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBoards;
 using DATN_BE.Modules.ProjectManagement.Application.Queries.GetMyBoards;
+using DATN_BE.Modules.Security.Application.DTOs;
 using DATN_BE.Shared.Application.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -152,6 +154,20 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
             command.BoardId = id;
             var result = await _mediator.Send(command);
             return Ok(ApiResponse<bool>.Ok(result, "Cập nhật vị trí Cột thành công."));
+        }
+
+        /// <summary>
+        /// Lấy lịch sử hoạt động của Cột (Audit Log / Activity Stream)
+        /// </summary>
+        [HttpGet("columns/{columnId:guid}/activities")]
+        public async Task<ActionResult<ApiResponse<PagedResult<ActivityLogDto>>>> GetColumnActivities(
+            Guid columnId,
+            CancellationToken cancellationToken,
+            [FromQuery] int pageIndex = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            var result = await _mediator.Send(new GetColumnActivitiesQuery(columnId, pageIndex, pageSize), cancellationToken);
+            return Ok(ApiResponse<PagedResult<ActivityLogDto>>.Ok(result, "Lấy lịch sử hoạt động của cột thành công."));
         }
     }
 }

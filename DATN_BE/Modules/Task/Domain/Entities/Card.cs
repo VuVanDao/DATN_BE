@@ -11,7 +11,7 @@ namespace DATN_BE.Modules.Task.Domain.Entities
         public string? Description { get; set; }
         public int Position { get; set; } // Thứ tự từ trên xuống trong Column
         public string? CoverUrl { get; set; }
-        public CardType Type { get; set; } = CardType.Task; // Task, Bug, Story, Epic
+        public CardType Type { get; set; } = CardType.Task; // Task, Bug, Features, Epic
         public CardPriority Priority { get; set; } = CardPriority.Low; // Low, Medium, High, Urgent
         public int? StoryPoints { get; set; }
         public DateTimeOffset? StartDate { get; set; }
