@@ -2,8 +2,10 @@ using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.Notifications.Application.Helpers;
 using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
+using DATN_BE.Modules.Security.Domain.Enum;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Modules.Task.Domain.Entities;
+using DATN_BE.Shared.Application.Events;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -21,6 +23,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
         private readonly IHubContext<BoardHub>? _hubContext;
         private readonly ILogger<CreateCardCommandHandler>? _logger;
         private readonly INotificationService? _notificationService;
+        private readonly IMediator? _mediator;
 
         public CreateCardCommandHandler(
             IApplicationDbContext context,
@@ -28,7 +31,8 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
             IProjectAuthorizationService authorizationService,
             IHubContext<BoardHub>? hubContext = null,
             ILogger<CreateCardCommandHandler>? logger = null,
-            INotificationService? notificationService = null)
+            INotificationService? notificationService = null,
+            IMediator? mediator = null)
         {
             _context = context;
             _currentUserService = currentUserService;
@@ -36,6 +40,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
             _hubContext = hubContext;
             _logger = logger;
             _notificationService = notificationService;
+            _mediator = mediator;
         }
         public async Task<CardDto> Handle(CreateCardCommand request, CancellationToken cancellationToken)
         {
@@ -160,6 +165,22 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
                     projectId: targetColumn.Board.ProjectId);
 
                 await _notificationService.CreateAndSendManyAsync([notificationItem], cancellationToken);
+            }
+
+            if (_mediator != null)
+            {
+                await _mediator.Publish(new EntityActivityLoggedEvent(
+                    currentUserId,
+                    ActivityEntityType.Card,
+                    newCard.Id,
+                    ActivityActionType.Created,
+                    new
+                    {
+                        cardTitle = newCard.Title,
+                        columnId = targetColumn.Id,
+                        columnTitle = targetColumn.Title,
+                        boardId = targetColumn.BoardId
+                    }), cancellationToken);
             }
 
             return result;

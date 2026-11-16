@@ -1,4 +1,6 @@
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+using DATN_BE.Modules.Security.Domain.Enum;
+using DATN_BE.Shared.Application.Events;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -14,7 +16,8 @@ public class UpdateColumnCommandHandler(
     IProjectAuthorizationService authorizationService,
     IHubContext<BoardHub>? hubContext = null,
     ICurrentUserService? currentUserService = null,
-    ILogger<UpdateColumnCommandHandler>? logger = null) : IRequestHandler<UpdateColumnCommand, ColumnDto>
+    ILogger<UpdateColumnCommandHandler>? logger = null,
+    IMediator? mediator = null) : IRequestHandler<UpdateColumnCommand, ColumnDto>
 {
     public async Task<ColumnDto> Handle(UpdateColumnCommand request, CancellationToken cancellationToken)
     {
@@ -28,9 +31,26 @@ public class UpdateColumnCommandHandler(
             .FirstOrDefaultAsync(c => c.Id == request.ColumnId && c.BoardId == board.Id, cancellationToken)
             ?? throw new NotFoundException("Column", request.ColumnId);
 
+        var oldTitle = column.Title;
         column.Title = request.Title.Trim();
         column.IsDoneColumn = request.IsDoneColumn;
         await context.SaveChangesAsync(cancellationToken);
+
+        if (mediator != null && currentUserService?.UserId is Guid actorId)
+        {
+            await mediator.Publish(new EntityActivityLoggedEvent(
+                actorId,
+                ActivityEntityType.Column,
+                column.Id,
+                ActivityActionType.Updated,
+                new
+                {
+                    oldTitle,
+                    newTitle = column.Title,
+                    boardId = column.BoardId,
+                    isDoneColumn = column.IsDoneColumn
+                }), cancellationToken);
+        }
 
         if (hubContext != null)
         {

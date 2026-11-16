@@ -1,8 +1,10 @@
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
+using DATN_BE.Modules.Security.Domain.Enum;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Modules.Task.Domain.Entities;
+using DATN_BE.Shared.Application.Events;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -19,19 +21,22 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateBacklogCard
         private readonly IProjectAuthorizationService _authorizationService;
         private readonly IHubContext<BoardHub>? _hubContext;
         private readonly ILogger<CreateBacklogCardCommandHandler>? _logger;
+        private readonly IMediator? _mediator;
 
         public CreateBacklogCardCommandHandler(
             IApplicationDbContext context,
             ICurrentUserService currentUserService,
             IProjectAuthorizationService authorizationService,
             IHubContext<BoardHub>? hubContext = null,
-            ILogger<CreateBacklogCardCommandHandler>? logger = null)
+            ILogger<CreateBacklogCardCommandHandler>? logger = null,
+            IMediator? mediator = null)
         {
             _context = context;
             _currentUserService = currentUserService;
             _authorizationService = authorizationService;
             _hubContext = hubContext;
             _logger = logger;
+            _mediator = mediator;
         }
 
         public async Task<CardDto> Handle(CreateBacklogCardCommand request, CancellationToken cancellationToken)
@@ -148,6 +153,22 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateBacklogCard
                 {
                     _logger?.LogWarning(exception, "Không thể phát sự kiện CardCreated cho board {BoardId}.", scrumBoard.Id);
                 }
+            }
+
+            if (_mediator != null)
+            {
+                await _mediator.Publish(new EntityActivityLoggedEvent(
+                    currentUserId,
+                    ActivityEntityType.Card,
+                    newCard.Id,
+                    ActivityActionType.Created,
+                    new
+                    {
+                        cardTitle = newCard.Title,
+                        columnId = newCard.ColumnId,
+                        boardId = scrumBoard.Id,
+                        isBacklog = true
+                    }), cancellationToken);
             }
 
             return result;

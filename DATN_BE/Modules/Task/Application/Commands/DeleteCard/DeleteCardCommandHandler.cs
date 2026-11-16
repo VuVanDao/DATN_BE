@@ -1,4 +1,6 @@
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
+using DATN_BE.Modules.Security.Domain.Enum;
+using DATN_BE.Shared.Application.Events;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -15,19 +17,22 @@ namespace DATN_BE.Modules.Task.Application.Commands.DeleteCard
         private readonly IHubContext<BoardHub>? _hubContext;
         private readonly ICurrentUserService? _currentUserService;
         private readonly ILogger<DeleteCardCommandHandler>? _logger;
+        private readonly IMediator? _mediator;
 
         public DeleteCardCommandHandler(
             IApplicationDbContext context,
             IProjectAuthorizationService authorizationService,
             IHubContext<BoardHub>? hubContext = null,
             ICurrentUserService? currentUserService = null,
-            ILogger<DeleteCardCommandHandler>? logger = null)
+            ILogger<DeleteCardCommandHandler>? logger = null,
+            IMediator? mediator = null)
         {
             _context = context;
             _authorizationService = authorizationService;
             _hubContext = hubContext;
             _currentUserService = currentUserService;
             _logger = logger;
+            _mediator = mediator;
         }
 
         public async Task<bool> Handle(DeleteCardCommand request, CancellationToken cancellationToken)
@@ -74,6 +79,21 @@ namespace DATN_BE.Modules.Task.Application.Commands.DeleteCard
             }
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            if (_mediator != null && _currentUserService?.UserId is Guid actorId)
+            {
+                await _mediator.Publish(new EntityActivityLoggedEvent(
+                    actorId,
+                    ActivityEntityType.Card,
+                    cardId,
+                    ActivityActionType.Deleted,
+                    new
+                    {
+                        cardTitle = targetedCard.Title,
+                        columnId = sourceColumnId,
+                        boardId = boardId
+                    }), cancellationToken);
+            }
 
             if (_hubContext != null)
             {

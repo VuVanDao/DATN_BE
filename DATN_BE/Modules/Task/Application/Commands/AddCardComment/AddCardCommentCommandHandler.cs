@@ -1,6 +1,8 @@
 ﻿using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
+using DATN_BE.Modules.Security.Domain.Enum;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Modules.Task.Domain.Entities;
+using DATN_BE.Shared.Application.Events;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -17,19 +19,22 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardComment
         private readonly IProjectAuthorizationService _authorizationService;
         private readonly IHubContext<BoardHub>? _hubContext;
         private readonly ILogger<AddCardCommentCommandHandler>? _logger;
+        private readonly IMediator? _mediator;
 
         public AddCardCommentCommandHandler(
             IApplicationDbContext context,
             ICurrentUserService currentUserService,
             IProjectAuthorizationService authorizationService,
             IHubContext<BoardHub>? hubContext = null,
-            ILogger<AddCardCommentCommandHandler>? logger = null)
+            ILogger<AddCardCommentCommandHandler>? logger = null,
+            IMediator? mediator = null)
         {
             _context = context;
             _currentUserService = currentUserService;
             _authorizationService = authorizationService;
             _hubContext = hubContext;
             _logger = logger;
+            _mediator = mediator;
         }
 
         public async Task<CardCommentDto> Handle(AddCardCommentCommand request, CancellationToken cancellationToken)
@@ -50,6 +55,21 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardComment
             };
             _context.CardComments.Add(comment);
             await _context.SaveChangesAsync(cancellationToken);
+
+            if (_mediator != null)
+            {
+                await _mediator.Publish(new EntityActivityLoggedEvent(
+                    currentUserId,
+                    ActivityEntityType.Card,
+                    card.Id,
+                    ActivityActionType.Commented,
+                    new
+                    {
+                        cardTitle = card.Title,
+                        commentId = comment.Id,
+                        preview = comment.ContentText.Length > 80 ? comment.ContentText[..80] + "..." : comment.ContentText
+                    }), cancellationToken);
+            }
 
             var result = new CardCommentDto
             {

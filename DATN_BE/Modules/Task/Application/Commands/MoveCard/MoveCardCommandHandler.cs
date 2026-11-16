@@ -1,3 +1,5 @@
+using DATN_BE.Modules.Security.Domain.Enum;
+using DATN_BE.Shared.Application.Events;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -14,15 +16,18 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
         private readonly IHubContext<BoardHub> _hubContext;
         private readonly ICurrentUserService _currentUser;
         private readonly ILogger<MoveCardCommandHandler> _logger;
+        private readonly IMediator? _mediator;
 
         public MoveCardCommandHandler(IApplicationDbContext context, IProjectAuthorizationService authorizationService,
-            IHubContext<BoardHub> hubContext, ICurrentUserService currentUser, ILogger<MoveCardCommandHandler> logger)
+            IHubContext<BoardHub> hubContext, ICurrentUserService currentUser, ILogger<MoveCardCommandHandler> logger,
+            IMediator? mediator = null)
         {
             _context = context;
             _authorizationService = authorizationService;
             _hubContext = hubContext;
             _currentUser = currentUser;
             _logger = logger;
+            _mediator = mediator;
         }
 
         public async Task<bool> Handle(MoveCardCommand request, CancellationToken cancellationToken)
@@ -61,6 +66,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
             }
             // id của cột gốc của card đang được kéo thả
             var oldColumnId = targetCard.ColumnId;
+            var oldColumnTitle = targetCard.Column?.Title;
 
             if (oldColumnId == request.TargetColumnId)
             {
@@ -119,6 +125,24 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
             }
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            if (_mediator != null && _currentUser.UserId.HasValue && oldColumnId != request.TargetColumnId)
+            {
+                await _mediator.Publish(new EntityActivityLoggedEvent(
+                    _currentUser.UserId.Value,
+                    ActivityEntityType.Card,
+                    targetCard.Id,
+                    ActivityActionType.MovedColumn,
+                    new
+                    {
+                        cardTitle = targetCard.Title,
+                        fromColumnId = oldColumnId,
+                        fromColumnTitle = oldColumnTitle,
+                        toColumnId = targetColumn.Id,
+                        toColumnTitle = targetColumn.Title,
+                        newPosition = targetCard.Position
+                    }), cancellationToken);
+            }
             try
             {
                 await _hubContext.Clients.Group(BoardHub.GroupName(targetColumn.BoardId))

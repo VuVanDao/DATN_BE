@@ -1,7 +1,9 @@
 using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.Notifications.Application.Helpers;
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
+using DATN_BE.Modules.Security.Domain.Enum;
 using DATN_BE.Modules.Task.Application.DTOs;
+using DATN_BE.Shared.Application.Events;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -20,6 +22,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
         private readonly ICurrentUserService? _currentUserService;
         private readonly ILogger<UpdateCardCommandHandler>? _logger;
         private readonly INotificationService? _notificationService;
+        private readonly IMediator? _mediator;
 
         public UpdateCardCommandHandler(
             IApplicationDbContext context,
@@ -28,7 +31,8 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
             IHubContext<BoardHub>? hubContext = null,
             ICurrentUserService? currentUserService = null,
             ILogger<UpdateCardCommandHandler>? logger = null,
-            INotificationService? notificationService = null)
+            INotificationService? notificationService = null,
+            IMediator? mediator = null)
         {
             _context = context;
             _authorizationService = authorizationService;
@@ -37,10 +41,12 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
             _currentUserService = currentUserService;
             _logger = logger;
             _notificationService = notificationService;
+            _mediator = mediator;
         }
 
         public async Task<CardDto> Handle(UpdateCardCommand request, CancellationToken cancellationToken)
         {
+            var currentUserId = _currentUserService?.UserId;
             var targetCard = await _context.Cards.Include(c => c.Assignee).Include(c => c.Reporter)
                 .Include(c => c.Column)
                 .ThenInclude(c => c.Board)
@@ -72,6 +78,13 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                     throw new BadRequestException($"Không thể đánh dấu hoàn thành thẻ vì đang bị chặn bởi công việc chưa xong: {names}.");
                 }
             }
+
+            var previousTitle = targetCard.Title;
+            var previousDueDate = targetCard.DueDate;
+            var previousPriority = targetCard.Priority;
+            var previousProgress = targetCard.ProgressPercentage;
+            var previousAssigneeId = targetCard.AssigneeId;
+            var previousAssigneeName = targetCard.Assignee?.Username;
 
             targetCard.Title = request.Title.Trim();
             targetCard.Description = request.Description;
@@ -108,8 +121,6 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                 targetCard.SprintId = request.SprintId.Value;
             }
 
-            var previousAssigneeId = targetCard.AssigneeId;
-
             if (request.AssigneeId.HasValue)
             {
                 if (targetCard.AssigneeId != request.AssigneeId.Value || targetCard.Assignee == null)
@@ -130,6 +141,72 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
             }
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            if (_mediator != null && currentUserId.HasValue)
+            {
+                if (previousAssigneeId != targetCard.AssigneeId)
+                {
+                    if (targetCard.AssigneeId.HasValue)
+                    {
+                        await _mediator.Publish(new EntityActivityLoggedEvent(
+                            currentUserId.Value,
+                            ActivityEntityType.Card,
+                            targetCard.Id,
+                            ActivityActionType.AssignedUser,
+                            new
+                            {
+                                cardTitle = targetCard.Title,
+                                assigneeId = targetCard.AssigneeId,
+                                assigneeName = targetCard.Assignee?.Username
+                            }), cancellationToken);
+                    }
+                    else
+                    {
+                        await _mediator.Publish(new EntityActivityLoggedEvent(
+                            currentUserId.Value,
+                            ActivityEntityType.Card,
+                            targetCard.Id,
+                            ActivityActionType.UnassignedUser,
+                            new
+                            {
+                                cardTitle = targetCard.Title,
+                                previousAssigneeName
+                            }), cancellationToken);
+                    }
+                }
+
+                if (previousDueDate != targetCard.DueDate)
+                {
+                    await _mediator.Publish(new EntityActivityLoggedEvent(
+                        currentUserId.Value,
+                        ActivityEntityType.Card,
+                        targetCard.Id,
+                        ActivityActionType.UpdatedDueDate,
+                        new
+                        {
+                            cardTitle = targetCard.Title,
+                            oldDueDate = previousDueDate,
+                            newDueDate = targetCard.DueDate
+                        }), cancellationToken);
+                }
+
+                if (previousTitle != targetCard.Title ||
+                    previousPriority != targetCard.Priority ||
+                    previousProgress != targetCard.ProgressPercentage)
+                {
+                    await _mediator.Publish(new EntityActivityLoggedEvent(
+                        currentUserId.Value,
+                        ActivityEntityType.Card,
+                        targetCard.Id,
+                        ActivityActionType.Updated,
+                        new
+                        {
+                            cardTitle = targetCard.Title,
+                            priority = targetCard.Priority.ToString(),
+                            progressPercentage = targetCard.ProgressPercentage
+                        }), cancellationToken);
+                }
+            }
             
             var result = new CardDto
             {

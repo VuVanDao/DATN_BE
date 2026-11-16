@@ -1,4 +1,6 @@
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+using DATN_BE.Modules.Security.Domain.Enum;
+using DATN_BE.Shared.Application.Events;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -17,19 +19,22 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn
         private readonly IHubContext<BoardHub>? _hubContext;
         private readonly ICurrentUserService? _currentUserService;
         private readonly ILogger<CreateColumnCommandHandler>? _logger;
+        private readonly IMediator? _mediator;
 
         public CreateColumnCommandHandler(
             IApplicationDbContext context,
             IProjectAuthorizationService authorizationService,
             IHubContext<BoardHub>? hubContext = null,
             ICurrentUserService? currentUserService = null,
-            ILogger<CreateColumnCommandHandler>? logger = null)
+            ILogger<CreateColumnCommandHandler>? logger = null,
+            IMediator? mediator = null)
         {
             _context = context;
             _authorizationService = authorizationService;
             _hubContext = hubContext;
             _currentUserService = currentUserService;
             _logger = logger;
+            _mediator = mediator;
         }
 
         public async Task<ColumnDto> Handle(CreateColumnCommand request, CancellationToken cancellationToken)
@@ -57,6 +62,22 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateColumn
 
             _context.Columns.Add(newColumn);
             await _context.SaveChangesAsync(cancellationToken);
+
+            if (_mediator != null && _currentUserService?.UserId is Guid actorId)
+            {
+                await _mediator.Publish(new EntityActivityLoggedEvent(
+                    actorId,
+                    ActivityEntityType.Column,
+                    newColumn.Id,
+                    ActivityActionType.Created,
+                    new
+                    {
+                        columnTitle = newColumn.Title,
+                        boardId = newColumn.BoardId,
+                        position = newColumn.Position,
+                        isDoneColumn = newColumn.IsDoneColumn
+                    }), cancellationToken);
+            }
 
             if (_hubContext != null)
             {

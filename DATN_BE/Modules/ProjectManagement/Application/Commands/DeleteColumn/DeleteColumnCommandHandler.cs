@@ -1,3 +1,5 @@
+using DATN_BE.Modules.Security.Domain.Enum;
+using DATN_BE.Shared.Application.Events;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -13,7 +15,8 @@ public class DeleteColumnCommandHandler(
     IProjectAuthorizationService authorizationService,
     IHubContext<BoardHub>? hubContext = null,
     ICurrentUserService? currentUserService = null,
-    ILogger<DeleteColumnCommandHandler>? logger = null) : IRequestHandler<DeleteColumnCommand, bool>
+    ILogger<DeleteColumnCommandHandler>? logger = null,
+    IMediator? mediator = null) : IRequestHandler<DeleteColumnCommand, bool>
 {
     public async Task<bool> Handle(DeleteColumnCommand request, CancellationToken cancellationToken)
     {
@@ -35,6 +38,7 @@ public class DeleteColumnCommandHandler(
             .ToListAsync(cancellationToken);
 
         var deletedAt = DateTimeOffset.UtcNow;
+        var columnTitle = column.Title;
         column.IsDeleted = true;
         column.DeletedAt = deletedAt;
         foreach (var card in cards)
@@ -44,6 +48,21 @@ public class DeleteColumnCommandHandler(
         }
 
         await context.SaveChangesAsync(cancellationToken);
+
+        if (mediator != null && currentUserService?.UserId is Guid actorId)
+        {
+            await mediator.Publish(new EntityActivityLoggedEvent(
+                actorId,
+                ActivityEntityType.Column,
+                column.Id,
+                ActivityActionType.Deleted,
+                new
+                {
+                    columnTitle,
+                    boardId = column.BoardId,
+                    cardsCount = cards.Count
+                }), cancellationToken);
+        }
 
         if (hubContext != null)
         {
