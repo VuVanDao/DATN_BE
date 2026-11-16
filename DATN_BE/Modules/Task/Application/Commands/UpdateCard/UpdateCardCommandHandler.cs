@@ -82,6 +82,8 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
             var previousTitle = targetCard.Title;
             var previousDueDate = targetCard.DueDate;
             var previousPriority = targetCard.Priority;
+            var previousType = targetCard.Type;
+            var previousStoryPoints = targetCard.StoryPoints;
             var previousProgress = targetCard.ProgressPercentage;
             var previousAssigneeId = targetCard.AssigneeId;
             var previousAssigneeName = targetCard.Assignee?.Username;
@@ -190,9 +192,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                         }), cancellationToken);
                 }
 
-                if (previousTitle != targetCard.Title ||
-                    previousPriority != targetCard.Priority ||
-                    previousProgress != targetCard.ProgressPercentage)
+                if (previousType != targetCard.Type)
                 {
                     await _mediator.Publish(new EntityActivityLoggedEvent(
                         currentUserId.Value,
@@ -202,8 +202,72 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                         new
                         {
                             cardTitle = targetCard.Title,
-                            priority = targetCard.Priority.ToString(),
-                            progressPercentage = targetCard.ProgressPercentage
+                            field = "Type",
+                            oldType = previousType.ToString(),
+                            newType = targetCard.Type.ToString()
+                        }), cancellationToken);
+                }
+
+                if (previousStoryPoints != targetCard.StoryPoints)
+                {
+                    await _mediator.Publish(new EntityActivityLoggedEvent(
+                        currentUserId.Value,
+                        ActivityEntityType.Card,
+                        targetCard.Id,
+                        ActivityActionType.Updated,
+                        new
+                        {
+                            cardTitle = targetCard.Title,
+                            field = "StoryPoints",
+                            oldStoryPoints = previousStoryPoints,
+                            newStoryPoints = targetCard.StoryPoints
+                        }), cancellationToken);
+                }
+
+                if (previousPriority != targetCard.Priority)
+                {
+                    await _mediator.Publish(new EntityActivityLoggedEvent(
+                        currentUserId.Value,
+                        ActivityEntityType.Card,
+                        targetCard.Id,
+                        ActivityActionType.Updated,
+                        new
+                        {
+                            cardTitle = targetCard.Title,
+                            field = "Priority",
+                            oldPriority = previousPriority.ToString(),
+                            newPriority = targetCard.Priority.ToString()
+                        }), cancellationToken);
+                }
+
+                if (previousProgress != targetCard.ProgressPercentage)
+                {
+                    await _mediator.Publish(new EntityActivityLoggedEvent(
+                        currentUserId.Value,
+                        ActivityEntityType.Card,
+                        targetCard.Id,
+                        ActivityActionType.Updated,
+                        new
+                        {
+                            cardTitle = targetCard.Title,
+                            field = "Progress",
+                            oldProgress = previousProgress,
+                            newProgress = targetCard.ProgressPercentage
+                        }), cancellationToken);
+                }
+
+                if (previousTitle != targetCard.Title)
+                {
+                    await _mediator.Publish(new EntityActivityLoggedEvent(
+                        currentUserId.Value,
+                        ActivityEntityType.Card,
+                        targetCard.Id,
+                        ActivityActionType.Updated,
+                        new
+                        {
+                            field = "Title",
+                            oldTitle = previousTitle,
+                            newTitle = targetCard.Title
                         }), cancellationToken);
                 }
             }

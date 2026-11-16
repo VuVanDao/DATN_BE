@@ -171,4 +171,33 @@ public class CardColumnActivityTests
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             handler.Handle(new GetColumnActivitiesQuery(column.Id, 1, 10), default));
     }
+
+    [Fact]
+    public async Task EntityActivityLoggedEventHandler_saves_card_type_and_storypoints_updates()
+    {
+        var (db, current, auth, member, outsider, card, column) = await SetupAsync();
+        var handler = new EntityActivityLoggedEventHandler(db);
+
+        var typeEvent = new EntityActivityLoggedEvent(
+            member.Id,
+            ActivityEntityType.Card,
+            card.Id,
+            ActivityActionType.Updated,
+            new { cardTitle = card.Title, field = "Type", oldType = "Task", newType = "Bug" });
+
+        var storyPointsEvent = new EntityActivityLoggedEvent(
+            member.Id,
+            ActivityEntityType.Card,
+            card.Id,
+            ActivityActionType.Updated,
+            new { cardTitle = card.Title, field = "StoryPoints", oldStoryPoints = (int?)null, newStoryPoints = 5 });
+
+        await handler.Handle(typeEvent, default);
+        await handler.Handle(storyPointsEvent, default);
+
+        var logs = await db.ActivityLogs.Where(l => l.EntityId == card.Id).ToListAsync();
+        Assert.Equal(2, logs.Count);
+        Assert.Contains(logs, l => l.DetailsJson!.Contains("Bug"));
+        Assert.Contains(logs, l => l.DetailsJson!.Contains("StoryPoints"));
+    }
 }
