@@ -64,9 +64,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CompleteSprint
                 }
             }
 
-            // Tách các task chưa hoàn thành (không ở cột Done và chưa đạt tiến độ 100%)
+            // Tách các task chưa hoàn thành (không ở cột Done và chưa được đánh dấu hoàn thành)
             var unfinishedCards = sprint.Cards
-                .Where(c => !((c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100))
+                .Where(c => !((c.Column != null && c.Column.IsDoneColumn) || c.IsCompleted))
                 .ToList();
 
             foreach (var card in unfinishedCards)
@@ -79,10 +79,10 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CompleteSprint
 
             var remainingCards = sprint.Cards.Where(c => c.SprintId == sprint.Id).ToList();
             var totalCards = remainingCards.Count;
-            var completedCards = remainingCards.Count(c => (c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100);
+            var completedCards = remainingCards.Count(c => (c.Column != null && c.Column.IsDoneColumn) || c.IsCompleted);
             var totalStoryPoints = remainingCards.Sum(c => c.StoryPoints ?? 0);
             var completedStoryPoints = remainingCards
-                .Where(c => (c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100)
+                .Where(c => (c.Column != null && c.Column.IsDoneColumn) || c.IsCompleted)
                 .Sum(c => c.StoryPoints ?? 0);
 
             var result = new SprintDto

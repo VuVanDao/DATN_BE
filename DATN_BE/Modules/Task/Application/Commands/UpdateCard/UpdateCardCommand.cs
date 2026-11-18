@@ -18,7 +18,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
         public DateTimeOffset? StartDate { get; set; }
         public DateTimeOffset? DueDate { get; set; }
         public int? StoryPoints { get; set; }
-        public int ProgressPercentage { get; set; }
+        public bool IsCompleted { get; set; }
         public Guid? SprintId { get; set; }
     }
 }

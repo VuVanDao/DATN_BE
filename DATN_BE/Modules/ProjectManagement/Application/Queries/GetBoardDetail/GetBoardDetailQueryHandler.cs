@@ -117,9 +117,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                             Status = activeSprint.Status,
                             CreatedAt = activeSprint.CreatedAt,
                             TotalCards = sprintCards.Count,
-                            CompletedCards = sprintCards.Count(c => (c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100),
+                            CompletedCards = sprintCards.Count(c => (c.Column != null && c.Column.IsDoneColumn) || c.IsCompleted),
                             TotalStoryPoints = sprintCards.Sum(c => c.StoryPoints ?? 0),
-                            CompletedStoryPoints = sprintCards.Where(c => (c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100).Sum(c => c.StoryPoints ?? 0)
+                            CompletedStoryPoints = sprintCards.Where(c => (c.Column != null && c.Column.IsDoneColumn) || c.IsCompleted).Sum(c => c.StoryPoints ?? 0)
                         };
                     }
                 }
@@ -172,7 +172,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                                 StoryPoints = card.StoryPoints,
                                 StartDate = card.StartDate,
                                 DueDate = card.DueDate,
-                                ProgressPercentage = card.ProgressPercentage,
+                                IsCompleted = card.IsCompleted,
                                 ColumnId = card.ColumnId,
                                 AssigneeId = card.AssigneeId,
                                 AssigneeName = card.Assignee != null ? card.Assignee.Username : null,
@@ -183,8 +183,8 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                                 SprintId = card.SprintId,
                                 CreatedAt = card.CreatedAt,
                                 CommentsCount = card.Comments.Count,
-                                IsBlocked = card.BlockedByDependencies.Any(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100)),
-                                BlockedByCount = card.BlockedByDependencies.Count(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100))
+                                IsBlocked = card.BlockedByDependencies.Any(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.IsCompleted)),
+                                BlockedByCount = card.BlockedByDependencies.Count(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.IsCompleted))
                             }).ToList()
                         };
                     }).ToList()

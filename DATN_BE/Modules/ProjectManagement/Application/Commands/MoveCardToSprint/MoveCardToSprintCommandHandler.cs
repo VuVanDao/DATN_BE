@@ -114,7 +114,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprin
                 StoryPoints = card.StoryPoints,
                 StartDate = card.StartDate,
                 DueDate = card.DueDate,
-                ProgressPercentage = card.ProgressPercentage,
+                IsCompleted = card.IsCompleted,
                 ColumnId = card.ColumnId,
                 AssigneeId = card.AssigneeId,
                 AssigneeName = card.Assignee?.Username,

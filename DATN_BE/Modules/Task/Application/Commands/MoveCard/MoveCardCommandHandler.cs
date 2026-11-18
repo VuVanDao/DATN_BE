@@ -54,7 +54,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
                 var unfinishedBlockers = targetCard.BlockedByDependencies
                     .Where(d => d.BlockingCard != null
                              && !d.BlockingCard.IsDeleted
-                             && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100))
+                             && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.IsCompleted))
                     .Select(d => d.BlockingCard.Title)
                     .ToList();
 
@@ -109,11 +109,11 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
                 // Đổi colId của targetCard sang cột mới
                 targetCard.ColumnId = request.TargetColumnId;
 
-                // Khi kéo vào cột hoàn thành thì tự động đánh dấu hoàn thành (100%),
+                // Khi kéo vào cột hoàn thành thì tự động đánh dấu hoàn thành,
                 // khi kéo ra khỏi cột hoàn thành thì vẫn giữ nguyên trạng thái của thẻ
                 if (targetColumn.IsDoneColumn)
                 {
-                    targetCard.ProgressPercentage = 100;
+                    targetCard.IsCompleted = true;
                 }
 
                 targetCards.Insert(Math.Clamp(request.NewPosition, 0, targetCards.Count), targetCard);
@@ -153,7 +153,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
                             oldColumnId,
                             targetCard.ColumnId,
                             targetCard.Position,
-                            targetCard.ProgressPercentage,
+                            targetCard.IsCompleted,
                             _currentUser.UserId,
                             DateTimeOffset.UtcNow),
                         CancellationToken.None);

@@ -14,7 +14,7 @@ namespace DATN_BE.Modules.Task.Application.DTOs
         public int? StoryPoints { get; set; }
         public DateTimeOffset? StartDate { get; set; }
         public DateTimeOffset? DueDate { get; set; }
-        public int ProgressPercentage { get; set; }
+        public bool IsCompleted { get; set; }
         public Guid ColumnId { get; set; }
         public Guid? AssigneeId { get; set; }
         public string? AssigneeName { get; set; }

@@ -101,7 +101,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
                 DueDate = request.DueDate,
                 StoryPoints = request.StoryPoints,
                 SprintId = finalSprintId,
-                ProgressPercentage = targetColumn.IsDoneColumn ? 100 : 0
+                IsCompleted = targetColumn.IsDoneColumn
             };
             _context.Cards.Add(newCard);
             await _context.SaveChangesAsync(cancellationToken);
@@ -118,7 +118,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
                 StoryPoints = newCard.StoryPoints,
                 StartDate = newCard.StartDate,
                 DueDate = newCard.DueDate,
-                ProgressPercentage = newCard.ProgressPercentage,
+                IsCompleted = newCard.IsCompleted,
                 ColumnId = newCard.ColumnId,
                 AssigneeId = newCard.AssigneeId,
                 AssigneeName = assignee?.Username,

@@ -84,7 +84,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectSprint
                         StoryPoints = c.StoryPoints,
                         StartDate = c.StartDate,
                         DueDate = c.DueDate,
-                        ProgressPercentage = c.ProgressPercentage,
+                        IsCompleted = c.IsCompleted,
                         ColumnId = c.ColumnId,
                         AssigneeId = c.AssigneeId,
                         AssigneeName = c.Assignee?.Username,
@@ -95,8 +95,8 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectSprint
                         SprintId = c.SprintId,
                         CreatedAt = c.CreatedAt,
                         CommentsCount = c.Comments.Count,
-                        IsBlocked = c.BlockedByDependencies.Any(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100)),
-                        BlockedByCount = c.BlockedByDependencies.Count(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100))
+                        IsBlocked = c.BlockedByDependencies.Any(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.IsCompleted)),
+                        BlockedByCount = c.BlockedByDependencies.Count(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.IsCompleted))
                     }).ToList();
 
                 return new SprintDto
@@ -111,9 +111,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectSprint
                     Status = s.Status,
                     CreatedAt = s.CreatedAt,
                     TotalCards = s.Cards.Count,
-                    CompletedCards = s.Cards.Count(c => (c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100),
+                    CompletedCards = s.Cards.Count(c => (c.Column != null && c.Column.IsDoneColumn) || c.IsCompleted),
                     TotalStoryPoints = s.Cards.Sum(c => c.StoryPoints ?? 0),
-                    CompletedStoryPoints = s.Cards.Where(c => (c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100).Sum(c => c.StoryPoints ?? 0),
+                    CompletedStoryPoints = s.Cards.Where(c => (c.Column != null && c.Column.IsDoneColumn) || c.IsCompleted).Sum(c => c.StoryPoints ?? 0),
                     Cards = cardDtos
                 };
             }).ToList();

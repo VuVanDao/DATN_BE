@@ -91,7 +91,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardDependency
             await _context.SaveChangesAsync(cancellationToken);
 
             var targetCard = request.Direction == DependencyDirection.BlockedBy ? blockingCard : blockedCard;
-            var isDone = (targetCard.Column != null && targetCard.Column.IsDoneColumn) || targetCard.ProgressPercentage == 100;
+            var isDone = (targetCard.Column != null && targetCard.Column.IsDoneColumn) || targetCard.IsCompleted;
 
             var result = new CardDependencyItemDto
             {

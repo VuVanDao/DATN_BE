@@ -95,7 +95,7 @@ public sealed record CardMovedMessage(
     Guid SourceColumnId,
     Guid TargetColumnId,
     int NewPosition,
-    int ProgressPercentage,
+    bool IsCompleted,
     Guid? ChangedByUserId,
     DateTimeOffset OccurredAt);
 

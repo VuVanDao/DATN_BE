@@ -67,7 +67,7 @@ namespace DATN_BE.Modules.Task.Application.Queries.GetProjectBacklogCards
                 StoryPoints = c.StoryPoints,
                 StartDate = c.StartDate,
                 DueDate = c.DueDate,
-                ProgressPercentage = c.ProgressPercentage,
+                IsCompleted = c.IsCompleted,
                 ColumnId = c.ColumnId,
                 AssigneeId = c.AssigneeId,
                 AssigneeName = c.Assignee != null ? c.Assignee.Username : null,
@@ -78,8 +78,8 @@ namespace DATN_BE.Modules.Task.Application.Queries.GetProjectBacklogCards
                 SprintId = c.SprintId,
                 CreatedAt = c.CreatedAt,
                 CommentsCount = c.Comments.Count,
-                IsBlocked = c.BlockedByDependencies.Any(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100)),
-                BlockedByCount = c.BlockedByDependencies.Count(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100))
+                IsBlocked = c.BlockedByDependencies.Any(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.IsCompleted)),
+                BlockedByCount = c.BlockedByDependencies.Count(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.IsCompleted))
             }).ToList();
         }
     }

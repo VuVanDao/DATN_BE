@@ -79,10 +79,10 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.StartSprint
             await _context.SaveChangesAsync(cancellationToken);
 
             var totalCards = sprint.Cards.Count;
-            var completedCards = sprint.Cards.Count(c => (c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100);
+            var completedCards = sprint.Cards.Count(c => (c.Column != null && c.Column.IsDoneColumn) || c.IsCompleted);
             var totalStoryPoints = sprint.Cards.Sum(c => c.StoryPoints ?? 0);
             var completedStoryPoints = sprint.Cards
-                .Where(c => (c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100)
+                .Where(c => (c.Column != null && c.Column.IsDoneColumn) || c.IsCompleted)
                 .Sum(c => c.StoryPoints ?? 0);
 
             var result = new SprintDto

@@ -107,7 +107,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateBacklogCard
                 StoryPoints = request.StoryPoints,
                 SprintId = request.SprintId,
                 ReporterId = currentUserId,
-                ProgressPercentage = 0
+                IsCompleted = false
             };
 
             _context.Cards.Add(newCard);
@@ -124,7 +124,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateBacklogCard
                 StoryPoints = newCard.StoryPoints,
                 StartDate = newCard.StartDate,
                 DueDate = newCard.DueDate,
-                ProgressPercentage = newCard.ProgressPercentage,
+                IsCompleted = newCard.IsCompleted,
                 ColumnId = newCard.ColumnId,
                 ReporterId = newCard.ReporterId,
                 ReporterName = reporter.Username,

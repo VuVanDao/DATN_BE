@@ -60,7 +60,7 @@ namespace DATN_BE.Modules.Task.Application.Queries.SearchCardCandidates
                     Id = c.Id,
                     Title = c.Title,
                     ColumnTitle = c.Column != null ? c.Column.Title : null,
-                    IsDone = (c.Column != null && c.Column.IsDoneColumn) || c.ProgressPercentage == 100,
+                    IsDone = (c.Column != null && c.Column.IsDoneColumn) || c.IsCompleted,
                     Type = c.Type,
                     Priority = c.Priority,
                     AssigneeName = c.Assignee != null ? c.Assignee.Username : null

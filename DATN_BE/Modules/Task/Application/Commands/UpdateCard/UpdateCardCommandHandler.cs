@@ -63,12 +63,12 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                 throw new BadRequestException("Hạn chót (DueDate) phải lớn hơn hoặc bằng Ngày bắt đầu (StartDate).");
             }
             
-            if (request.ProgressPercentage == 100)
+            if (request.IsCompleted)
             {
                 var unfinishedBlockers = targetCard.BlockedByDependencies
                     .Where(d => d.BlockingCard != null
                              && !d.BlockingCard.IsDeleted
-                             && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100))
+                             && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.IsCompleted))
                     .Select(d => d.BlockingCard.Title)
                     .ToList();
 
@@ -84,7 +84,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
             var previousPriority = targetCard.Priority;
             var previousType = targetCard.Type;
             var previousStoryPoints = targetCard.StoryPoints;
-            var previousProgress = targetCard.ProgressPercentage;
+            var previousIsCompleted = targetCard.IsCompleted;
             var previousAssigneeId = targetCard.AssigneeId;
             var previousAssigneeName = targetCard.Assignee?.Username;
 
@@ -116,7 +116,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
             targetCard.StartDate = request.StartDate;
             targetCard.DueDate = request.DueDate;
             targetCard.StoryPoints = request.StoryPoints;
-            targetCard.ProgressPercentage = request.ProgressPercentage;
+            targetCard.IsCompleted = request.IsCompleted;
 
             if (request.SprintId.HasValue)
             {
@@ -240,7 +240,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                         }), cancellationToken);
                 }
 
-                if (previousProgress != targetCard.ProgressPercentage)
+                if (previousIsCompleted != targetCard.IsCompleted)
                 {
                     await _mediator.Publish(new EntityActivityLoggedEvent(
                         currentUserId.Value,
@@ -250,9 +250,9 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                         new
                         {
                             cardTitle = targetCard.Title,
-                            field = "Progress",
-                            oldProgress = previousProgress,
-                            newProgress = targetCard.ProgressPercentage
+                            field = "IsCompleted",
+                            oldIsCompleted = previousIsCompleted,
+                            newIsCompleted = targetCard.IsCompleted
                         }), cancellationToken);
                 }
 
@@ -284,7 +284,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                 StoryPoints = targetCard.StoryPoints,
                 StartDate = targetCard.StartDate,
                 DueDate = targetCard.DueDate,
-                ProgressPercentage = targetCard.ProgressPercentage,
+                IsCompleted = targetCard.IsCompleted,
                 ColumnId = targetCard.ColumnId,
                 AssigneeId = targetCard.AssigneeId,
                 AssigneeName = targetCard.Assignee?.Username,
@@ -295,8 +295,8 @@ namespace DATN_BE.Modules.Task.Application.Commands.UpdateCard
                 SprintId = targetCard.SprintId,
                 CreatedAt = targetCard.CreatedAt,
                 CommentsCount = targetCard.Comments.Count,
-                IsBlocked = targetCard.BlockedByDependencies.Any(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100)),
-                BlockedByCount = targetCard.BlockedByDependencies.Count(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.ProgressPercentage == 100))
+                IsBlocked = targetCard.BlockedByDependencies.Any(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.IsCompleted)),
+                BlockedByCount = targetCard.BlockedByDependencies.Count(d => d.BlockingCard != null && !d.BlockingCard.IsDeleted && !((d.BlockingCard.Column != null && d.BlockingCard.Column.IsDoneColumn) || d.BlockingCard.IsCompleted))
             };
 
             if (_hubContext != null && targetCard.Column?.Board != null)

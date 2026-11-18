@@ -658,6 +658,11 @@ namespace DATN_BE.Migrations
                     b.Property<DateTimeOffset?>("DueDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("IsCompleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -668,9 +673,6 @@ namespace DATN_BE.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
-
-                    b.Property<int>("ProgressPercentage")
-                        .HasColumnType("integer");
 
                     b.Property<Guid>("ReporterId")
                         .HasColumnType("uuid");

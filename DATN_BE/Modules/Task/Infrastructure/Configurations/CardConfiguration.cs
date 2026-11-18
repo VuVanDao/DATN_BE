@@ -19,6 +19,7 @@ namespace DATN_BE.Modules.Task.Infrastructure.Configurations
                 .HasConversion<string>()
                 .HasMaxLength(20);
             builder.Property(c => c.CoverUrl).HasMaxLength(500);
+            builder.Property(c => c.IsCompleted).HasDefaultValue(false);
 
             // Quan hệ Column (1 Column có nhiều Card)
             builder.HasOne(c => c.Column)

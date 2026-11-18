@@ -16,7 +16,7 @@ namespace DATN_BE.Modules.Task.Domain.Entities
         public int? StoryPoints { get; set; }
         public DateTimeOffset? StartDate { get; set; }
         public DateTimeOffset? DueDate { get; set; }
-        public int ProgressPercentage { get; set; } = 0; // 0 - 100%
+        public bool IsCompleted { get; set; } = false;
 
         // Thuộc Column nào
         public Guid ColumnId { get; set; }
