@@ -5,6 +5,7 @@ using DATN_BE.Modules.Identity.Presentation.BackgroundJob;
 using DATN_BE.Modules.Notifications.Infrastructure.Services;
 using DATN_BE.Modules.Notifications.Presentation.Hubs;
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
+using DATN_BE.Modules.Task.Presentation.BackgroundJob;
 using DATN_BE.Shared.Application.Behaviors;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Infrastructure.Persistence;
@@ -53,6 +54,7 @@ namespace DATN_BE
             builder.Services.AddScoped<IEmailService, GmailSmtpEmailService>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddHostedService<SendPasswordResetTokenByEmailWorker>();
+            builder.Services.AddHostedService<CardDueDateReminderWorker>();
 
             // 3. Register Identity Services
             builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();

@@ -152,6 +152,37 @@ namespace DATN_BE.Modules.Notifications.Application.Helpers
                 TargetUrl: targetUrl);
         }
 
+        public static NotificationDispatchItem BuildDueDateReminderItem(
+            Guid receiverId,
+            Guid cardId,
+            string cardTitle,
+            string boardSlug,
+            Guid projectId,
+            bool isOverdue,
+            DateTimeOffset dueDate)
+        {
+            var targetUrl = !string.IsNullOrWhiteSpace(boardSlug)
+                ? BuildCardTargetUrl(boardSlug, projectId, cardId)
+                : null;
+
+            var title = isOverdue ? "Công việc đã quá hạn!" : "Nhắc nhở: Công việc sắp đến hạn";
+            var content = isOverdue
+                ? $"Thẻ \"{cardTitle}\" đã quá hạn ({dueDate.ToLocalTime():dd/MM/yyyy HH:mm})."
+                : $"Thẻ \"{cardTitle}\" sẽ đến hạn vào {dueDate.ToLocalTime():dd/MM/yyyy HH:mm}. Vui lòng kiểm tra tiến độ.";
+
+            return new NotificationDispatchItem(
+                ReceiverId: receiverId,
+                SenderId: null,
+                SenderName: "Hệ thống",
+                SenderAvatarUrl: null,
+                Type: NotificationType.DueDateReminder,
+                Title: title,
+                Content: content,
+                EntityType: EntityType.Card,
+                EntityId: cardId,
+                TargetUrl: targetUrl);
+        }
+
         public static NotificationDto ToDto(
             Notification entity,
             IReadOnlyDictionary<(EntityType Type, Guid Id), string>? targetUrls = null,
