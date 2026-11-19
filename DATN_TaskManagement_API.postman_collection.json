@@ -1,0 +1,3188 @@
+{
+  "info": {
+    "_postman_id": "d91fa591-1b94-4340-9a29-b472e391cb4d",
+    "name": "DATN - Task Management & AI Collaboration API",
+    "description": "Bộ sưu tập API cho Đồ Án Tốt Nghiệp: Xây dựng hệ thống quản lý công việc và cộng tác nhóm tích hợp trí tuệ nhân tạo.\\nCông nghệ: .NET 8 (Clean Architecture + Modular Monolith + CQRS MediatR) & Angular v22.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5025",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "loginEmail",
+      "value": "admin@gmail.com",
+      "type": "string"
+    },
+    {
+      "key": "loginPassword",
+      "value": "Dao11082004@",
+      "type": "string"
+    },
+    {
+      "key": "registerEmail",
+      "value": "member_demo@gmail.com",
+      "type": "string"
+    },
+    {
+      "key": "registerPassword",
+      "value": "Password123@",
+      "type": "string"
+    },
+    {
+      "key": "workspaceId",
+      "value": "01a1109d-851f-7597-8212-bc3b2da26599",
+      "type": "string"
+    },
+    {
+      "key": "workspaceSlug",
+      "value": "workspace-so-1-name",
+      "type": "string"
+    },
+    {
+      "key": "projectId",
+      "value": "01a18563-4b9c-7154-8b7f-27f7a882b42d",
+      "type": "string"
+    },
+    {
+      "key": "projectKey",
+      "value": "TUP289021",
+      "type": "string"
+    },
+    {
+      "key": "boardId",
+      "value": "01a18563-4bb7-72c4-bb89-9cce7209b9bb",
+      "type": "string"
+    },
+    {
+      "key": "columnId",
+      "value": "01a19316-b852-7751-8842-c32ee8c8ecf4",
+      "type": "string"
+    },
+    {
+      "key": "cardId",
+      "value": "01a19546-e44d-7f06-9ade-0a0fdbdaec43",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "01a0f716-70d9-7c16-9750-b9a13ec47823",
+      "type": "string"
+    },
+    {
+      "key": "boardSlug",
+      "value": "bang-1",
+      "type": "string"
+    },
+    {
+      "key": "sprintId",
+      "value": "01a19546-e44d-7f06-9ade-0a0fdbdaec44",
+      "type": "string"
+    },
+    {
+      "key": "dependencyId",
+      "value": "01a19546-e44d-7f06-9ade-0a0fdbdaec45",
+      "type": "string"
+    },
+    {
+      "key": "notificationId",
+      "value": "01a19546-e44d-7f06-9ade-0a0fdbdaec46",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Authentication (Xác thực)",
+      "item": [
+        {
+          "name": "Đăng nhập hệ thống (Login)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "description": "Đăng nhập hệ thống bằng email và mật khẩu (biến {{loginEmail}} và {{loginPassword}}). Tự động lưu token.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var response = pm.response.json();",
+                  "    var token = (response.data && (response.data.token || response.data.accessToken)) || null;",
+                  "    if (token) {",
+                  "        pm.collectionVariables.set('accessToken', token);",
+                  "        try { pm.environment.set('accessToken', token); } catch(e) {}",
+                  "        console.log('✅ AccessToken updated successfully in Environment and Collection.');",
+                  "    }",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('userId', response.data.id);",
+                  "        try { pm.environment.set('userId', response.data.id); } catch(e) {}",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đăng ký tài khoản (Register)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ],
+              "query": []
+            },
+            "description": "Đăng ký tài khoản người dùng mới vào hệ thống. Tự động lưu token.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{registerEmail}}\",\n  \"username\": \"member_demo\",\n  \"password\": \"{{registerPassword}}\",\n  \"bio\": \"Sinh viên thực hiện đồ án tốt nghiệp\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var response = pm.response.json();",
+                  "    var token = (response.data && (response.data.token || response.data.accessToken)) || null;",
+                  "    if (token) {",
+                  "        pm.collectionVariables.set('accessToken', token);",
+                  "        try { pm.environment.set('accessToken', token); } catch(e) {}",
+                  "        console.log('✅ AccessToken updated successfully in Environment and Collection.');",
+                  "    }",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('userId', response.data.id);",
+                  "        try { pm.environment.set('userId', response.data.id); } catch(e) {}",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cấp lại Access Token (Refresh Token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh-token"
+              ],
+              "query": []
+            },
+            "description": "Cấp Access Token mới từ Refresh Token lưu trong Cookie hoặc truyền trong Body.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var response = pm.response.json();",
+                  "    var token = (response.data && (response.data.token || response.data.accessToken)) || null;",
+                  "    if (token) {",
+                  "        pm.collectionVariables.set('accessToken', token);",
+                  "        try { pm.environment.set('accessToken', token); } catch(e) {}",
+                  "        console.log('✅ AccessToken updated successfully in Environment and Collection.');",
+                  "    }",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('userId', response.data.id);",
+                  "        try { pm.environment.set('userId', response.data.id); } catch(e) {}",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đăng xuất / Thu hồi Token (Revoke Token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/revoke-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "revoke-token"
+              ],
+              "query": []
+            },
+            "description": "Thu hồi Refresh Token và xóa Cookie đăng nhập.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Yêu cầu đặt lại mật khẩu (Forgot Password)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ],
+              "query": []
+            },
+            "description": "Gửi email chứa mã Token khôi phục mật khẩu đến hòm thư người dùng (sử dụng {{loginEmail}}).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xác nhận đặt lại mật khẩu (Reset Password)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ],
+              "query": []
+            },
+            "description": "Nhập mã token từ email và thiết lập mật khẩu mới.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"token\": \"RESET_TOKEN_FROM_EMAIL\",\n  \"newPassword\": \"{{loginPassword}}\",\n  \"confirmNewPassword\": \"{{loginPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02. User Profile (Hồ sơ cá nhân)",
+      "item": [
+        {
+          "name": "Lấy thông tin cá nhân (Get My Profile)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ],
+              "query": []
+            },
+            "description": "Lấy thông tin tài khoản hiện tại đang đăng nhập qua JWT Bearer Token."
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật thông tin cá nhân (Update Profile)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ],
+              "query": []
+            },
+            "description": "Cập nhật tên hiển thị (Username) và tiểu sử (Bio).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"Dao Le (Updated)\",\n  \"bio\": \"Fullstack Software Engineer & AI Researcher\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Đổi mật khẩu (Change Password)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "change-password"
+              ],
+              "query": []
+            },
+            "description": "Đổi mật khẩu cho người dùng đang đăng nhập.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{loginPassword}}\",\n  \"newPassword\": \"NewPassword123@\",\n  \"confirmNewPassword\": \"NewPassword123@\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Upload ảnh đại diện (Upload Avatar Cloudinary)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "File",
+                  "type": "file",
+                  "value": "",
+                  "description": "Chọn tệp hình ảnh đại diện (JPG, PNG, WEBP)",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "avatar"
+              ]
+            },
+            "description": "Tải ảnh đại diện lên Cloudinary thông qua ICloudinaryService và lưu URL vào hồ sơ."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03. System Administration (Quản trị hệ thống - Admin)",
+      "item": [
+        {
+          "name": "[Admin] Danh sách người dùng (Get Users - Paged)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users?search=&isActive=true&pageIndex=1&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Tìm theo username hoặc email",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Lọc trạng thái hoạt động",
+                  "disabled": true
+                },
+                {
+                  "key": "pageIndex",
+                  "value": "1",
+                  "description": "Trang hiện tại",
+                  "disabled": false
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10",
+                  "description": "Số bản ghi trên trang",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Yêu cầu vai trò SystemAdmin. Lấy danh sách toàn bộ người dùng kèm phân trang."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Tạo người dùng mới (Create User)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ],
+              "query": []
+            },
+            "description": "Tạo mới tài khoản người dùng trực tiếp từ trang Admin.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"member01@gmail.com\",\n  \"username\": \"member01\",\n  \"password\": \"Password123@\",\n  \"bio\": \"Team Member\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Cập nhật người dùng (Update User)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{userId}}"
+              ],
+              "query": []
+            },
+            "description": "Cập nhật thông tin người dùng theo Id.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"member01_updated\",\n  \"bio\": \"Senior Backend Engineer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Khóa / Mở khóa tài khoản (Update Status)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{userId}}",
+                "status"
+              ],
+              "query": []
+            },
+            "description": "Khóa (isActive=false) hoặc mở khóa (isActive=true) tài khoản người dùng.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false,\n  \"reason\": \"Tạm khóa để kiểm tra bảo mật\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Gán vai trò cho người dùng (Assign Role)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{userId}}",
+                "role"
+              ],
+              "query": []
+            },
+            "description": "Gán Role (SystemAdmin hoặc User) cho tài khoản.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"01a0f716-70d9-7c16-9750-b9a13ec47800\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Xóa mềm người dùng (Delete User)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{userId}}"
+              ],
+              "query": []
+            },
+            "description": "Xóa mềm tài khoản người dùng (IsDeleted = true)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Danh sách tất cả vai trò (Get Roles)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "roles"
+              ],
+              "query": []
+            },
+            "description": "Lấy danh sách các vai trò (Global, Workspace, Project) trong hệ thống."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04. Security & Audit (Bảo mật & Nhật ký)",
+      "item": [
+        {
+          "name": "Lịch sử đăng nhập cá nhân (My Login History)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/security/me/login-history?limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "security",
+                "me",
+                "login-history"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Số lượng bản ghi lấy về",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Xem danh sách lịch sử đăng nhập gồm IP, Thiết bị, Trình duyệt, Trạng thái thành công/thất bại."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05. Workspaces (Không gian làm việc)",
+      "item": [
+        {
+          "name": "Tạo Không gian làm việc mới (Create Workspace)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces"
+              ],
+              "query": []
+            },
+            "description": "Tạo mới Workspace. Tự động lưu workspaceId và workspaceSlug vừa tạo vào biến môi trường.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Workspace Đồ Án Tốt Nghiệp\",\n  \"description\": \"Không gian làm việc chính cho nhóm phát triển hệ thống Task Management AI\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var response = pm.response.json();",
+                  "    if (response.data) {",
+                  "        if (response.data.id) {",
+                  "            pm.collectionVariables.set('workspaceId', response.data.id);",
+                  "            try { pm.environment.set('workspaceId', response.data.id); } catch(e) {}",
+                  "        }",
+                  "        if (response.data.slug) {",
+                  "            pm.collectionVariables.set('workspaceSlug', response.data.slug);",
+                  "            try { pm.environment.set('workspaceSlug', response.data.slug); } catch(e) {}",
+                  "        }",
+                  "        console.log('✅ Workspace variables captured: ID=' + response.data.id + ', Slug=' + response.data.slug);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lấy danh sách Workspace của tôi (Get My Workspaces)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces"
+              ],
+              "query": []
+            },
+            "description": "Lấy toàn bộ Workspace mà người dùng đang sở hữu hoặc tham gia thành viên."
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết Workspace theo Slug (Get By Slug)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceSlug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceSlug}}"
+              ],
+              "query": []
+            },
+            "description": "Lấy thông tin chi tiết Workspace bao gồm số lượng dự án và thành viên theo Slug URL."
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật thông tin Workspace (Update Workspace)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "Name",
+                  "type": "text",
+                  "value": "Workspace Đồ Án Tốt Nghiệp (Updated)",
+                  "description": "Tên workspace"
+                },
+                {
+                  "key": "Description",
+                  "type": "text",
+                  "value": "Mô tả cập nhật",
+                  "description": "Mô tả"
+                },
+                {
+                  "key": "Logo",
+                  "type": "file",
+                  "value": "",
+                  "description": "Logo đại diện Workspace (Ảnh)",
+                  "src": []
+                },
+                {
+                  "key": "CoverImage",
+                  "type": "file",
+                  "value": "",
+                  "description": "Ảnh bìa Workspace (Ảnh)",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}"
+              ]
+            },
+            "description": "Cập nhật tên, mô tả, logo và cover image cho Workspace (Yêu cầu WorkspaceOwner)."
+          },
+          "response": []
+        },
+        {
+          "name": "Danh sách Dự án trong Workspace (Get Projects)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}/projects?pageIndex=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}",
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "pageIndex",
+                  "value": "1",
+                  "description": "Trang hiện tại",
+                  "disabled": false
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "Số lượng dự án trên trang",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Lấy danh sách các Dự án (Projects) thuộc một Workspace có phân trang."
+          },
+          "response": []
+        },
+        {
+          "name": "Danh sách thành viên Workspace (Get Members)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members?pageIndex=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}",
+                "members"
+              ],
+              "query": [
+                {
+                  "key": "pageIndex",
+                  "value": "1",
+                  "description": "Trang hiện tại",
+                  "disabled": false
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "Số lượng thành viên trên trang",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Lấy danh sách thành viên trong Workspace kèm vai trò (WorkspaceOwner/WorkspaceMember)."
+          },
+          "response": []
+        },
+        {
+          "name": "Thêm thành viên vào Workspace (Add Members)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}",
+                "members"
+              ],
+              "query": []
+            },
+            "description": "Mời nhiều thành viên vào Workspace bằng địa chỉ email.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"members\": [\n    {\n      \"email\": \"member01@gmail.com\",\n      \"roleId\": null\n    },\n    {\n      \"email\": \"member02@gmail.com\",\n      \"roleId\": null\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xem ảnh hưởng trước khi xóa thành viên (Removal Impact)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members/{{userId}}/removal-impact",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}",
+                "members",
+                "{{userId}}",
+                "removal-impact"
+              ],
+              "query": []
+            },
+            "description": "Kiểm tra thành viên đang là Trưởng dự án nào hoặc đang giữ bao nhiêu card trước khi quyết định gỡ khỏi Workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa thành viên khỏi Workspace (Remove Member)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}",
+                "members",
+                "{{userId}}"
+              ],
+              "query": []
+            },
+            "description": "Gỡ bỏ thành viên khỏi Workspace (hoặc thành viên tự rời)."
+          },
+          "response": []
+        },
+        {
+          "name": "Danh sách vai trò trong Workspace (Get Roles)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "roles"
+              ],
+              "query": []
+            },
+            "description": "Lấy danh sách các vai trò phạm vi Workspace (WorkspaceOwner, WorkspaceMember)."
+          },
+          "response": []
+        },
+        {
+          "name": "Nhật ký quản trị Workspace (Workspace Audit Logs)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}/audit-logs?pageIndex=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "pageIndex",
+                  "value": "1",
+                  "description": "Trang hiện tại",
+                  "disabled": false
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "Số lượng nhật ký",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Xem lịch sử các thao tác quản trị diễn ra trên Workspace (Chỉ Owner)."
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa Workspace (Delete Workspace)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{workspaceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{workspaceId}}"
+              ],
+              "query": []
+            },
+            "description": "Xóa mềm Workspace (Đặt ở cuối phân hệ Workspace để không ảnh hưởng các test phía trước)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06. Projects (Quản lý Dự án)",
+      "item": [
+        {
+          "name": "Tạo Dự án mới trong Workspace (Create Project)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/project",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project"
+              ],
+              "query": []
+            },
+            "description": "Tạo một Project mới trực thuộc Workspace. Tự động lưu projectId và projectKey vừa tạo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"name\": \"Task Management AI System\",\n  \"projectKey\": \"TMAI\",\n  \"description\": \"Dự án xây dựng nền tảng quản lý công việc và cộng tác tích hợp trí tuệ nhân tạo\",\n  \"isAssignAsLeader\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var response = pm.response.json();",
+                  "    if (response.data) {",
+                  "        if (response.data.id) {",
+                  "            pm.collectionVariables.set('projectId', response.data.id);",
+                  "            try { pm.environment.set('projectId', response.data.id); } catch(e) {}",
+                  "        }",
+                  "        if (response.data.projectKey) {",
+                  "            pm.collectionVariables.set('projectKey', response.data.projectKey);",
+                  "            try { pm.environment.set('projectKey', response.data.projectKey); } catch(e) {}",
+                  "        }",
+                  "        console.log('✅ Project variables captured: ID=' + response.data.id + ', Key=' + response.data.projectKey);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dự án tôi đã tham gia (Get My Projects)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/my-projects?workspaceId={{workspaceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "my-projects"
+              ],
+              "query": [
+                {
+                  "key": "workspaceId",
+                  "value": "{{workspaceId}}",
+                  "description": "Lọc theo workspace tùy chọn",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Lấy danh sách dự án mà người dùng hiện tại tham gia thành viên, nhóm theo Workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết Dự án (Get Project Detail)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectKey}}/workspace/{{workspaceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectKey}}",
+                "workspace",
+                "{{workspaceId}}"
+              ],
+              "query": []
+            },
+            "description": "Lấy thông tin chi tiết một Dự án theo ProjectKey và WorkspaceId."
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật thông tin Dự án (Update Project)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}"
+              ],
+              "query": []
+            },
+            "description": "Cập nhật tên, mã viết tắt (projectKey) và mô tả dự án (WorkspaceOwner hoặc ProjectLeader).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Task Management AI System (v2)\",\n  \"projectKey\": \"TMAI2\",\n  \"description\": \"Mô tả dự án được cập nhật\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Danh sách thành viên Dự án (Get Members)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}",
+                "members"
+              ],
+              "query": []
+            },
+            "description": "Lấy danh sách thành viên trong Dự án kèm chức danh (JobTitle) và vai trò (Leader/Member)."
+          },
+          "response": []
+        },
+        {
+          "name": "Thêm thành viên vào Dự án (Add Members)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}",
+                "members"
+              ],
+              "query": []
+            },
+            "description": "Thêm các thành viên từ Workspace vào trong Dự án này.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"members\": [\n    {\n      \"userId\": \"{{userId}}\",\n      \"roleId\": null,\n      \"jobTitle\": \"Frontend Engineer\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật vai trò thành viên Dự án (Update Member Role)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}/members/{{userId}}/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}",
+                "members",
+                "{{userId}}",
+                "role"
+              ],
+              "query": []
+            },
+            "description": "Chuyển giao quyền Trưởng dự án (ProjectLeader) hoặc đổi sang ProjectMember.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newRoleId\": \"01a0f716-70d9-7c16-9750-b9a13ec47805\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật chức danh chuyên môn (Update Job Title)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}/members/{{userId}}/job-title",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}",
+                "members",
+                "{{userId}}",
+                "job-title"
+              ],
+              "query": []
+            },
+            "description": "Cập nhật chức danh công việc của thành viên trong dự án (VD: Backend Lead, QA Tester).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobTitle\": \"Senior Fullstack Engineer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa thành viên khỏi Dự án (Remove Member)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}/members/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}",
+                "members",
+                "{{userId}}"
+              ],
+              "query": []
+            },
+            "description": "Gỡ thành viên khỏi Dự án."
+          },
+          "response": []
+        },
+        {
+          "name": "Danh sách vai trò trong Dự án (Get Roles)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "roles"
+              ],
+              "query": []
+            },
+            "description": "Lấy danh sách các vai trò phạm vi Project (ProjectLeader, ProjectMember)."
+          },
+          "response": []
+        },
+        {
+          "name": "Nhật ký quản trị Dự án (Project Audit Logs)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}/audit-logs?pageIndex=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "pageIndex",
+                  "value": "1",
+                  "description": "Trang hiện tại",
+                  "disabled": false
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "Số lượng nhật ký",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Lấy lịch sử hoạt động và các thay đổi quản trị trong Dự án."
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa mềm Dự án (Delete Project)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/{{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "project",
+                "{{projectId}}"
+              ],
+              "query": []
+            },
+            "description": "Xóa mềm Dự án và toàn bộ Bảng, Cột, Thẻ liên quan (Đặt ở cuối phân hệ Dự án)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07. Boards & Columns (Bảng Kanban & Cột)",
+      "item": [
+        {
+          "name": "Tạo Bảng mới trong Dự án (Create Board)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/board",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board"
+              ],
+              "query": []
+            },
+            "description": "Tạo mới Bảng công việc. Tự động lưu boardId và boardSlug vừa tạo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"title\": \"Bảng Phát Triển Phần Mềm\",\n  \"slug\": \"bang-phat-trien-phan-mem\",\n  \"type\": \"Kanban\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var response = pm.response.json();",
+                  "    if (response.data) {",
+                  "        if (response.data.id) {",
+                  "            pm.collectionVariables.set('boardId', response.data.id);",
+                  "            try { pm.environment.set('boardId', response.data.id); } catch(e) {}",
+                  "        }",
+                  "        if (response.data.slug) {",
+                  "            pm.collectionVariables.set('boardSlug', response.data.slug);",
+                  "            try { pm.environment.set('boardSlug', response.data.slug); } catch(e) {}",
+                  "        }",
+                  "        console.log('✅ Board variables captured: ID=' + response.data.id + ', Slug=' + response.data.slug);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Danh sách Bảng trong Dự án (Get Project Boards)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/project/{{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "project",
+                "{{projectId}}"
+              ],
+              "query": []
+            },
+            "description": "Lấy danh sách tất cả các Bảng thuộc một Dự án."
+          },
+          "response": []
+        },
+        {
+          "name": "Danh sách Bảng cá nhân (My Boards - Recent & Pinned)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/my-boards?limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "my-boards"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Số lượng bảng tối đa mỗi nhóm",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Lấy danh sách các Bảng vừa xem gần đây và các Bảng đã ghim của người đăng nhập."
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết Bảng kèm Cột & Thẻ (Get Board Detail)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardSlug}}/project/{{projectId}}?sprintId={{sprintId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "{{boardSlug}}",
+                "project",
+                "{{projectId}}"
+              ],
+              "query": [
+                {
+                  "key": "sprintId",
+                  "value": "{{sprintId}}",
+                  "description": "Lọc thẻ theo Sprint nếu là bảng Scrum",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Lấy chi tiết bảng Kanban, bao gồm các Cột và danh sách Thẻ công việc sắp xếp theo vị trí Position."
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật thông tin Bảng (Update Board)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "{{boardId}}"
+              ],
+              "query": []
+            },
+            "description": "Cập nhật tiêu đề, đường dẫn slug và loại bảng.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Bảng Phát Triển Phần Mềm (Updated)\",\n  \"slug\": \"bang-phat-trien-v2\",\n  \"type\": \"Kanban\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ghim hoặc Đánh dấu đã xem Bảng (Update Preference)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardId}}/preferences",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "{{boardId}}",
+                "preferences"
+              ],
+              "query": []
+            },
+            "description": "Ghim bảng lên đầu danh sách hoặc ghi nhận lượt xem mới nhất.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isPinned\": true,\n  \"markViewed\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo Cột mới trong Bảng (Create Column)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardId}}/columns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "{{boardId}}",
+                "columns"
+              ],
+              "query": []
+            },
+            "description": "Tạo một Cột mới trong quy trình làm việc. Tự động lưu columnId vừa tạo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"In Review\",\n  \"isDoneColumn\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('columnId', response.data.id);",
+                  "        try { pm.environment.set('columnId', response.data.id); } catch(e) {}",
+                  "        console.log('✅ Column variable captured: ID=' + response.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cập nhật thông tin Cột (Update Column)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardId}}/columns/{{columnId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "{{boardId}}",
+                "columns",
+                "{{columnId}}"
+              ],
+              "query": []
+            },
+            "description": "Cập nhật tiêu đề cột hoặc đánh dấu cột này là cột Hoàn thành công việc (IsDoneColumn).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Done / Completed\",\n  \"isDoneColumn\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sắp xếp lại thứ tự Cột (Reorder Columns)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardId}}/columns/reorder",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "{{boardId}}",
+                "columns",
+                "reorder"
+              ],
+              "query": []
+            },
+            "description": "Cập nhật thứ tự các Cột sau khi người dùng kéo thả trên giao diện Kanban.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderedColumnIds\": [\n    \"{{columnId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Lịch sử hoạt động của Cột (Column Activities)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/columns/{{columnId}}/activities?pageIndex=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "columns",
+                "{{columnId}}",
+                "activities"
+              ],
+              "query": [
+                {
+                  "key": "pageIndex",
+                  "value": "1",
+                  "description": "Trang",
+                  "disabled": false
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "Số lượng",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Lấy nhật ký hoạt động (thẻ được chuyển đến/đi) của Cột."
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa Cột trong Bảng (Delete Column)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardId}}/columns/{{columnId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "{{boardId}}",
+                "columns",
+                "{{columnId}}"
+              ],
+              "query": []
+            },
+            "description": "Xóa mềm Cột và các Thẻ bên trong Cột."
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa mềm Bảng (Delete Board)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/board/{{boardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "board",
+                "{{boardId}}"
+              ],
+              "query": []
+            },
+            "description": "Xóa mềm Bảng và toàn bộ Cột, Thẻ bên trong (Đặt ở cuối phân hệ Bảng)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08. Sprints & Agile Backlog (Quản lý Sprint & Backlog)",
+      "item": [
+        {
+          "name": "Tạo mới Sprint cho Dự án (Create Sprint)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sprint",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sprint"
+              ],
+              "query": []
+            },
+            "description": "Tạo mới một Sprint với trạng thái ban đầu là Future. Tự động lưu sprintId vừa tạo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"boardId\": \"{{boardId}}\",\n  \"name\": \"Sprint 1 - Foundation & Auth\",\n  \"goal\": \"Hoàn thiện luồng đăng ký, đăng nhập và cấu trúc bảng Kanban\",\n  \"startDate\": \"2026-11-20T00:00:00Z\",\n  \"endDate\": \"2026-12-04T00:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('sprintId', response.data.id);",
+                  "        try { pm.environment.set('sprintId', response.data.id); } catch(e) {}",
+                  "        console.log('✅ Sprint variable captured: ID=' + response.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cập nhật thông tin Sprint (Update Sprint)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sprint/{{sprintId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sprint",
+                "{{sprintId}}"
+              ],
+              "query": []
+            },
+            "description": "Cập nhật tên, mục tiêu và thời hạn chạy của Sprint.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sprint 1 - Foundation & Core Features\",\n  \"goal\": \"Mục tiêu hoàn thành giao diện kéo thả Kanban\",\n  \"startDate\": \"2026-11-20T00:00:00Z\",\n  \"endDate\": \"2026-12-04T00:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bắt đầu Sprint (Start Sprint)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sprint/{{sprintId}}/start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sprint",
+                "{{sprintId}}",
+                "start"
+              ],
+              "query": []
+            },
+            "description": "Kích hoạt Sprint từ trạng thái Future sang Active.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startDate\": \"2026-11-20T00:00:00Z\",\n  \"endDate\": \"2026-12-04T00:00:00Z\",\n  \"goal\": \"Bắt đầu triển khai các User Story của Sprint 1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Gán Thẻ vào Sprint hoặc đưa về Backlog (Move Card To Sprint)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sprint/move-card",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sprint",
+                "move-card"
+              ],
+              "query": []
+            },
+            "description": "Chuyển một Thẻ công việc vào Sprint (truyền sprintId) hoặc đưa về Backlog (truyền sprintId = null).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cardId\": \"{{cardId}}\",\n  \"sprintId\": \"{{sprintId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Danh sách Sprint của Dự án (Get Project Sprints)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sprint/project/{{projectId}}?boardId={{boardId}}&includeClosed=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sprint",
+                "project",
+                "{{projectId}}"
+              ],
+              "query": [
+                {
+                  "key": "boardId",
+                  "value": "{{boardId}}",
+                  "description": "Lọc theo Board Scrum",
+                  "disabled": true
+                },
+                {
+                  "key": "includeClosed",
+                  "value": "false",
+                  "description": "Bao gồm các Sprint đã hoàn thành",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Lấy danh sách các Sprint trong dự án."
+          },
+          "response": []
+        },
+        {
+          "name": "Dữ liệu màn hình Backlog (Get Project Backlog)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sprint/project/{{projectId}}/backlog?boardId={{boardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sprint",
+                "project",
+                "{{projectId}}",
+                "backlog"
+              ],
+              "query": [
+                {
+                  "key": "boardId",
+                  "value": "{{boardId}}",
+                  "description": "Lọc theo Board Scrum",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Lấy toàn bộ danh sách thẻ chưa gán Sprint (Product Backlog) và các Sprint chưa hoàn thành phục vụ giao diện lập kế hoạch Sprint."
+          },
+          "response": []
+        },
+        {
+          "name": "Hoàn thành Sprint (Complete Sprint)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sprint/{{sprintId}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sprint",
+                "{{sprintId}}",
+                "complete"
+              ],
+              "query": []
+            },
+            "description": "Đóng Sprint (chuyển sang Closed). Các công việc chưa hoàn thành có thể chuyển sang Sprint kế tiếp hoặc đưa về Backlog.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"moveUnfinishedToSprintId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa Sprint (Delete Sprint)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sprint/{{sprintId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sprint",
+                "{{sprintId}}"
+              ],
+              "query": []
+            },
+            "description": "Xóa Sprint; các thẻ bên trong Sprint sẽ được tự động chuyển về Backlog."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09. Tasks & Cards (Thẻ công việc & Liên kết)",
+      "item": [
+        {
+          "name": "Tạo Thẻ công việc mới trong Cột (Create Card)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards"
+              ],
+              "query": []
+            },
+            "description": "Tạo mới một thẻ công việc trực tiếp vào một Cột trên Bảng Kanban. Tự động lưu cardId vừa tạo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"columnId\": \"{{columnId}}\",\n  \"title\": \"Tích hợp kéo thả thẻ Kanban bằng Angular CDK\",\n  \"description\": \"Hiện thực hóa tính năng di chuyển thẻ giữa các cột và sắp xếp thứ tự mượt mà\",\n  \"type\": \"Story\",\n  \"priority\": \"High\",\n  \"assigneeId\": \"{{userId}}\",\n  \"startDate\": \"2026-11-20T00:00:00Z\",\n  \"dueDate\": \"2026-11-25T00:00:00Z\",\n  \"storyPoints\": 5,\n  \"sprintId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('cardId', response.data.id);",
+                  "        try { pm.environment.set('cardId', response.data.id); } catch(e) {}",
+                  "        console.log('✅ Card variable captured: ID=' + response.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tạo Thẻ mới vào Backlog (Create Backlog Card)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/backlog",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "backlog"
+              ],
+              "query": []
+            },
+            "description": "Tạo thẻ công việc trong Product Backlog (chưa gán vào cột hoặc gán vào cột đầu tiên của Board Scrum).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"boardId\": \"{{boardId}}\",\n  \"title\": \"Xây dựng Module AI RAG với pgvector\",\n  \"description\": \"Chunking tài liệu đồ án và lưu trữ vector embeddings trong PostgreSQL\",\n  \"type\": \"Task\",\n  \"priority\": \"Urgent\",\n  \"storyPoints\": 8,\n  \"sprintId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết Thẻ công việc (Get Card Detail)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}"
+              ],
+              "query": []
+            },
+            "description": "Lấy đầy đủ thông tin chi tiết thẻ: người giao, người nhận, độ ưu tiên, bình luận, ngày bắt đầu và ngày hết hạn."
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật thông tin Thẻ (Update Card)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "Title",
+                  "type": "text",
+                  "value": "Tích hợp kéo thả thẻ Kanban (Đã cập nhật)",
+                  "description": "Tiêu đề"
+                },
+                {
+                  "key": "Description",
+                  "type": "text",
+                  "value": "Mô tả chi tiết công việc",
+                  "description": "Mô tả"
+                },
+                {
+                  "key": "CoverImage",
+                  "type": "file",
+                  "value": "",
+                  "description": "Ảnh bìa thẻ (Upload file)",
+                  "src": []
+                },
+                {
+                  "key": "CoverUrl",
+                  "type": "text",
+                  "value": "",
+                  "description": "URL ảnh bìa (nếu không upload file)"
+                },
+                {
+                  "key": "Type",
+                  "type": "text",
+                  "value": "Story",
+                  "description": "Loại thẻ: Task, Bug, Story, Epic"
+                },
+                {
+                  "key": "Priority",
+                  "type": "text",
+                  "value": "High",
+                  "description": "Mức ưu tiên: Low, Medium, High, Urgent"
+                },
+                {
+                  "key": "AssigneeId",
+                  "type": "text",
+                  "value": "{{userId}}",
+                  "description": "Id người được giao việc"
+                },
+                {
+                  "key": "StartDate",
+                  "type": "text",
+                  "value": "2026-11-20T00:00:00Z",
+                  "description": "Ngày bắt đầu"
+                },
+                {
+                  "key": "DueDate",
+                  "type": "text",
+                  "value": "2026-11-25T00:00:00Z",
+                  "description": "Hạn hoàn thành"
+                },
+                {
+                  "key": "StoryPoints",
+                  "type": "text",
+                  "value": "5",
+                  "description": "Điểm độ phức tạp (Scrum)"
+                },
+                {
+                  "key": "IsCompleted",
+                  "type": "text",
+                  "value": "false",
+                  "description": "Trạng thái hoàn thành"
+                },
+                {
+                  "key": "SprintId",
+                  "type": "text",
+                  "value": "",
+                  "description": "Id của Sprint"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}"
+              ]
+            },
+            "description": "Cập nhật chi tiết thẻ công việc (Hỗ trợ upload ảnh bìa cover qua form-data)."
+          },
+          "response": []
+        },
+        {
+          "name": "Di chuyển thẻ khi kéo thả (Move Card)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}/move",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}",
+                "move"
+              ],
+              "query": []
+            },
+            "description": "Đổi vị trí thẻ trong cùng một cột hoặc chuyển thẻ sang cột khác với thứ tự Position mới.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetColumnId\": \"{{columnId}}\",\n  \"newPosition\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Thêm bình luận vào Thẻ (Add Comment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}",
+                "comments"
+              ],
+              "query": []
+            },
+            "description": "Viết bình luận thảo luận bên dưới thẻ công việc.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contentText\": \"Đã hoàn thành merge pull request và test case thành công trên staging.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Lịch sử hoạt động của Thẻ (Get Card Activities)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}/activities?pageIndex=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}",
+                "activities"
+              ],
+              "query": [
+                {
+                  "key": "pageIndex",
+                  "value": "1",
+                  "description": "Trang",
+                  "disabled": false
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "Số lượng",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Lấy luồng hoạt động (Activity Stream / Audit Log) chi tiết của Thẻ."
+          },
+          "response": []
+        },
+        {
+          "name": "Danh sách thẻ trong Backlog (Get Backlog Cards)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/project/{{projectId}}/backlog?boardId={{boardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "project",
+                "{{projectId}}",
+                "backlog"
+              ],
+              "query": [
+                {
+                  "key": "boardId",
+                  "value": "{{boardId}}",
+                  "description": "Lọc theo board",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Lấy danh sách các thẻ chưa được gán vào Sprint nào của Dự án."
+          },
+          "response": []
+        },
+        {
+          "name": "Thêm liên kết phụ thuộc giữa các Thẻ (Add Dependency)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}/dependencies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}",
+                "dependencies"
+              ],
+              "query": []
+            },
+            "description": "Thiết lập mối quan hệ phụ thuộc công việc: BlockedBy (bị chặn bởi thẻ khác) hoặc Blocking (đang chặn thẻ khác).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetCardId\": \"01a19546-e44d-7f06-9ade-0a0fdbdaec99\",\n  \"direction\": \"BlockedBy\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Lấy danh sách quan hệ phụ thuộc của Thẻ (Get Dependencies)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}/dependencies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}",
+                "dependencies"
+              ],
+              "query": []
+            },
+            "description": "Xem danh sách các thẻ đang chặn hoặc bị chặn bởi thẻ hiện tại."
+          },
+          "response": []
+        },
+        {
+          "name": "Tìm kiếm thẻ ứng viên để liên kết phụ thuộc (Search Candidates)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}/dependency-candidates?query=Tích hợp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}",
+                "dependency-candidates"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "Tích hợp",
+                  "description": "Từ khóa tìm kiếm tiêu đề thẻ",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Tìm kiếm các thẻ cùng dự án để liên kết phụ thuộc (loại trừ chính thẻ này và các thẻ đã tạo chu trình vòng lặp)."
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa liên kết phụ thuộc (Remove Dependency)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/dependencies/{{dependencyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "dependencies",
+                "{{dependencyId}}"
+              ],
+              "query": []
+            },
+            "description": "Hủy bỏ quan hệ phụ thuộc giữa 2 thẻ."
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa Thẻ công việc (Delete Card)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}"
+              ],
+              "query": []
+            },
+            "description": "Xóa mềm thẻ công việc (Đặt ở cuối phân hệ Thẻ công việc)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10. Notifications (Thông báo)",
+      "item": [
+        {
+          "name": "Lấy danh sách thông báo (Get Notifications)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?pageIndex=1&pageSize=20&unreadOnly=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "pageIndex",
+                  "value": "1",
+                  "description": "Trang",
+                  "disabled": false
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "Số lượng",
+                  "disabled": false
+                },
+                {
+                  "key": "unreadOnly",
+                  "value": "false",
+                  "description": "Chỉ lấy thông báo chưa đọc",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Lấy danh sách thông báo của người dùng hiện tại kèm số lượng thông báo chưa đọc."
+          },
+          "response": []
+        },
+        {
+          "name": "Đánh dấu một thông báo đã đọc (Mark As Read)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "{{notificationId}}",
+                "read"
+              ],
+              "query": []
+            },
+            "description": "Cập nhật trạng thái thông báo thành đã đọc (IsRead = true)."
+          },
+          "response": []
+        },
+        {
+          "name": "Đánh dấu tất cả thông báo là đã đọc (Mark All Read)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "read-all"
+              ],
+              "query": []
+            },
+            "description": "Đánh dấu toàn bộ thông báo chưa đọc của người dùng hiện tại là đã đọc."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11. Real-Time Hubs (SignalR WebSocket)",
+      "item": [
+        {
+          "name": "SignalR Board Hub (Realtime Kanban Drag & Drop)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hubs/board?access_token={{accessToken}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "hubs",
+                "board"
+              ],
+              "query": [
+                {
+                  "key": "access_token",
+                  "value": "{{accessToken}}",
+                  "description": "Truyền JWT Token qua query param cho SignalR WebSocket kết nối"
+                }
+              ]
+            },
+            "description": "Kênh SignalR phục vụ đồng bộ tức thì thao tác kéo thả thẻ, cập nhật cột, thêm thẻ mới giữa các thành viên đang cùng mở bảng."
+          },
+          "response": []
+        },
+        {
+          "name": "SignalR Notification Hub (Realtime Instant Push)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hubs/notifications?access_token={{accessToken}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "hubs",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "access_token",
+                  "value": "{{accessToken}}",
+                  "description": "Truyền JWT Token qua query param"
+                }
+              ]
+            },
+            "description": "Kênh SignalR đẩy thông báo tức thì (Toast notification) cho người dùng khi được mời vào workspace, gán thẻ hoặc được nhắc tên."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
