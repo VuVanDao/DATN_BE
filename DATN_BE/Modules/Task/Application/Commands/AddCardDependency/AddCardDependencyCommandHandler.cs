@@ -1,3 +1,4 @@
+using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Modules.Task.Domain.Entities;
@@ -62,8 +63,14 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardDependency
                 throw new BadRequestException("Không thể tạo quan hệ phụ thuộc giữa các thẻ thuộc các bảng (Board) khác nhau.");
             }
 
-            var projectId = blockedCard.Column.Board.ProjectId;
-            var boardId = blockedCard.Column.BoardId;
+            var board = blockedCard.Column.Board;
+            if (board.Type == BoardType.Scrum && blockedCard.SprintId != blockingCard.SprintId)
+            {
+                throw new BadRequestException("Trong bảng Scrum, chỉ có thể tạo liên kết phụ thuộc giữa các thẻ trong cùng một Sprint hoặc cùng trong Backlog.");
+            }
+
+            var projectId = board.ProjectId;
+            var boardId = board.Id;
             await _authorizationService.EnsureCanModifyProjectAsync(projectId, cancellationToken);
 
             var existing = await _context.CardDependencies
@@ -78,7 +85,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardDependency
             var hasCycle = await CheckCircularDependencyAsync(blockedCardId, blockingCardId, boardId, cancellationToken);
             if (hasCycle)
             {
-                throw new BadRequestException("Không thể tạo liên kết vì sẽ tạo thành chu trình phụ thuộc vòng (Circular Dependency), gây tắc nghẽn công việc.");
+                throw new BadRequestException("Không thể tạo liên kết vì sẽ tạo thành chu trình phụ thuộc vòng, gây tắc nghẽn công việc.");
             }
 
             var dependency = new CardDependency

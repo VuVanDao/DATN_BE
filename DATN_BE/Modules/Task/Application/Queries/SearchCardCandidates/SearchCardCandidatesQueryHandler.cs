@@ -1,3 +1,4 @@
+using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -27,8 +28,9 @@ namespace DATN_BE.Modules.Task.Application.Queries.SearchCardCandidates
                 .FirstOrDefaultAsync(c => c.Id == request.CardId, cancellationToken)
                 ?? throw new NotFoundException("Thẻ công việc không tồn tại.");
 
-            var boardId = card.Column.BoardId;
-            var projectId = card.Column.Board.ProjectId;
+            var board = card.Column.Board;
+            var boardId = board.Id;
+            var projectId = board.ProjectId;
             await _authorizationService.EnsureCanViewProjectAsync(projectId, cancellationToken);
 
             // Các thẻ đã có liên kết với thẻ hiện tại (đã chặn hoặc đang bị chặn)
@@ -45,6 +47,12 @@ namespace DATN_BE.Modules.Task.Application.Queries.SearchCardCandidates
                 .Where(c => c.Column.BoardId == boardId &&
                             c.Id != request.CardId &&
                             !linkedCardIds.Contains(c.Id));
+
+            // Trong bảng Scrum: chỉ cho phép liên kết phụ thuộc với các thẻ cùng Sprint (hoặc cùng ở Backlog)
+            if (board.Type == BoardType.Scrum)
+            {
+                query = query.Where(c => c.SprintId == card.SprintId);
+            }
 
             if (!string.IsNullOrWhiteSpace(request.Query))
             {
