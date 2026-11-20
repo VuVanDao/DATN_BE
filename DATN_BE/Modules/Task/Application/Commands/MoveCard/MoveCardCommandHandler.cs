@@ -67,6 +67,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
             // id của cột gốc của card đang được kéo thả
             var oldColumnId = targetCard.ColumnId;
             var oldColumnTitle = targetCard.Column?.Title;
+            var isOldColumnDone = targetCard.Column?.IsDoneColumn ?? false;
 
             if (oldColumnId == request.TargetColumnId)
             {
@@ -109,11 +110,15 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
                 // Đổi colId của targetCard sang cột mới
                 targetCard.ColumnId = request.TargetColumnId;
 
-                // Khi kéo vào cột hoàn thành thì tự động đánh dấu hoàn thành,
-                // khi kéo ra khỏi cột hoàn thành thì vẫn giữ nguyên trạng thái của thẻ
+                // Cập nhật trạng thái hoàn thành 2 chiều:
+                // Kéo vào cột Done -> tự động hoàn thành; Kéo ra khỏi cột Done -> huỷ hoàn thành
                 if (targetColumn.IsDoneColumn)
                 {
                     targetCard.IsCompleted = true;
+                }
+                else if (isOldColumnDone)
+                {
+                    targetCard.IsCompleted = false;
                 }
 
                 targetCards.Insert(Math.Clamp(request.NewPosition, 0, targetCards.Count), targetCard);
