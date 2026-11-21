@@ -41,9 +41,8 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateBoard
 
             await _authorizationService.EnsureProjectLeaderAsync(request.ProjectId, cancellationToken);
 
-            // 1. Tự động sinh Slug và xử lý chống trùng Slug trong Project
-            var sourceText = !string.IsNullOrWhiteSpace(request.Slug) ? request.Slug : request.Title;
-            var baseSlug = SlugHelper.GenerateSlug(sourceText);
+            // 1. Tự động sinh Slug theo Title và xử lý chống trùng Slug trong Project
+            var baseSlug = SlugHelper.GenerateSlug(request.Title);
             if (string.IsNullOrWhiteSpace(baseSlug))
             {
                 baseSlug = "board";

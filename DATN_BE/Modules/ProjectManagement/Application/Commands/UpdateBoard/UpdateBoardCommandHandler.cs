@@ -35,33 +35,38 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoard
 
             await _authorizationService.EnsureProjectLeaderAsync(targetBoard.ProjectId, cancellationToken);
 
-            var sourceSlug = !string.IsNullOrWhiteSpace(request.Slug) ? request.Slug : request.Title;
-            var baseSlug = SlugHelper.GenerateSlug(sourceSlug);
-            if (string.IsNullOrWhiteSpace(baseSlug))
+            var normalizedTitle = request.Title.Trim();
+
+            if (!string.Equals(targetBoard.Title, normalizedTitle, StringComparison.OrdinalIgnoreCase))
             {
-                baseSlug = "board";
-            }
-            if (baseSlug.Length > 100)
-            {
-                baseSlug = baseSlug[..100].TrimEnd('-');
+                var baseSlug = SlugHelper.GenerateSlug(normalizedTitle);
+                if (string.IsNullOrWhiteSpace(baseSlug))
+                {
+                    baseSlug = "board";
+                }
+                if (baseSlug.Length > 100)
+                {
+                    baseSlug = baseSlug[..100].TrimEnd('-');
+                }
+
+                var existingSlugs = await _context.Boards
+                    .Where(b => b.ProjectId == targetBoard.ProjectId
+                                && b.Id != targetBoard.Id
+                                && (b.Slug == baseSlug || b.Slug.StartsWith(baseSlug + "-")))
+                    .Select(item => item.Slug)
+                    .ToHashSetAsync(cancellationToken);
+
+                var slug = baseSlug;
+                while (existingSlugs.Contains(slug))
+                {
+                    var shortCode = SlugHelper.GenerateShortCode(6);
+                    slug = $"{baseSlug}-{shortCode}";
+                }
+
+                targetBoard.Slug = slug;
             }
 
-            var existingSlugs = await _context.Boards
-                .Where(b => b.ProjectId == targetBoard.ProjectId
-                            && b.Id != targetBoard.Id
-                            && (b.Slug == baseSlug || b.Slug.StartsWith(baseSlug + "-")))
-                .Select(item => item.Slug)
-                .ToHashSetAsync(cancellationToken);
-
-            var slug = baseSlug;
-            while (existingSlugs.Contains(slug))
-            {
-                var shortCode = SlugHelper.GenerateShortCode(6);
-                slug = $"{baseSlug}-{shortCode}";
-            }
-
-            targetBoard.Title = request.Title.Trim();
-            targetBoard.Slug = slug;
+            targetBoard.Title = normalizedTitle;
             targetBoard.Type = request.Type;
 
             await _context.SaveChangesAsync(cancellationToken);
