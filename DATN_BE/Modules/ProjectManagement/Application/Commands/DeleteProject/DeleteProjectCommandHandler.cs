@@ -1,3 +1,4 @@
+using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Domain;
@@ -44,8 +45,51 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteProject
                 .IgnoreQueryFilters()
                 .Where(card => columnIds.Contains(card.ColumnId))
                 .ToListAsync(cancellationToken);
+            var sprints = await _context.Sprints
+                .IgnoreQueryFilters()
+                .Where(s => s.ProjectId == project.Id)
+                .ToListAsync(cancellationToken);
 
             var deletedAt = DateTimeOffset.UtcNow;
+
+            // Dọn dẹp CardDependencies & CardComments liên quan đến các Cards của Project
+            var cardIds = cards.Select(c => c.Id).ToList();
+            if (cardIds.Count > 0)
+            {
+                var dependencies = await _context.CardDependencies
+                    .Where(cd => cardIds.Contains(cd.BlockedCardId) || cardIds.Contains(cd.BlockingCardId))
+                    .ToListAsync(cancellationToken);
+
+                if (dependencies.Count > 0)
+                {
+                    _context.CardDependencies.RemoveRange(dependencies);
+                }
+
+                var cardComments = await _context.CardComments
+                    .IgnoreQueryFilters()
+                    .Where(cc => cardIds.Contains(cc.CardId) && !cc.IsDeleted)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var comment in cardComments)
+                {
+                    MarkAsDeleted(comment, deletedAt);
+                }
+            }
+
+            // Dọn dẹp UserBoardPreferences liên quan đến các Boards của Project
+            var boardIdList = boards.Select(b => b.Id).ToList();
+            if (boardIdList.Count > 0)
+            {
+                var preferences = await _context.UserBoardPreferences
+                    .Where(ubp => boardIdList.Contains(ubp.BoardId))
+                    .ToListAsync(cancellationToken);
+
+                if (preferences.Count > 0)
+                {
+                    _context.UserBoardPreferences.RemoveRange(preferences);
+                }
+            }
+
             MarkAsDeleted(project, deletedAt);
             foreach (var board in boards)
             {
@@ -58,6 +102,10 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteProject
             foreach (var card in cards)
             {
                 MarkAsDeleted(card, deletedAt);
+            }
+            foreach (var sprint in sprints)
+            {
+                MarkAsDeleted(sprint, deletedAt);
             }
 
             await _context.SaveChangesAsync(cancellationToken);

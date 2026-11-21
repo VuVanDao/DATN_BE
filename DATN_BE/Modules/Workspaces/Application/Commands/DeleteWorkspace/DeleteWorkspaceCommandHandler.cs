@@ -1,3 +1,5 @@
+using DATN_BE.Modules.ProjectManagement.Domain.Entities;
+using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Domain;
@@ -68,6 +70,45 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.DeleteWorkspace
                 .IgnoreQueryFilters()
                 .Where(p => p.WorkspaceId == currentWorkspace.Id && !p.IsDeleted)
                 .ToListAsync(cancellationToken);
+
+            // Dọn dẹp CardDependencies và CardComments liên quan đến toàn bộ Cards trong Workspace
+            var cardIds = cards.Select(c => c.Id).ToList();
+            if (cardIds.Count > 0)
+            {
+                var dependencies = await _context.CardDependencies
+                    .Where(cd => cardIds.Contains(cd.BlockedCardId) || cardIds.Contains(cd.BlockingCardId))
+                    .ToListAsync(cancellationToken);
+
+                if (dependencies.Count > 0)
+                {
+                    _context.CardDependencies.RemoveRange(dependencies);
+                }
+
+                var cardComments = await _context.CardComments
+                    .IgnoreQueryFilters()
+                    .Where(cc => cardIds.Contains(cc.CardId) && !cc.IsDeleted)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var comment in cardComments)
+                {
+                    comment.IsDeleted = true;
+                    comment.DeletedAt = now;
+                }
+            }
+
+            // Dọn dẹp UserBoardPreferences liên quan đến toàn bộ Boards trong Workspace
+            var boardIds = boards.Select(b => b.Id).ToList();
+            if (boardIds.Count > 0)
+            {
+                var preferences = await _context.UserBoardPreferences
+                    .Where(ubp => boardIds.Contains(ubp.BoardId))
+                    .ToListAsync(cancellationToken);
+
+                if (preferences.Count > 0)
+                {
+                    _context.UserBoardPreferences.RemoveRange(preferences);
+                }
+            }
 
             foreach (var entity in cards.Cast<ISoftDelete>().Concat(columns).Concat(boards).Concat(sprints).Concat(projects))
             {
