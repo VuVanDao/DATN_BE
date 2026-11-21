@@ -6,8 +6,8 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateBacklogCard
     {
         public CreateBacklogCardCommandValidator()
         {
-            RuleFor(x => x.ProjectId)
-                .NotEmpty().WithMessage("Mã Dự án (ProjectId) không hợp lệ.");
+            RuleFor(x => x.BoardId)
+                .NotEmpty().WithMessage("Mã Bảng Scrum (BoardId) không được để trống.");
 
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Tiêu đề công việc không được để trống.")

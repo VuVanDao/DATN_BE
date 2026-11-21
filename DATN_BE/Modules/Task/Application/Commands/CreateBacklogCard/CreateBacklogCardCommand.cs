@@ -6,8 +6,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateBacklogCard
 {
     public class CreateBacklogCardCommand : IRequest<CardDto>
     {
-        public Guid ProjectId { get; set; }
-        public Guid? BoardId { get; set; }
+        public Guid BoardId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
         public CardType Type { get; set; } = CardType.Task;

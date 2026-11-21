@@ -182,7 +182,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardDependency
 
             while (queue.Count > 0)
             {
-                var current = queue.Dequeue();
+                var current = queue.Dequeue();// lấy phan tử đầu tiên trong hàng đợi
                 if (current == blockingCardId)
                 {
                     return true;

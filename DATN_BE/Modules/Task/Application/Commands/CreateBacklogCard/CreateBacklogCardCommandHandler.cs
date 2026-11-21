@@ -44,31 +44,22 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateBacklogCard
             var currentUserId = _currentUserService.UserId
                 ?? throw new ForbiddenException("Bạn cần đăng nhập để tạo thẻ công việc.");
 
-            await _authorizationService.EnsureCanModifyProjectAsync(request.ProjectId, cancellationToken);
+            // 1. Tìm Bảng Scrum chỉ định để gán Cột cho thẻ
+            var scrumBoard = await _context.Boards
+                .Include(b => b.Columns)
+                .FirstOrDefaultAsync(b => b.Id == request.BoardId
+                                       && b.Type == BoardType.Scrum, cancellationToken)
+                ?? throw new NotFoundException("Bảng Scrum không tồn tại.");
+
+            await _authorizationService.EnsureCanModifyProjectAsync(scrumBoard.ProjectId, cancellationToken);
 
             var reporter = await _context.Users
                 .FirstOrDefaultAsync(u => u.Id == currentUserId, cancellationToken)
                 ?? throw new NotFoundException("Người dùng không tồn tại.");
 
-            // 1. Tìm Bảng Scrum trong Dự án để gán Cột cho thẻ
-            var scrumBoardQuery = _context.Boards
-                .Include(b => b.Columns)
-                .Where(b => b.ProjectId == request.ProjectId && b.Type == BoardType.Scrum);
-
-            Board? scrumBoard = null;
-            if (request.BoardId.HasValue)
+            if (!scrumBoard.Columns.Any())
             {
-                scrumBoard = await scrumBoardQuery.FirstOrDefaultAsync(b => b.Id == request.BoardId.Value, cancellationToken);
-            }
-
-            if (scrumBoard == null)
-            {
-                scrumBoard = await scrumBoardQuery.OrderBy(b => b.CreatedAt).FirstOrDefaultAsync(cancellationToken);
-            }
-
-            if (scrumBoard == null || !scrumBoard.Columns.Any())
-            {
-                throw new BadRequestException("Dự án hiện chưa có Bảng Scrum nào hoặc Bảng Scrum chưa có Cột để chứa công việc.");
+                throw new BadRequestException("Bảng Scrum chưa có Cột để chứa công việc.");
             }
 
             var targetColumn = scrumBoard.Columns
