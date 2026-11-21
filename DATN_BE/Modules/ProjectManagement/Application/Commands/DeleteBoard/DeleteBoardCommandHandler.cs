@@ -1,6 +1,7 @@
+using DATN_BE.Modules.ProjectManagement.Domain.Entities;
+using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
-using DATN_BE.Shared.Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,44 +34,78 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteBoard
 
             await _authorizationService.EnsureProjectLeaderAsync(board.ProjectId, cancellationToken);
 
+            // 1. Lấy danh sách Columns của Board
             var columns = await _context.Columns
                 .IgnoreQueryFilters()
                 .Where(column => column.BoardId == board.Id)
                 .ToListAsync(cancellationToken);
-            var columnIds = columns.Select(column => column.Id).ToList();
 
-            var cards = columnIds.Count == 0
-                ? new List<DATN_BE.Modules.Task.Domain.Entities.Card>()
-                : await _context.Cards
-                    .IgnoreQueryFilters()
-                    .Where(card => columnIds.Contains(card.ColumnId))
+            // 2. Lấy danh sách Cards thuộc Board qua Navigation Property
+            var cards = await _context.Cards
+                .IgnoreQueryFilters()
+                .Where(card => card.Column.BoardId == board.Id)
+                .ToListAsync(cancellationToken);
+
+            // 3. Lấy danh sách Sprints thuộc Board (đối với Scrum Board)
+            var sprints = await _context.Sprints
+                .IgnoreQueryFilters()
+                .Where(s => s.BoardId == board.Id)
+                .ToListAsync(cancellationToken);
+
+            // 4. Dọn dẹp CardComments và CardDependencies liên quan đến các Cards của Board
+            var cardIds = cards.Select(c => c.Id).ToList();
+            if (cardIds.Count > 0)
+            {
+                var cardComments = await _context.CardComments
+                    .Where(c => cardIds.Contains(c.CardId))
                     .ToListAsync(cancellationToken);
 
-            var deletedAt = DateTimeOffset.UtcNow;
-            MarkAsDeleted(board, deletedAt);
-            foreach (var column in columns)
-            {
-                MarkAsDeleted(column, deletedAt);
+                if (cardComments.Count > 0)
+                {
+                    _context.CardComments.RemoveRange(cardComments);
+                }
+
+                var dependencies = await _context.CardDependencies
+                    .Where(cd => cardIds.Contains(cd.BlockedCardId) || cardIds.Contains(cd.BlockingCardId))
+                    .ToListAsync(cancellationToken);
+
+                if (dependencies.Count > 0)
+                {
+                    _context.CardDependencies.RemoveRange(dependencies);
+                }
             }
-            foreach (var card in cards)
+
+            // 5. Dọn dẹp UserBoardPreferences của Board
+            var preferences = await _context.UserBoardPreferences
+                .Where(p => p.BoardId == board.Id)
+                .ToListAsync(cancellationToken);
+
+            if (preferences.Count > 0)
             {
-                MarkAsDeleted(card, deletedAt);
+                _context.UserBoardPreferences.RemoveRange(preferences);
             }
+
+            // 6. Xoá mềm Sprints, Cards, Columns, Board (ApplicationDbContext tự động gán IsDeleted = true)
+            if (sprints.Count > 0)
+            {
+                _context.Sprints.RemoveRange(sprints);
+            }
+
+            if (cards.Count > 0)
+            {
+                _context.Cards.RemoveRange(cards);
+            }
+
+            if (columns.Count > 0)
+            {
+                _context.Columns.RemoveRange(columns);
+            }
+
+            _context.Boards.Remove(board);
 
             await _context.SaveChangesAsync(cancellationToken);
 
             return true;
-        }
-
-        private static void MarkAsDeleted(ISoftDelete entity, DateTimeOffset deletedAt)
-        {
-            if (entity.IsDeleted)
-            {
-                return;
-            }
-
-            entity.IsDeleted = true;
-            entity.DeletedAt = deletedAt;
         }
     }
 }
