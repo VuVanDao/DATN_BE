@@ -1,8 +1,10 @@
 using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.Identity.Domain.Enum;
+using DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprint;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.Task.Application.Commands.CreateBacklogCard;
+using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Modules.Task.Domain.Enum;
 using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
@@ -88,6 +90,131 @@ public class BacklogCardTests
         }, CancellationToken.None));
     }
 
+    [Fact]
+    public async Task Move_card_to_sprint_by_outsider_throws_forbidden()
+    {
+        await using var f = await BacklogFixture.Create();
+        var card = new Card
+        {
+            Title = "Backlog task",
+            ColumnId = f.ColumnToDo.Id,
+            ReporterId = f.Owner.Id
+        };
+        f.Db.Cards.Add(card);
+        await f.Db.SaveChangesAsync();
+
+        var handler = new MoveCardToSprintCommandHandler(f.Db, f.Current, f.Auth);
+        f.Current.UserId = f.Outsider.Id;
+
+        await Assert.ThrowsAsync<ForbiddenException>(() => handler.Handle(new MoveCardToSprintCommand
+        {
+            CardId = card.Id,
+            SprintId = null
+        }, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Move_card_to_future_sprint_by_project_member_succeeds()
+    {
+        await using var f = await BacklogFixture.Create();
+        var sprint = new Sprint
+        {
+            Name = "Sprint 1 (Future)",
+            BoardId = f.ScrumBoard.Id,
+            ProjectId = f.Project.Id,
+            Status = SprintStatus.Future
+        };
+        f.Db.Sprints.Add(sprint);
+
+        var card = new Card
+        {
+            Title = "Backlog task",
+            ColumnId = f.ColumnToDo.Id,
+            ReporterId = f.Owner.Id
+        };
+        f.Db.Cards.Add(card);
+        await f.Db.SaveChangesAsync();
+
+        var handler = new MoveCardToSprintCommandHandler(f.Db, f.Current, f.Auth);
+        f.Current.UserId = f.Member.Id;
+
+        var result = await handler.Handle(new MoveCardToSprintCommand
+        {
+            CardId = card.Id,
+            SprintId = sprint.Id
+        }, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(sprint.Id, result.SprintId);
+    }
+
+    [Fact]
+    public async Task Move_card_to_active_sprint_by_project_member_throws_forbidden()
+    {
+        await using var f = await BacklogFixture.Create();
+        var activeSprint = new Sprint
+        {
+            Name = "Sprint 2 (Active)",
+            BoardId = f.ScrumBoard.Id,
+            ProjectId = f.Project.Id,
+            Status = SprintStatus.Active
+        };
+        f.Db.Sprints.Add(activeSprint);
+
+        var card = new Card
+        {
+            Title = "Backlog task",
+            ColumnId = f.ColumnToDo.Id,
+            ReporterId = f.Owner.Id
+        };
+        f.Db.Cards.Add(card);
+        await f.Db.SaveChangesAsync();
+
+        var handler = new MoveCardToSprintCommandHandler(f.Db, f.Current, f.Auth);
+        f.Current.UserId = f.Member.Id;
+
+        await Assert.ThrowsAsync<ForbiddenException>(() => handler.Handle(new MoveCardToSprintCommand
+        {
+            CardId = card.Id,
+            SprintId = activeSprint.Id
+        }, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Move_card_to_active_sprint_by_project_leader_succeeds()
+    {
+        await using var f = await BacklogFixture.Create();
+        var activeSprint = new Sprint
+        {
+            Name = "Sprint 2 (Active)",
+            BoardId = f.ScrumBoard.Id,
+            ProjectId = f.Project.Id,
+            Status = SprintStatus.Active
+        };
+        f.Db.Sprints.Add(activeSprint);
+
+        var card = new Card
+        {
+            Title = "Backlog task",
+            ColumnId = f.ColumnToDo.Id,
+            ReporterId = f.Owner.Id
+        };
+        f.Db.Cards.Add(card);
+        await f.Db.SaveChangesAsync();
+
+        var handler = new MoveCardToSprintCommandHandler(f.Db, f.Current, f.Auth);
+        f.Current.UserId = f.Owner.Id; // Owner is ProjectLeader
+
+        var result = await handler.Handle(new MoveCardToSprintCommand
+        {
+            CardId = card.Id,
+            SprintId = activeSprint.Id
+        }, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(activeSprint.Id, result.SprintId);
+    }
+
     private sealed class CurrentUser : ICurrentUserService
     {
         public Guid? UserId { get; set; }
@@ -103,9 +230,13 @@ public class BacklogCardTests
         public ProjectAuthorizationService Auth => new(Db, Current);
 
         public User Owner { get; } = new() { Username = "owner", Email = "owner@example.com", IsActive = true };
+        public User Member { get; } = new() { Username = "member", Email = "member@example.com", IsActive = true };
+        public User Outsider { get; } = new() { Username = "outsider", Email = "outsider@example.com", IsActive = true };
+
         public Role SystemUserRole { get; } = new() { Name = RoleConstants.User, Scope = RoleScope.Global };
         public Role WsMemberRole { get; } = new() { Name = RoleConstants.WorkspaceMember, Scope = RoleScope.Workspace };
         public Role ProjectLeaderRole { get; } = new() { Name = RoleConstants.ProjectLeader, Scope = RoleScope.Project };
+        public Role ProjectMemberRole { get; } = new() { Name = RoleConstants.ProjectMember, Scope = RoleScope.Project };
 
         public Workspace Workspace { get; private set; } = null!;
         public Project Project { get; private set; } = null!;
@@ -121,10 +252,12 @@ public class BacklogCardTests
                 .Options;
 
             f.Db = new ApplicationDbContext(options, f.Current);
-            f.Db.Roles.AddRange(f.SystemUserRole, f.WsMemberRole, f.ProjectLeaderRole);
+            f.Db.Roles.AddRange(f.SystemUserRole, f.WsMemberRole, f.ProjectLeaderRole, f.ProjectMemberRole);
 
             f.Owner.RoleId = f.SystemUserRole.Id;
-            f.Db.Users.Add(f.Owner);
+            f.Member.RoleId = f.SystemUserRole.Id;
+            f.Outsider.RoleId = f.SystemUserRole.Id;
+            f.Db.Users.AddRange(f.Owner, f.Member, f.Outsider);
 
             f.Workspace = new Workspace
             {
@@ -148,6 +281,13 @@ public class BacklogCardTests
                 ProjectId = f.Project.Id,
                 UserId = f.Owner.Id,
                 RoleId = f.ProjectLeaderRole.Id
+            });
+
+            f.Db.ProjectMembers.Add(new ProjectMember
+            {
+                ProjectId = f.Project.Id,
+                UserId = f.Member.Id,
+                RoleId = f.ProjectMemberRole.Id
             });
 
             f.ScrumBoard = new Board

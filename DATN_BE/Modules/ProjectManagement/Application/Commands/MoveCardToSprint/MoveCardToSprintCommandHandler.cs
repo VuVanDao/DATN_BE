@@ -49,6 +49,9 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprin
             var projectId = card.Column?.Board?.ProjectId
                 ?? throw new NotFoundException("Không tìm thấy Dự án của thẻ này.");
 
+            // 1. Kiểm tra quyền sửa đổi cơ bản trong dự án (ProjectMember, ProjectLeader, WorkspaceOwner)
+            await _authorizationService.EnsureCanModifyProjectAsync(projectId, cancellationToken);
+
             if (card.Column?.Board?.Type != BoardType.Scrum)
             {
                 throw new BadRequestException("Chỉ các thẻ thuộc mô hình Scrum mới có thể đưa vào Sprint hoặc Backlog.");
@@ -90,10 +93,6 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprin
             if (isSourceActive || isTargetActive)
             {
                 await _authorizationService.EnsureCanManageProjectAsync(projectId, cancellationToken);
-            }
-            else
-            {
-                await _authorizationService.EnsureCanModifyProjectAsync(projectId, cancellationToken);
             }
 
             var oldSprintId = card.SprintId;
