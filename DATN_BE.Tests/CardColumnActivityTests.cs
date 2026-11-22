@@ -81,7 +81,7 @@ public class CardColumnActivityTests
             member.Id,
             ActivityEntityType.Card,
             card.Id,
-            ActivityActionType.MovedColumn,
+            ActivityActionType.MovedToColumn,
             new { fromColumn = "To Do", toColumn = "Done" });
 
         await handler.Handle(cardEvent, default);
@@ -89,7 +89,7 @@ public class CardColumnActivityTests
         var savedLog = await db.ActivityLogs.FirstOrDefaultAsync(l => l.EntityId == card.Id);
         Assert.NotNull(savedLog);
         Assert.Equal(ActivityEntityType.Card, savedLog.EntityType);
-        Assert.Equal(ActivityActionType.MovedColumn, savedLog.ActionType);
+        Assert.Equal(ActivityActionType.MovedToColumn, savedLog.ActionType);
         Assert.Contains("To Do", savedLog.DetailsJson!);
         Assert.Contains("Done", savedLog.DetailsJson!);
     }

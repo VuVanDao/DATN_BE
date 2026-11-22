@@ -137,7 +137,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.MoveCard
                     _currentUser.UserId.Value,
                     ActivityEntityType.Card,
                     targetCard.Id,
-                    ActivityActionType.MovedColumn,
+                    ActivityActionType.MovedToColumn,
                     new
                     {
                         cardTitle = targetCard.Title,

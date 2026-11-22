@@ -6,7 +6,9 @@ namespace DATN_BE.Modules.Security.Domain.Enum
         Updated,
         Deleted,
         Restored,
-        MovedColumn,
+        MovedToColumn,
+        [Obsolete("Sử dụng MovedToColumn thay thế, giữ lại để tương thích ngược dữ liệu cũ")]
+        MovedColumn = MovedToColumn,
         UpdatedDueDate,
         AssignedUser,
         UnassignedUser,

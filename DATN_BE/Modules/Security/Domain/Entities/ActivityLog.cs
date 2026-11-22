@@ -14,7 +14,7 @@ namespace DATN_BE.Modules.Security.Domain.Entities
 
         public Guid EntityId { get; set; }
 
-        // Loại hành động (Created, MovedColumn, UpdatedDueDate, AssignedUser, Deleted...)
+        // Loại hành động (Created, MovedToColumn, UpdatedDueDate, AssignedUser, Deleted...)
         public ActivityActionType ActionType { get; set; }
 
         // Dữ liệu chi tiết sự thay đổi dạng JSONB trong PostgreSQL
