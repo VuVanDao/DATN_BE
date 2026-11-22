@@ -65,12 +65,27 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.StartSprint
                 throw new BadRequestException("Bảng Scrum này hiện đã có một Sprint đang chạy. Vui lòng hoàn thành Sprint hiện tại trước khi bắt đầu Sprint mới.");
             }
 
-            var startDate = request.StartDate ?? (sprint.StartDate != default ? sprint.StartDate : DateTimeOffset.UtcNow);
-            var endDate = request.EndDate ?? (sprint.EndDate != default ? sprint.EndDate : startDate.AddDays(14));
-
             sprint.Status = SprintStatus.Active;
-            sprint.StartDate = startDate;
-            sprint.EndDate = endDate;
+
+            // Nếu client có truyền StartDate/EndDate thì cập nhật, ngược lại giữ nguyên ngày giờ đã định sẵn trong DB
+            if (request.StartDate.HasValue)
+            {
+                sprint.StartDate = request.StartDate.Value;
+            }
+            else if (sprint.StartDate == default)
+            {
+                sprint.StartDate = DateTimeOffset.UtcNow;
+            }
+
+            if (request.EndDate.HasValue)
+            {
+                sprint.EndDate = request.EndDate.Value;
+            }
+            else if (sprint.EndDate == default)
+            {
+                sprint.EndDate = sprint.StartDate.AddDays(14);
+            }
+
             if (!string.IsNullOrWhiteSpace(request.Goal))
             {
                 sprint.Goal = request.Goal.Trim();

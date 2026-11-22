@@ -62,10 +62,11 @@ namespace DATN_BE.Modules.ProjectManagement.Presentation.Controllers
         /// Bắt đầu chạy Sprint (Chuyển từ Future sang Active)
         /// </summary>
         [HttpPost("{id:guid}/start")]
-        public async Task<ActionResult<ApiResponse<SprintDto>>> StartSprint(Guid id, [FromBody] StartSprintCommand command)
+        public async Task<ActionResult<ApiResponse<SprintDto>>> StartSprint(Guid id, [FromBody] StartSprintCommand? command = null)
         {
-            command.SprintId = id;
-            var result = await _mediator.Send(command);
+            var cmd = command ?? new StartSprintCommand();
+            cmd.SprintId = id;
+            var result = await _mediator.Send(cmd);
             return Ok(ApiResponse<SprintDto>.Ok(result, "Bắt đầu Sprint thành công."));
         }
 
