@@ -215,6 +215,86 @@ public class BacklogCardTests
         Assert.Equal(activeSprint.Id, result.SprintId);
     }
 
+    [Fact]
+    public async Task Reorder_cards_in_product_backlog_updates_positions()
+    {
+        await using var f = await BacklogFixture.Create();
+        var c0 = new Card { Title = "Task 0", ColumnId = f.ColumnToDo.Id, Position = 0, ReporterId = f.Owner.Id };
+        var c1 = new Card { Title = "Task 1", ColumnId = f.ColumnToDo.Id, Position = 1, ReporterId = f.Owner.Id };
+        var c2 = new Card { Title = "Task 2", ColumnId = f.ColumnToDo.Id, Position = 2, ReporterId = f.Owner.Id };
+        f.Db.Cards.AddRange(c0, c1, c2);
+        await f.Db.SaveChangesAsync();
+
+        var handler = new MoveCardToSprintCommandHandler(f.Db, f.Current, f.Auth);
+        f.Current.UserId = f.Member.Id;
+
+        // Move c2 to top (index 0)
+        var result = await handler.Handle(new MoveCardToSprintCommand
+        {
+            CardId = c2.Id,
+            SprintId = null,
+            NewPosition = 0
+        }, CancellationToken.None);
+
+        Assert.Equal(0, result.Position);
+
+        var updated0 = await f.Db.Cards.FindAsync(c0.Id);
+        var updated1 = await f.Db.Cards.FindAsync(c1.Id);
+        var updated2 = await f.Db.Cards.FindAsync(c2.Id);
+
+        Assert.Equal(1, updated0!.Position);
+        Assert.Equal(2, updated1!.Position);
+        Assert.Equal(0, updated2!.Position);
+    }
+
+    [Fact]
+    public async Task Move_card_from_backlog_to_sprint_at_position_updates_both_containers()
+    {
+        await using var f = await BacklogFixture.Create();
+        var sprint = new Sprint
+        {
+            Name = "Sprint 1",
+            BoardId = f.ScrumBoard.Id,
+            ProjectId = f.Project.Id,
+            Status = SprintStatus.Future
+        };
+        f.Db.Sprints.Add(sprint);
+
+        var b0 = new Card { Title = "Backlog 0", ColumnId = f.ColumnToDo.Id, Position = 0, ReporterId = f.Owner.Id };
+        var b1 = new Card { Title = "Backlog 1", ColumnId = f.ColumnToDo.Id, Position = 1, ReporterId = f.Owner.Id };
+        var s0 = new Card { Title = "Sprint 0", ColumnId = f.ColumnToDo.Id, Position = 0, SprintId = sprint.Id, ReporterId = f.Owner.Id };
+        var s1 = new Card { Title = "Sprint 1", ColumnId = f.ColumnToDo.Id, Position = 1, SprintId = sprint.Id, ReporterId = f.Owner.Id };
+        f.Db.Cards.AddRange(b0, b1, s0, s1);
+        await f.Db.SaveChangesAsync();
+
+        var handler = new MoveCardToSprintCommandHandler(f.Db, f.Current, f.Auth);
+        f.Current.UserId = f.Member.Id;
+
+        // Move b0 into sprint at position 1 (between s0 and s1)
+        var result = await handler.Handle(new MoveCardToSprintCommand
+        {
+            CardId = b0.Id,
+            SprintId = sprint.Id,
+            NewPosition = 1
+        }, CancellationToken.None);
+
+        Assert.Equal(sprint.Id, result.SprintId);
+        Assert.Equal(1, result.Position);
+
+        var updatedB0 = await f.Db.Cards.FindAsync(b0.Id);
+        var updatedB1 = await f.Db.Cards.FindAsync(b1.Id);
+        var updatedS0 = await f.Db.Cards.FindAsync(s0.Id);
+        var updatedS1 = await f.Db.Cards.FindAsync(s1.Id);
+
+        // Sprint container: s0 is 0, b0 is 1, s1 is 2
+        Assert.Equal(0, updatedS0!.Position);
+        Assert.Equal(1, updatedB0!.Position);
+        Assert.Equal(2, updatedS1!.Position);
+
+        // Backlog container: b1 is re-indexed to 0
+        Assert.Equal(0, updatedB1!.Position);
+    }
+
     private sealed class CurrentUser : ICurrentUserService
     {
         public Guid? UserId { get; set; }

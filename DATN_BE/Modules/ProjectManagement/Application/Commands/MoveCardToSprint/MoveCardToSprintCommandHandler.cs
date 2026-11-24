@@ -89,16 +89,92 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprin
                 isTargetActive = targetSprint.Status == SprintStatus.Active;
             }
 
-            // Nếu thêm/bớt thẻ làm thay đổi phạm vi của Sprint đang chạy -> Bắt buộc là WorkspaceOwner hoặc ProjectLeader!
-            if (isSourceActive || isTargetActive)
+            var oldSprintId = card.SprintId;
+            var boardId = card.Column!.BoardId;
+
+            // 2. Nếu thêm/bớt thẻ làm thay đổi phạm vi của Sprint đang chạy -> Bắt buộc là WorkspaceOwner hoặc ProjectLeader!
+            bool isChangingActiveSprintScope = (oldSprintId != request.SprintId) && (isSourceActive || isTargetActive);
+            if (isChangingActiveSprintScope)
             {
                 await _authorizationService.EnsureCanManageProjectAsync(projectId, cancellationToken);
             }
 
-            var oldSprintId = card.SprintId;
-            var boardId = card.Column!.BoardId;
+            if (oldSprintId == request.SprintId)
+            {
+                // TH1: Sắp xếp lại thứ tự (Reorder) trong cùng 1 container (cùng Sprint hoặc cùng Product Backlog)
+                if (request.NewPosition.HasValue)
+                {
+                    var cardsInContainer = await _context.Cards
+                        .Where(c => c.Column.BoardId == boardId && c.SprintId == request.SprintId && c.Id != card.Id)
+                        .OrderBy(c => c.Position)
+                        .ToListAsync(cancellationToken);
 
-            card.SprintId = request.SprintId;
+                    var newPos = Math.Clamp(request.NewPosition.Value, 0, cardsInContainer.Count);
+                    cardsInContainer.Insert(newPos, card);
+
+                    for (int i = 0; i < cardsInContainer.Count; i++)
+                    {
+                        cardsInContainer[i].Position = i;
+                    }
+                }
+            }
+            else
+            {
+                // TH2: Kéo thả sang container khác (giữa Sprint và Backlog, hoặc giữa Sprint A và Sprint B)
+                // 1. Sắp xếp lại container nguồn (loại bỏ card)
+                var cardsInOldContainer = await _context.Cards
+                    .Where(c => c.Column.BoardId == boardId && c.SprintId == oldSprintId && c.Id != card.Id)
+                    .OrderBy(c => c.Position)
+                    .ToListAsync(cancellationToken);
+
+                for (int i = 0; i < cardsInOldContainer.Count; i++)
+                {
+                    cardsInOldContainer[i].Position = i;
+                }
+
+                // 2. Chèn card vào container đích
+                var cardsInTargetContainer = await _context.Cards
+                    .Where(c => c.Column.BoardId == boardId && c.SprintId == request.SprintId && c.Id != card.Id)
+                    .OrderBy(c => c.Position)
+                    .ToListAsync(cancellationToken);
+
+                card.SprintId = request.SprintId;
+
+                // Nếu thẻ đang ở cột Done mà bị kéo sang container khác, đưa về cột chưa hoàn thành đầu tiên
+                if (card.Column != null && card.Column.IsDoneColumn)
+                {
+                    var defaultColumn = await _context.Columns
+                        .Where(col => col.BoardId == boardId && !col.IsDoneColumn)
+                        .OrderBy(col => col.Position)
+                        .FirstOrDefaultAsync(cancellationToken)
+                        ?? await _context.Columns
+                            .Where(col => col.BoardId == boardId)
+                            .OrderBy(col => col.Position)
+                            .FirstOrDefaultAsync(cancellationToken);
+
+                    if (defaultColumn != null)
+                    {
+                        card.ColumnId = defaultColumn.Id;
+                        card.IsCompleted = defaultColumn.IsDoneColumn;
+                    }
+                    else
+                    {
+                        card.IsCompleted = false;
+                    }
+                }
+
+                var targetPos = request.NewPosition.HasValue
+                    ? Math.Clamp(request.NewPosition.Value, 0, cardsInTargetContainer.Count)
+                    : cardsInTargetContainer.Count;
+
+                cardsInTargetContainer.Insert(targetPos, card);
+
+                for (int i = 0; i < cardsInTargetContainer.Count; i++)
+                {
+                    cardsInTargetContainer[i].Position = i;
+                }
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
 
             var result = new CardDto

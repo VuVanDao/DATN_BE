@@ -7,5 +7,6 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprin
     {
         public Guid CardId { get; set; }
         public Guid? SprintId { get; set; }
+        public int? NewPosition { get; set; }
     }
 }

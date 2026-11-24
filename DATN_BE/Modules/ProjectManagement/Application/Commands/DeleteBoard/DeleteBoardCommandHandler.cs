@@ -34,25 +34,21 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteBoard
 
             await _authorizationService.EnsureProjectLeaderAsync(board.ProjectId, cancellationToken);
 
-            // 1. Lấy danh sách Columns của Board
             var columns = await _context.Columns
                 .IgnoreQueryFilters()
                 .Where(column => column.BoardId == board.Id)
                 .ToListAsync(cancellationToken);
 
-            // 2. Lấy danh sách Cards thuộc Board qua Navigation Property
             var cards = await _context.Cards
                 .IgnoreQueryFilters()
                 .Where(card => card.Column.BoardId == board.Id)
                 .ToListAsync(cancellationToken);
 
-            // 3. Lấy danh sách Sprints thuộc Board (đối với Scrum Board)
             var sprints = await _context.Sprints
                 .IgnoreQueryFilters()
                 .Where(s => s.BoardId == board.Id)
                 .ToListAsync(cancellationToken);
 
-            // 4. Dọn dẹp CardComments và CardDependencies liên quan đến các Cards của Board
             var cardIds = cards.Select(c => c.Id).ToList();
             if (cardIds.Count > 0)
             {
@@ -75,7 +71,6 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteBoard
                 }
             }
 
-            // 5. Dọn dẹp UserBoardPreferences của Board
             var preferences = await _context.UserBoardPreferences
                 .Where(p => p.BoardId == board.Id)
                 .ToListAsync(cancellationToken);
@@ -85,7 +80,6 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteBoard
                 _context.UserBoardPreferences.RemoveRange(preferences);
             }
 
-            // 6. Xoá mềm Sprints, Cards, Columns, Board (ApplicationDbContext tự động gán IsDeleted = true)
             if (sprints.Count > 0)
             {
                 _context.Sprints.RemoveRange(sprints);
