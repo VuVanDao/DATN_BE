@@ -209,7 +209,7 @@ public class WorkspaceProjectSecurityTests
         f.Current.UserId = f.Outsider.Id;
         Assert.Empty((await handler.Handle(new(), default)).RecentBoards);
         f.Current.UserId = null;
-        await Assert.ThrowsAsync<ForbiddenException>(() => handler.Handle(new(), default));
+        await Assert.ThrowsAsync<UnauthorizedException>(() => handler.Handle(new(), default));
     }
 
     [Theory]

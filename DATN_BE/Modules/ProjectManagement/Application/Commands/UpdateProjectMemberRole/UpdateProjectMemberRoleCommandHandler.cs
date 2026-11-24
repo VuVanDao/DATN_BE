@@ -1,4 +1,4 @@
-using DATN_BE.Modules.Identity.Domain.Enum;
+﻿using DATN_BE.Modules.Identity.Domain.Enum;
 using DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectLeader;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
@@ -26,7 +26,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateProjectMe
             CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này");
 
             var project = await _context.Projects
                 .Where(p => p.Id == request.ProjectId)

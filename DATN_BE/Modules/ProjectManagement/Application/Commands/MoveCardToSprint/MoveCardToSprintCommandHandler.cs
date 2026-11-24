@@ -1,4 +1,4 @@
-using DATN_BE.Modules.ProjectManagement.Domain.Enum;
+﻿using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
@@ -35,7 +35,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprin
         public async Task<CardDto> Handle(MoveCardToSprintCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để thao tác.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để thao tác.");
 
             var card = await _context.Cards
                 .Include(c => c.Column)

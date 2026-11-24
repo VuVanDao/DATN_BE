@@ -1,4 +1,4 @@
-using DATN_BE.Modules.Identity.Application.DTOs;
+﻿using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Domain.Constants;
@@ -19,7 +19,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.UpdateProfile
         public async Task<UserProfileDto> Handle(UpdateProfileCommand request, CancellationToken cancellationToken)
         {
             // lấy userId trong token người dùng gửi lên
-            var userId = _currentUserService.UserId ?? throw new UnauthorizedAccessException("Người dùng chưa đăng nhập, yêu cầu đăng nhập");
+            var userId = _currentUserService.UserId ?? throw new UnauthorizedException("Người dùng chưa đăng nhập, yêu cầu đăng nhập");
             // lấy user tương ứng với UserId
             var user = await _context.Users.Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken) ?? throw new NotFoundException("Không tìm thấy user tương ứng");

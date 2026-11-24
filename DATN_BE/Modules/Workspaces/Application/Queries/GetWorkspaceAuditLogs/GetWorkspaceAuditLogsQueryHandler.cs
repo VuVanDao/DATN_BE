@@ -1,4 +1,4 @@
-using DATN_BE.Modules.Security.Application.DTOs;
+﻿using DATN_BE.Modules.Security.Application.DTOs;
 using DATN_BE.Modules.Security.Domain.Enum;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -13,7 +13,7 @@ public class GetWorkspaceAuditLogsQueryHandler(IApplicationDbContext context, IC
 {
     public async Task<PagedResult<ActivityLogDto>> Handle(GetWorkspaceAuditLogsQuery request, CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId ?? throw new ForbiddenException("Bạn cần đăng nhập.");
+        var userId = currentUserService.UserId ?? throw new UnauthorizedException("Bạn cần đăng nhập.");
         // Retain access to deletion history; ownership is still checked against persisted data.
         var workspace = await context.Workspaces.IgnoreQueryFilters().AsNoTracking()
             .Where(w => w.Id == request.WorkspaceId)

@@ -1,4 +1,4 @@
-using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+﻿using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -16,7 +16,7 @@ public class UpdateBoardPreferenceCommandHandler(
     public async Task<BoardPreferenceDto> Handle(UpdateBoardPreferenceCommand request, CancellationToken cancellationToken)
     {
         var userId = currentUserService.UserId
-            ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này.");
+            ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này.");
 
         // Exclude boards under deleted projects/workspaces as well.
         var board = await context.Boards.AsNoTracking()

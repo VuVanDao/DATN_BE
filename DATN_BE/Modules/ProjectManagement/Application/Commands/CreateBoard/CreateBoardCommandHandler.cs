@@ -1,4 +1,4 @@
-using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+﻿using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -28,7 +28,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateBoard
         public async Task<BoardDto> Handle(CreateBoardCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này.");
                 
             var projectExists = await _context.Projects
                 .AsNoTracking()

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,7 +24,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Queries.GetWorkspaceBySlug
 
         public async Task<WorkspaceDetailDto> Handle(GetWorkspaceBySlugQuery request, CancellationToken cancellationToken)
         {
-            var currUserId = _currentUserService.UserId ?? throw new ForbiddenException("Bạn cần đăng nhập để xem thông tin Workspace");
+            var currUserId = _currentUserService.UserId ?? throw new UnauthorizedException("Bạn cần đăng nhập để xem thông tin Workspace");
             var slug = request.Slug.Trim().ToLower();
             var isGuid = Guid.TryParse(request.Slug.Trim(), out var workspaceId);
 

@@ -18,7 +18,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Queries.GetUserWorkspaces
         }
         public async Task<List<WorkspaceDto>> Handle(GetUserWorkspacesQuery request, CancellationToken cancellationToken)
         {
-            var currentUserId = _currentUserService.UserId ?? throw new ForbiddenException("Bạn cần đăng nhập để xem danh sách Workspace");
+            var currentUserId = _currentUserService.UserId ?? throw new UnauthorizedException("Bạn cần đăng nhập để xem danh sách Workspace");
             // Lấy tất cả Workspace mà user đang làm Owner HOẶC làm Member
             // 1. Dùng .AsNoTracking(): Tắt hoàn toàn bộ theo dõi của EF Core giúp truy vấn nhanh hơn
             var workspace = await _context.Workspaces.AsNoTracking().Where(w => !w.IsDeleted && (w.OwnerId == currentUserId || w.Members.Any(m => m.UserId == currentUserId)))

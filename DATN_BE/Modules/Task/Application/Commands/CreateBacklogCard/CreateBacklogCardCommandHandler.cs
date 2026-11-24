@@ -1,4 +1,4 @@
-using DATN_BE.Modules.ProjectManagement.Domain.Entities;
+﻿using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 using DATN_BE.Modules.Security.Domain.Enum;
@@ -42,7 +42,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateBacklogCard
         public async Task<CardDto> Handle(CreateBacklogCardCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để tạo thẻ công việc.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để tạo thẻ công việc.");
 
             // 1. Tìm Bảng Scrum chỉ định để gán Cột cho thẻ
             var scrumBoard = await _context.Boards

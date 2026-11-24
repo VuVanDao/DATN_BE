@@ -52,6 +52,16 @@ namespace DATN_BE.Shared.Presentation.Middlewares
                     StatusCode = (int)HttpStatusCode.Forbidden,
                     Body = ApiResponse<object>.Fail(forbiddenEx.Message)
                 },
+                UnauthorizedException unauthorizedEx => new
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Body = ApiResponse<object>.Fail(unauthorizedEx.Message)
+                },
+                UnauthorizedAccessException unauthorizedAccessEx => new
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Body = ApiResponse<object>.Fail(unauthorizedAccessEx.Message)
+                },
                 _ => new
                 {
                     StatusCode = (int)HttpStatusCode.InternalServerError,

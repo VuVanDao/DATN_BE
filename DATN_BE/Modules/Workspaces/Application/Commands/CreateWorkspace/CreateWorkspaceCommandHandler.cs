@@ -1,4 +1,4 @@
-using DATN_BE.Modules.Workspaces.Application.DTOs;
+﻿using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -20,7 +20,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace
         }
         public async Task<WorkspaceDto> Handle(CreateWorkspaceCommand request, CancellationToken cancellationToken)
         {
-            var currentUserId = _currentUserService.UserId ?? throw new ForbiddenException("Bạn cần đăng nhập để tạo Workspace.");
+            var currentUserId = _currentUserService.UserId ?? throw new UnauthorizedException("Bạn cần đăng nhập để tạo Workspace.");
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == currentUserId && !u.IsDeleted, cancellationToken) ?? throw new NotFoundException("Người dùng không tồn tại");
 
             // 1. Tự động sinh Slug và xử lý chống trùng Slug

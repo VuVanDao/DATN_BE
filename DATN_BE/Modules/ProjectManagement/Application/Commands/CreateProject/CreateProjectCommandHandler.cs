@@ -1,4 +1,4 @@
-using DATN_BE.Modules.Identity.Domain.Enum;
+﻿using DATN_BE.Modules.Identity.Domain.Enum;
 using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Enum;
@@ -21,7 +21,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateProject
         }
         public async Task<ProjectDto> Handle(CreateProjectCommand request, CancellationToken cancellationToken)
         {
-            var currentUserId = _currentUserService.UserId ?? throw new ForbiddenException("Bạn cần phải đăng nhập vào trước");
+            var currentUserId = _currentUserService.UserId ?? throw new UnauthorizedException("Bạn cần phải đăng nhập vào trước");
 
             // 1. Kiểm tra Workspace có tồn tại và User có phải thành viên không
             var targetWorkspace = await _context.Workspaces

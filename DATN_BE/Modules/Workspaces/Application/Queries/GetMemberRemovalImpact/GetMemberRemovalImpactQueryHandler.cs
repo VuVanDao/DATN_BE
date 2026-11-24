@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,7 +25,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Queries.GetMemberRemovalImpact
         public async Task<MemberRemovalImpactDto> Handle(GetMemberRemovalImpactQuery request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-               ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");
+               ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này");
 
             // tìm workspace mà:
             // w.OwnerId == currentUserId: case workspaceOwner xoá thành viên

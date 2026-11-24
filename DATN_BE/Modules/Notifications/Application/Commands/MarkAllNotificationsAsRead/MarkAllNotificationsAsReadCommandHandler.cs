@@ -1,4 +1,4 @@
-using DATN_BE.Modules.Notifications.Presentation.Hubs;
+﻿using DATN_BE.Modules.Notifications.Presentation.Hubs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -32,7 +32,7 @@ namespace DATN_BE.Modules.Notifications.Application.Commands.MarkAllNotification
             CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này.");
 
             var unreadNotifications = await _context.Notifications
                 .Where(n => n.ReceiverId == currentUserId && !n.IsRead)

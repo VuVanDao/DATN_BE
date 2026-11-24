@@ -1,4 +1,4 @@
-using DATN_BE.Shared.Application.Exceptions;
+﻿using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
@@ -32,7 +32,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.ReorderColumns
         public async Task<bool> Handle(ReorderColumnsCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này");
                 
             if (request.OrderedColumnIds == null || request.OrderedColumnIds.Count == 0)
             {

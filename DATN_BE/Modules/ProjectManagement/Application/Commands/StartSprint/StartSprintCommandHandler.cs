@@ -1,4 +1,4 @@
-using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+﻿using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 using DATN_BE.Shared.Application.Exceptions;
@@ -35,7 +35,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.StartSprint
         public async Task<SprintDto> Handle(StartSprintCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để bắt đầu Sprint.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để bắt đầu Sprint.");
 
             var sprint = await _context.Sprints
                 .Include(s => s.Cards)

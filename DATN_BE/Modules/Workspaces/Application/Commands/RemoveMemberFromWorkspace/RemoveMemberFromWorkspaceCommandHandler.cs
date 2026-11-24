@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,7 +23,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.RemoveMemberFromProjec
         {
             // 1. Xác thực người dùng hiện tại
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này");
 
             // 2. Tìm Workspace
             var workspace = await _context.Workspaces

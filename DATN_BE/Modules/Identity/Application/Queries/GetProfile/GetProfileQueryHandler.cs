@@ -1,4 +1,4 @@
-using DATN_BE.Modules.Identity.Application.DTOs;
+﻿using DATN_BE.Modules.Identity.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Domain.Constants;
@@ -18,7 +18,7 @@ namespace DATN_BE.Modules.Identity.Application.Queries.GetProfile
         }
         public async Task<UserProfileDto> Handle(GetProfileQuery request, CancellationToken cancellationToken)
         {
-            var UserId = _currentUserService.UserId ?? throw new UnauthorizedAccessException("Yêu cầu đăng nhập, bạn chưa đăng nhập vào hệ thống");
+            var UserId = _currentUserService.UserId ?? throw new UnauthorizedException("Yêu cầu đăng nhập, bạn chưa đăng nhập vào hệ thống");
             // tìm user tương ứng với UserId
             var user = await _context.Users.Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Id == UserId, cancellationToken) ?? throw new NotFoundException("Không tìm thấy người dùng");

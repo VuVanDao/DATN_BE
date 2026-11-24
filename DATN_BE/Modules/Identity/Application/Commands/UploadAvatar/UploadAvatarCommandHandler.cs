@@ -21,7 +21,7 @@ namespace DATN_BE.Modules.Identity.Application.Commands.UploadAvatar
         }
         public async Task<string> Handle(UploadAvatarCommand request, CancellationToken cancellationToken)
         {
-            var userId = _currentUserService.UserId ?? throw new UnauthorizedAccessException("Yêu cầu đăng nhập, người dùng hiện tại chưa đăng nhập");
+            var userId = _currentUserService.UserId ?? throw new UnauthorizedException("Yêu cầu đăng nhập, người dùng hiện tại chưa đăng nhập");
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken) ?? throw new NotFoundException("Không tìm thấy user tương ứng");
 
             // upload ảnh lên cloudinary

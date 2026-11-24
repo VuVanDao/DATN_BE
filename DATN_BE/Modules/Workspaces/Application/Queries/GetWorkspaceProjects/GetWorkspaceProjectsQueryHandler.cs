@@ -1,4 +1,4 @@
-using DATN_BE.Modules.Workspaces.Application.DTOs;
+﻿using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Application.Models;
@@ -12,7 +12,7 @@ public class GetWorkspaceProjectsQueryHandler(IApplicationDbContext _context, IC
 {
     public async Task<PagedResult<WorkspaceProjectDto>> Handle(GetWorkspaceProjectsQuery request, CancellationToken cancellationToken)
     {
-        var userId = _currentUserService.UserId ?? throw new ForbiddenException("Bạn cần đăng nhập.");
+        var userId = _currentUserService.UserId ?? throw new UnauthorizedException("Bạn cần đăng nhập.");
         if (!await _context.Workspaces.AnyAsync(w => w.Id == request.WorkspaceId &&
             (w.OwnerId == userId || w.Members.Any(m => m.UserId == userId)), cancellationToken))
             throw new NotFoundException("Không tìm thấy Workspace hoặc bạn không có quyền xem.");

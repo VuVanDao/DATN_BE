@@ -40,7 +40,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.AddCardComment
         public async Task<CardCommentDto> Handle(AddCardCommentCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để bình luận.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để bình luận.");
             var card = await _context.Cards.Include(c => c.Column).ThenInclude(c => c.Board)
                 .FirstOrDefaultAsync(c => c.Id == request.CardId, cancellationToken)
                 ?? throw new NotFoundException($"Không tìm thấy card với id {request.CardId}");

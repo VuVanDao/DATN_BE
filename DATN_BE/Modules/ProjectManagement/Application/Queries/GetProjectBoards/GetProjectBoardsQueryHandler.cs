@@ -1,4 +1,4 @@
-using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+﻿using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -24,7 +24,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetProjectBoards
             CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để xem danh sách Bảng.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để xem danh sách Bảng.");
 
             var projectExists = await _context.Projects
                 .AsNoTracking()

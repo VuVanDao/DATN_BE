@@ -1,4 +1,4 @@
-using DATN_BE.Modules.Workspaces.Application.DTOs;
+﻿using DATN_BE.Modules.Workspaces.Application.DTOs;
 using DATN_BE.Modules.Workspaces.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -22,7 +22,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.UpdateWorkspace
         }
         public async Task<WorkspaceDetailDto> Handle(UpdateWorkspaceCommand request, CancellationToken cancellationToken)
         {
-            var currUserId = _currentUserService.UserId ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");
+            var currUserId = _currentUserService.UserId ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này");
             var workspaceToUpdate = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == request.WorkspaceId, cancellationToken) ?? throw new NotFoundException("Không tìm thấy workspace cần cập nhật");
             if (currUserId != workspaceToUpdate.OwnerId)
             {

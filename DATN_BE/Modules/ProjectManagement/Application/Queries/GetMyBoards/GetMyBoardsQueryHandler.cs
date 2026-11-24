@@ -1,4 +1,4 @@
-using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+﻿using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -12,7 +12,7 @@ public class GetMyBoardsQueryHandler(IApplicationDbContext context, ICurrentUser
     public async Task<MyBoardsDto> Handle(GetMyBoardsQuery request, CancellationToken cancellationToken)
     {
         var userId = currentUserService.UserId
-            ?? throw new ForbiddenException("Bạn cần đăng nhập để xem danh sách Bảng.");
+            ?? throw new UnauthorizedException("Bạn cần đăng nhập để xem danh sách Bảng.");
 
         var takeCount = request.Limit is > 0 ? request.Limit.Value : 3;
 

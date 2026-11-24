@@ -1,4 +1,4 @@
-using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
+﻿using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
@@ -33,7 +33,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.DeleteSprint
         public async Task<bool> Handle(DeleteSprintCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để xóa Sprint.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để xóa Sprint.");
 
             var sprint = await _context.Sprints
                 .Include(s => s.Cards)

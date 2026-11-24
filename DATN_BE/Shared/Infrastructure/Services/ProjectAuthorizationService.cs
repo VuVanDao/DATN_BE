@@ -83,7 +83,7 @@ namespace DATN_BE.Shared.Infrastructure.Services
         private Guid GetCurrentUserId()
         {
             return _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này.");
         }
 
         private static async Task EnsureAsync(Task<bool> accessCheck, string forbiddenMessage)

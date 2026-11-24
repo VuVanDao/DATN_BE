@@ -1,4 +1,4 @@
-using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+﻿using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
@@ -36,7 +36,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.CreateSprint
         public async Task<SprintDto> Handle(CreateSprintCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để tạo Sprint.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để tạo Sprint.");
 
             var projectExists = await _context.Projects
                 .AsNoTracking()

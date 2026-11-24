@@ -1,4 +1,4 @@
-using DATN_BE.Modules.ProjectManagement.Application.DTOs;
+﻿using DATN_BE.Modules.ProjectManagement.Application.DTOs;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
 using DATN_BE.Shared.Domain.Constants;
@@ -27,7 +27,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.UpdateBoard
         public async Task<BoardDto> Handle(UpdateBoardCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này.");
 
             var targetBoard = await _context.Boards
                 .FirstOrDefaultAsync(item => item.Id == request.BoardId, cancellationToken)

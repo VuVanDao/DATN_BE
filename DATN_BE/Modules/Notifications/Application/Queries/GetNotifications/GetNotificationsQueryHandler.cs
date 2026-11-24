@@ -1,4 +1,4 @@
-using DATN_BE.Modules.Notifications.Application.DTOs;
+﻿using DATN_BE.Modules.Notifications.Application.DTOs;
 using DATN_BE.Modules.Notifications.Application.Helpers;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -25,7 +25,7 @@ namespace DATN_BE.Modules.Notifications.Application.Queries.GetNotifications
             CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để xem thông báo.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để xem thông báo.");
 
             var baseQuery = _context.Notifications
                 .AsNoTracking()

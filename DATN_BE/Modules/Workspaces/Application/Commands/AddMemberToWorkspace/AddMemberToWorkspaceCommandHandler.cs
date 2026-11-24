@@ -1,4 +1,4 @@
-using DATN_BE.Modules.Identity.Domain.Entities;
+﻿using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.Identity.Domain.Enum;
 using DATN_BE.Modules.Notifications.Domain.Enum;
 using DATN_BE.Modules.Workspaces.Application.DTOs;
@@ -31,7 +31,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.AddWorkspaceMember
         public async Task<AddWorkspaceMembersResultDto> Handle(AddMemberToWorkspaceCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này");
 
             // 1. check workspace exist
             var workspace = await _context.Workspaces.Include(w => w.Members).Include(w => w.Owner)

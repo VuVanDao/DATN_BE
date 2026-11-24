@@ -1,4 +1,4 @@
-using DATN_BE.Modules.ProjectManagement.Domain.Entities;
+﻿using DATN_BE.Modules.ProjectManagement.Domain.Entities;
 using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
@@ -23,7 +23,7 @@ namespace DATN_BE.Modules.Workspaces.Application.Commands.DeleteWorkspace
         {
             // 1. Kiểm tra xác thực người dùng hiện tại
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này.");
 
             var currentUser = await _context.Users
                 .Include(u => u.Role)

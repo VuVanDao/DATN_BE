@@ -1,4 +1,4 @@
-using DATN_BE.Modules.Identity.Domain.Entities;
+﻿using DATN_BE.Modules.Identity.Domain.Entities;
 using DATN_BE.Modules.Notifications.Application.Helpers;
 using DATN_BE.Modules.ProjectManagement.Domain.Enum;
 using DATN_BE.Modules.ProjectManagement.Presentation.Hubs;
@@ -45,7 +45,7 @@ namespace DATN_BE.Modules.Task.Application.Commands.CreateCard
         public async Task<CardDto> Handle(CreateCardCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để tạo Thẻ công việc.");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để tạo Thẻ công việc.");
             // Kiểm tra xem cột có tồn tại không
             var targetColumn = await _context.Columns.Include(c => c.Board)
                 .FirstOrDefaultAsync(c => c.Id == request.ColumnId, cancellationToken)

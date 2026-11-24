@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -34,7 +34,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.AddMemberToProe
         public async Task<List<ProjectMemberDto>> Handle(AddMemberToProejctCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này");
 
             var project = await _context.Projects
                 .Include(p => p.Workspace)

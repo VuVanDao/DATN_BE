@@ -1,4 +1,5 @@
-﻿using DATN_BE.Modules.Security.Application.DTOs;
+﻿using DATN_BE.Shared.Application.Exceptions;
+using DATN_BE.Modules.Security.Application.DTOs;
 using DATN_BE.Shared.Application.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,7 @@ namespace DATN_BE.Modules.Security.Application.Queries.GetMyLoginHistory
 
         public async Task<List<LoginHistoryDto>> Handle(GetMyLoginHistoryQuery request, CancellationToken cancellationToken)
         {
-            var userId = _currentUserService.UserId ?? throw new UnauthorizedAccessException("Bạn chưa đăng nhập."); ;
+            var userId = _currentUserService.UserId ?? throw new UnauthorizedException("Bạn chưa đăng nhập."); ;
             var limit = request.Limit > 100 ? 100 : (request.Limit < 1 ? 20 : request.Limit);
             var histories = await _context.LoginHistories
                 .Where(lh => lh.UserId == userId)

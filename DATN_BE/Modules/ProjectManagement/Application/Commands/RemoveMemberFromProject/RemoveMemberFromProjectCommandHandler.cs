@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,7 +22,7 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.RemoveMemberFro
         public async Task<bool> Handle(RemoveMemberFromProjectCommand request, CancellationToken cancellationToken)
         {
             var currentUserId = _currentUserService.UserId
-                ?? throw new ForbiddenException("Bạn cần đăng nhập để thực hiện hành động này");
+                ?? throw new UnauthorizedException("Bạn cần đăng nhập để thực hiện hành động này");
 
             var project = await _context.Projects
                 .Include(p => p.Workspace)
