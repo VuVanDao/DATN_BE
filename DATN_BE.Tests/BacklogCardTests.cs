@@ -295,6 +295,69 @@ public class BacklogCardTests
         Assert.Equal(0, updatedB1!.Position);
     }
 
+    [Fact]
+    public async Task Reorder_cards_in_active_sprint_by_project_member_throws_forbidden()
+    {
+        await using var f = await BacklogFixture.Create();
+        var activeSprint = new Sprint
+        {
+            Name = "Active Sprint",
+            BoardId = f.ScrumBoard.Id,
+            ProjectId = f.Project.Id,
+            Status = SprintStatus.Active
+        };
+        f.Db.Sprints.Add(activeSprint);
+
+        var s0 = new Card { Title = "Task 0", ColumnId = f.ColumnToDo.Id, Position = 0, SprintId = activeSprint.Id, ReporterId = f.Owner.Id };
+        var s1 = new Card { Title = "Task 1", ColumnId = f.ColumnToDo.Id, Position = 1, SprintId = activeSprint.Id, ReporterId = f.Owner.Id };
+        f.Db.Cards.AddRange(s0, s1);
+        await f.Db.SaveChangesAsync();
+
+        var handler = new MoveCardToSprintCommandHandler(f.Db, f.Current, f.Auth);
+        f.Current.UserId = f.Member.Id;
+
+        // Reordering in active sprint requires ProjectLeader or WorkspaceOwner
+        await Assert.ThrowsAsync<ForbiddenException>(() => handler.Handle(new MoveCardToSprintCommand
+        {
+            CardId = s1.Id,
+            SprintId = activeSprint.Id,
+            NewPosition = 0
+        }, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Reorder_cards_in_active_sprint_by_project_leader_succeeds()
+    {
+        await using var f = await BacklogFixture.Create();
+        var activeSprint = new Sprint
+        {
+            Name = "Active Sprint",
+            BoardId = f.ScrumBoard.Id,
+            ProjectId = f.Project.Id,
+            Status = SprintStatus.Active
+        };
+        f.Db.Sprints.Add(activeSprint);
+
+        var s0 = new Card { Title = "Task 0", ColumnId = f.ColumnToDo.Id, Position = 0, SprintId = activeSprint.Id, ReporterId = f.Owner.Id };
+        var s1 = new Card { Title = "Task 1", ColumnId = f.ColumnToDo.Id, Position = 1, SprintId = activeSprint.Id, ReporterId = f.Owner.Id };
+        f.Db.Cards.AddRange(s0, s1);
+        await f.Db.SaveChangesAsync();
+
+        var handler = new MoveCardToSprintCommandHandler(f.Db, f.Current, f.Auth);
+        f.Current.UserId = f.Owner.Id; // Owner is ProjectLeader
+
+        var result = await handler.Handle(new MoveCardToSprintCommand
+        {
+            CardId = s1.Id,
+            SprintId = activeSprint.Id,
+            NewPosition = 0
+        }, CancellationToken.None);
+
+        Assert.Equal(0, result.Position);
+        var updated0 = await f.Db.Cards.FindAsync(s0.Id);
+        Assert.Equal(1, updated0!.Position);
+    }
+
     private sealed class CurrentUser : ICurrentUserService
     {
         public Guid? UserId { get; set; }

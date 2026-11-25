@@ -57,55 +57,39 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprin
                 throw new BadRequestException("Chỉ các thẻ thuộc mô hình Scrum mới có thể đưa vào Sprint hoặc Backlog.");
             }
 
-            // Kiểm tra trạng thái của Sprint nguồn (nếu thẻ đang thuộc 1 Sprint)
-            bool isSourceActive = false;
-            if (card.SprintId.HasValue)
-            {
-                var sourceSprint = await _context.Sprints
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(s => s.Id == card.SprintId.Value, cancellationToken);
-                isSourceActive = sourceSprint?.Status == SprintStatus.Active;
-            }
-
-            // Kiểm tra trạng thái của Sprint đích (nếu chuyển vào 1 Sprint)
-            bool isTargetActive = false;
-            if (request.SprintId.HasValue)
-            {
-                var targetSprint = await _context.Sprints
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(s => s.Id == request.SprintId.Value && s.ProjectId == projectId, cancellationToken)
-                    ?? throw new NotFoundException("Sprint", request.SprintId.Value);
-
-                if (targetSprint.BoardId != card.Column!.BoardId)
-                {
-                    throw new BadRequestException("Không thể đưa thẻ vào Sprint của một Bảng Scrum khác.");
-                }
-
-                if (targetSprint.Status == SprintStatus.Closed)
-                {
-                    throw new BadRequestException("Không thể đưa công việc vào một Sprint đã đóng.");
-                }
-
-                isTargetActive = targetSprint.Status == SprintStatus.Active;
-            }
-
             var oldSprintId = card.SprintId;
+            var targetSprintId = request.SprintId;
             var boardId = card.Column!.BoardId;
 
-            // 2. Nếu thêm/bớt thẻ làm thay đổi phạm vi của Sprint đang chạy -> Bắt buộc là WorkspaceOwner hoặc ProjectLeader!
-            bool isChangingActiveSprintScope = (oldSprintId != request.SprintId) && (isSourceActive || isTargetActive);
-            if (isChangingActiveSprintScope)
+            if (oldSprintId == targetSprintId)
             {
-                await _authorizationService.EnsureCanManageProjectAsync(projectId, cancellationToken);
-            }
-
-            if (oldSprintId == request.SprintId)
-            {
-                // TH1: Sắp xếp lại thứ tự (Reorder) trong cùng 1 container (cùng Sprint hoặc cùng Product Backlog)
+                // =========================================================================
+                // TH1: SẮP XẾP LẠI THỨ TỰ (REORDER) TRONG CÙNG CONTAINER (CÙNG SPRINT HOẶC CÙNG PRODUCT BACKLOG)
+                // =========================================================================
                 if (request.NewPosition.HasValue)
                 {
+                    // Nếu đang sắp xếp thứ tự trong một Sprint
+                    if (targetSprintId.HasValue)
+                    {
+                        var sprint = await _context.Sprints
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(s => s.Id == targetSprintId.Value, cancellationToken)
+                            ?? throw new NotFoundException("Sprint", targetSprintId.Value);
+
+                        if (sprint.Status == SprintStatus.Closed)
+                        {
+                            throw new BadRequestException("Không thể sắp xếp công việc trong một Sprint đã hoàn thành.");
+                        }
+
+                        // Nếu Sprint đang chạy (Active) -> Bắt buộc là WorkspaceOwner hoặc ProjectLeader mới được thay đổi thứ tự ưu tiên
+                        if (sprint.Status == SprintStatus.Active)
+                        {
+                            await _authorizationService.EnsureCanManageProjectAsync(projectId, cancellationToken);
+                        }
+                    }
+
                     var cardsInContainer = await _context.Cards
-                        .Where(c => c.Column.BoardId == boardId && c.SprintId == request.SprintId && c.Id != card.Id)
+                        .Where(c => c.Column.BoardId == boardId && c.SprintId == targetSprintId && c.Id != card.Id)
                         .OrderBy(c => c.Position)
                         .ToListAsync(cancellationToken);
 
@@ -120,7 +104,45 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprin
             }
             else
             {
-                // TH2: Kéo thả sang container khác (giữa Sprint và Backlog, hoặc giữa Sprint A và Sprint B)
+                // =========================================================================
+                // TH2: KÉO THẢ SANG CONTAINER KHÁC (GIỮA BACKLOG VÀ SPRINT, HOẶC GIỮA 2 SPRINT)
+                // =========================================================================
+                bool isSourceActive = false;
+                if (oldSprintId.HasValue)
+                {
+                    var sourceSprint = await _context.Sprints
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(s => s.Id == oldSprintId.Value, cancellationToken);
+                    isSourceActive = sourceSprint?.Status == SprintStatus.Active;
+                }
+
+                bool isTargetActive = false;
+                if (targetSprintId.HasValue)
+                {
+                    var targetSprint = await _context.Sprints
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(s => s.Id == targetSprintId.Value && s.ProjectId == projectId, cancellationToken)
+                        ?? throw new NotFoundException("Sprint", targetSprintId.Value);
+
+                    if (targetSprint.BoardId != boardId)
+                    {
+                        throw new BadRequestException("Không thể đưa thẻ vào Sprint của một Bảng Scrum khác.");
+                    }
+
+                    if (targetSprint.Status == SprintStatus.Closed)
+                    {
+                        throw new BadRequestException("Không thể đưa công việc vào một Sprint đã đóng.");
+                    }
+
+                    isTargetActive = targetSprint.Status == SprintStatus.Active;
+                }
+
+                // Nếu thêm/bớt thẻ làm thay đổi phạm vi của Sprint đang chạy -> Bắt buộc là WorkspaceOwner hoặc ProjectLeader!
+                if (isSourceActive || isTargetActive)
+                {
+                    await _authorizationService.EnsureCanManageProjectAsync(projectId, cancellationToken);
+                }
+
                 // 1. Sắp xếp lại container nguồn (loại bỏ card)
                 var cardsInOldContainer = await _context.Cards
                     .Where(c => c.Column.BoardId == boardId && c.SprintId == oldSprintId && c.Id != card.Id)
@@ -134,11 +156,11 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Commands.MoveCardToSprin
 
                 // 2. Chèn card vào container đích
                 var cardsInTargetContainer = await _context.Cards
-                    .Where(c => c.Column.BoardId == boardId && c.SprintId == request.SprintId && c.Id != card.Id)
+                    .Where(c => c.Column.BoardId == boardId && c.SprintId == targetSprintId && c.Id != card.Id)
                     .OrderBy(c => c.Position)
                     .ToListAsync(cancellationToken);
 
-                card.SprintId = request.SprintId;
+                card.SprintId = targetSprintId;
 
                 // Nếu thẻ đang ở cột Done mà bị kéo sang container khác, đưa về cột chưa hoàn thành đầu tiên
                 if (card.Column != null && card.Column.IsDoneColumn)
