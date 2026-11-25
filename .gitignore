@@ -7,6 +7,7 @@ x64/
 x86/
 [Bb]uild/
 out/
+.verification/
 
 # Visual Studio / IDE temporary files & settings
 .vs/
@@ -36,7 +37,9 @@ project.fragment.lock.json
 # Environment secrets / Local overrides
 appsettings.Local.json
 appsettings.Development.local.json
+**/appsettings.Development.json
 appsettings.Secrets.json
+
 *.env
 secrets.json
 
@@ -49,3 +52,6 @@ secrets.json
 .DS_Store
 Thumbs.db
 desktop.ini
+
+.artifacts/
+.tmp*

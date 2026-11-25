@@ -1,0 +1,90 @@
+﻿using DATN_BE.Modules.Workspaces.Application.DTOs;
+using DATN_BE.Modules.Workspaces.Domain.Entities;
+using DATN_BE.Shared.Application.Exceptions;
+using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
+using DATN_BE.Shared.Utils;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+
+namespace DATN_BE.Modules.Workspaces.Application.Commands.CreateWorkspace
+{
+    public class CreateWorkspaceCommandHandler : IRequestHandler<CreateWorkspaceCommand, WorkspaceDto>
+    {
+        private readonly IApplicationDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
+        public CreateWorkspaceCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
+        {
+            _context = context;
+            _currentUserService = currentUserService;
+        }
+        public async Task<WorkspaceDto> Handle(CreateWorkspaceCommand request, CancellationToken cancellationToken)
+        {
+            var currentUserId = _currentUserService.UserId ?? throw new UnauthorizedException("Bạn cần đăng nhập để tạo Workspace.");
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == currentUserId && !u.IsDeleted, cancellationToken) ?? throw new NotFoundException("Người dùng không tồn tại");
+
+            // 1. Tự động sinh Slug và xử lý chống trùng Slug
+            var baseSlug = SlugHelper.GenerateSlug(request.Name);
+            if (string.IsNullOrWhiteSpace(baseSlug))
+            {
+                baseSlug = "workspace";
+            }
+            if (baseSlug.Length > 100)
+            {
+                baseSlug = baseSlug[..100].TrimEnd('-');
+            }
+
+            var existingSlugs = await _context.Workspaces
+                .Where(w => w.Slug == baseSlug || w.Slug.StartsWith(baseSlug + "-"))
+                .Select(w => w.Slug)
+                .ToHashSetAsync(cancellationToken);
+
+            var slug = baseSlug;
+            while (existingSlugs.Contains(slug))
+            {
+                var shortCode = SlugHelper.GenerateShortCode(6);
+                slug = $"{baseSlug}-{shortCode}";
+            }
+
+            // 2. Tạo Workspace
+            var workspace = new Workspace
+            {
+                Name = request.Name.Trim(),
+                Slug = slug,
+                Description = request.Description,
+                OwnerId = currentUserId
+            };
+            _context.Workspaces.Add(workspace);
+
+            // 3. Tìm Role "WorkspaceOwner" để gán cho Người tạo
+            var OwnerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == RoleConstants.WorkspaceOwner, cancellationToken) 
+                ?? throw new NotFoundException("Không tìm thấy vai trò WorkspaceOwner");
+
+            // 4. Thêm người tạo vào danh sách WorkspaceMembers
+            var member = new WorkspaceMember
+            {
+                WorkspaceId = workspace.Id,
+                UserId = currentUserId,
+                RoleId = OwnerRole.Id
+            };
+            _context.WorkspaceMembers.Add(member);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return new WorkspaceDto
+            {
+                Id = workspace.Id,
+                Name = workspace.Name,
+                Slug = workspace.Slug,
+                Description = workspace.Description,
+                LogoUrl = workspace.LogoUrl,
+                CoverImgUrl = workspace.CoverImgUrl,
+                OwnerId = workspace.OwnerId,
+                OwnerName = user.Username,
+                MembersCount = 1,
+                ProjectsCount = 0,
+                CurrentUserRole = OwnerRole != null? OwnerRole.Name : RoleConstants.WorkspaceOwner,
+                CreatedAt = workspace.CreatedAt
+            };
+        }
+    }
+}

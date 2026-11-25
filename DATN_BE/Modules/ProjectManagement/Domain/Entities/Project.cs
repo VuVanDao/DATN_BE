@@ -11,12 +11,13 @@ namespace DATN_BE.Modules.ProjectManagement.Domain.Entities
         public string? Description { get; set; }
         public Guid WorkspaceId { get; set; }
         public Workspace Workspace { get; set; } = null!;
-        public Guid OwnerId { get; set; }
-        public User Owner { get; set; } = null!;
+        public Guid CreatedById { get; set; }
+        public User CreatedBy { get; set; } = null!;
         public bool IsDeleted { get; set; } = false;
         public DateTimeOffset? DeletedAt { get; set; }
 
         public ICollection<Board> Boards { get; set; } = new List<Board>();
         public ICollection<ProjectMember> ProjectMembers { get; set; } = new List<ProjectMember>();
+        public ICollection<Sprint> Sprints { get; set; } = new List<Sprint>();
     }
 }

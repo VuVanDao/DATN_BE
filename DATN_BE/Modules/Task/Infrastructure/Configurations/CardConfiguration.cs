@@ -19,6 +19,7 @@ namespace DATN_BE.Modules.Task.Infrastructure.Configurations
                 .HasConversion<string>()
                 .HasMaxLength(20);
             builder.Property(c => c.CoverUrl).HasMaxLength(500);
+            builder.Property(c => c.IsCompleted).HasDefaultValue(false);
 
             // Quan hệ Column (1 Column có nhiều Card)
             builder.HasOne(c => c.Column)
@@ -28,20 +29,24 @@ namespace DATN_BE.Modules.Task.Infrastructure.Configurations
 
             // Quan hệ Assignee (1 User được giao nhiều Card)
             builder.HasOne(c => c.Assignee)
-                .WithMany(u => u.AssignedCard)
+                .WithMany(u => u.AssignedCards)
                 .HasForeignKey(c => c.AssigneeId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             // Quan hệ Reporter (1 User tạo nhiều Card)
             builder.HasOne(c => c.Reporter)
-                .WithMany(u => u.ReportedCard)
+                .WithMany(u => u.ReportedCards)
                 .HasForeignKey(c => c.ReporterId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Partial Unique Index: Position không trùng nhau trong CÙNG 1 Column
-            builder.HasIndex(c => new { c.ColumnId, c.Position })
-                .IsUnique()
-                .HasFilter("\"IsDeleted\" = false");
+            // Quan hệ Sprint (1 Sprint có nhiều Card)
+            builder.HasOne(c => c.Sprint)
+                .WithMany(s => s.Cards)
+                .HasForeignKey(c => c.SprintId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Index thông thường phục vụ ORDER BY Position nhanh chóng
+            builder.HasIndex(c => new { c.ColumnId, c.Position });
         }
     }
 }

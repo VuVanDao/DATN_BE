@@ -14,5 +14,7 @@ namespace DATN_BE.Modules.ProjectManagement.Domain.Entities
         public DateTimeOffset? DeletedAt { get; set; }
 
         public ICollection<Column> Columns { get; set; } = new List<Column>();
+        public ICollection<UserBoardPreference> UserBoardPreferences { get; set; } = new List<UserBoardPreference>();
+        public ICollection<Sprint> Sprints { get; set; } = new List<Sprint>();
     }
 }

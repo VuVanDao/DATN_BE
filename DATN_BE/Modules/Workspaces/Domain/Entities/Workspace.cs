@@ -10,6 +10,7 @@ namespace DATN_BE.Modules.Workspaces.Domain.Entities
         public string Slug { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? LogoUrl { get; set; }
+        public string? CoverImgUrl {  get; set; }
         public Guid OwnerId { get; set; }
         public User Owner { get; set; } = null!;
         public bool IsDeleted { get; set; } = false;
