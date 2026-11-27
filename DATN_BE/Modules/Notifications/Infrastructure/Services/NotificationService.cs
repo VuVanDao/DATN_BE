@@ -67,7 +67,7 @@ namespace DATN_BE.Modules.Notifications.Infrastructure.Services
                 return;
             }
 
-            // Chỉ resolve các bản ghi chưa có TargetUrl truyền sẵn
+            // Lọc ra danh sách các thông báo đang bị THIẾU LINK
             var needingUrls = createdPairs
                 .Where(p => string.IsNullOrWhiteSpace(p.Source.TargetUrl) && p.Entity.EntityType.HasValue && p.Entity.EntityId.HasValue)
                 .Select(p => p.Entity)

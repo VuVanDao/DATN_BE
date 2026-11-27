@@ -159,16 +159,63 @@ namespace DATN_BE.Modules.Notifications.Application.Helpers
             string boardSlug,
             Guid projectId,
             bool isOverdue,
-            DateTimeOffset dueDate)
+            DateTimeOffset dueDate,
+            bool isUnassigned = false,
+            int diffDays = 0)
         {
             var targetUrl = !string.IsNullOrWhiteSpace(boardSlug)
                 ? BuildCardTargetUrl(boardSlug, projectId, cardId)
                 : null;
 
-            var title = isOverdue ? "Công việc đã quá hạn!" : "Nhắc nhở: Công việc sắp đến hạn";
-            var content = isOverdue
-                ? $"Thẻ \"{cardTitle}\" đã quá hạn ({dueDate.ToLocalTime():dd/MM/yyyy HH:mm})."
-                : $"Thẻ \"{cardTitle}\" sẽ đến hạn vào {dueDate.ToLocalTime():dd/MM/yyyy HH:mm}. Vui lòng kiểm tra tiến độ.";
+            var localOffset = TimeSpan.FromHours(7);
+            var localDue = dueDate.ToOffset(localOffset);
+            var dueFormatted = localDue.ToString("dd/MM/yyyy HH:mm");
+
+            string title;
+            string content;
+
+            if (isUnassigned)
+            {
+                if (isOverdue)
+                {
+                    var overdueDays = Math.Abs(diffDays);
+                    title = "Công việc chưa phân công đã quá hạn!";
+                    content = overdueDays > 0
+                        ? $"Thẻ \"{cardTitle}\" chưa được gán người làm và đã quá hạn {overdueDays} ngày ({dueFormatted}). Vui lòng phân công hoặc kiểm tra tiến độ."
+                        : $"Thẻ \"{cardTitle}\" chưa được gán người làm và đã quá hạn ({dueFormatted}). Vui lòng phân công hoặc kiểm tra tiến độ.";
+                }
+                else if (diffDays == 0)
+                {
+                    title = "Nhắc nhở: Công việc chưa phân công sắp đến hạn";
+                    content = $"Thẻ \"{cardTitle}\" chưa được gán người làm và đến hạn hôm nay ({dueFormatted}). Vui lòng kiểm tra và phân công xử lý.";
+                }
+                else
+                {
+                    title = "Nhắc nhở: Công việc chưa phân công sắp đến hạn";
+                    content = $"Thẻ \"{cardTitle}\" chưa được gán người làm và sẽ đến hạn vào {dueFormatted}. Vui lòng kiểm tra và phân công xử lý.";
+                }
+            }
+            else
+            {
+                if (isOverdue)
+                {
+                    var overdueDays = Math.Abs(diffDays);
+                    title = "Công việc đã quá hạn!";
+                    content = overdueDays > 0
+                        ? $"Thẻ \"{cardTitle}\" đã quá hạn {overdueDays} ngày ({dueFormatted})."
+                        : $"Thẻ \"{cardTitle}\" đã quá hạn ({dueFormatted}).";
+                }
+                else if (diffDays == 0)
+                {
+                    title = "Nhắc nhở: Công việc sắp đến hạn";
+                    content = $"Thẻ \"{cardTitle}\" đến hạn vào hôm nay ({dueFormatted}). Vui lòng kiểm tra tiến độ.";
+                }
+                else
+                {
+                    title = "Nhắc nhở: Công việc sắp đến hạn";
+                    content = $"Thẻ \"{cardTitle}\" sẽ đến hạn vào {dueFormatted}. Vui lòng kiểm tra tiến độ.";
+                }
+            }
 
             return new NotificationDispatchItem(
                 ReceiverId: receiverId,
@@ -185,15 +232,14 @@ namespace DATN_BE.Modules.Notifications.Application.Helpers
 
         public static NotificationDto ToDto(
             Notification entity,
-            IReadOnlyDictionary<(EntityType Type, Guid Id), string>? targetUrls = null,
+            IReadOnlyDictionary<(EntityType Type, Guid Id), string>? resolvedUrls = null,
             string? targetUrlOverride = null,
             string? senderNameOverride = null,
             string? senderAvatarUrlOverride = null)
         {
-            string? resolvedUrl = targetUrlOverride;
-            if (resolvedUrl == null && entity.EntityType.HasValue && entity.EntityId.HasValue && targetUrls != null)
+            if (targetUrlOverride == null && entity.EntityType.HasValue && entity.EntityId.HasValue && resolvedUrls != null)
             {
-                targetUrls.TryGetValue((entity.EntityType.Value, entity.EntityId.Value), out resolvedUrl);
+                resolvedUrls.TryGetValue((entity.EntityType.Value, entity.EntityId.Value), out targetUrlOverride);
             }
 
             return new NotificationDto
@@ -208,7 +254,7 @@ namespace DATN_BE.Modules.Notifications.Application.Helpers
                 Type = entity.Type.ToString(),
                 EntityType = entity.EntityType?.ToString(),
                 EntityId = entity.EntityId,
-                TargetUrl = resolvedUrl,
+                TargetUrl = targetUrlOverride,
                 IsRead = entity.IsRead,
                 ReadAt = entity.ReadAt,
                 CreatedAt = entity.CreatedAt

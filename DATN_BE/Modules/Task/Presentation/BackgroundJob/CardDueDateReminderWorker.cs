@@ -1,6 +1,7 @@
 using DATN_BE.Modules.Notifications.Application.Helpers;
 using DATN_BE.Modules.Notifications.Domain.Enum;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using DATN_BE.Shared.Enum;
 using DATN_BE.Shared.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +13,12 @@ namespace DATN_BE.Modules.Task.Presentation.BackgroundJob
 {
     /// <summary>
     /// Worker chạy nền định kỳ để quét các thẻ công việc sắp hết hạn (trong 24h) hoặc đã quá hạn,
-    /// tự động gửi thông báo (DueDateReminder) tới người thực hiện (Assignee).
+    /// tự động gửi thông báo (DueDateReminder) tới người thực hiện (Assignee), hoặc tới
+    /// ProjectLeader / WorkspaceOwner nếu thẻ chưa được phân công.
     /// </summary>
     public class CardDueDateReminderWorker : BackgroundService
     {
+        private static readonly TimeSpan LocalTimeZoneOffset = TimeSpan.FromHours(7);// tạo 1 khoảng thời gian cố định 7 tiếng
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<CardDueDateReminderWorker> _logger;
         private readonly TimeSpan _checkInterval = TimeSpan.FromHours(1);
@@ -77,18 +80,17 @@ namespace DATN_BE.Modules.Task.Presentation.BackgroundJob
             var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
             var now = DateTimeOffset.UtcNow;
-            var soonThreshold = now.AddDays(1); // Thẻ sắp đến hạn trong vòng 24 giờ tới
-            var overdueThreshold = now.AddDays(-7); // Thẻ quá hạn trong vòng 7 ngày gần đây
+            var dbQueryStartTime = now.AddDays(-8);
+            var dbQueryEndTime = now.AddDays(2);
 
-            // 1. Lấy danh sách thẻ thỏa mãn điều kiện
-            var candidateCards = await db.Cards
+            // 1. Lấy danh sách thẻ thỏa mãn điều kiện thời gian tổng quát
+            var CardsNotCompleteFrom8BeforeTo2DayLater = await db.Cards
                 .AsNoTracking()
                 .Include(c => c.Column).ThenInclude(col => col.Board)
                 .Where(c => !c.IsCompleted
-                            && c.AssigneeId.HasValue
                             && c.DueDate.HasValue
-                            && c.DueDate.Value >= overdueThreshold
-                            && c.DueDate.Value <= soonThreshold
+                            && c.DueDate.Value >= dbQueryStartTime
+                            && c.DueDate.Value <= dbQueryEndTime
                             && c.Column != null
                             && !c.Column.IsDoneColumn
                             && !c.Column.IsDeleted
@@ -97,58 +99,176 @@ namespace DATN_BE.Modules.Task.Presentation.BackgroundJob
                 {
                     CardId = c.Id,
                     c.Title,
-                    AssigneeId = c.AssigneeId!.Value,
+                    c.AssigneeId,
                     DueDate = c.DueDate!.Value,
                     BoardSlug = c.Column.Board.Slug,
                     ProjectId = c.Column.Board.ProjectId
                 })
                 .ToListAsync(cancellationToken);
 
-            if (candidateCards.Count == 0)
+            if (CardsNotCompleteFrom8BeforeTo2DayLater.Count == 0)
             {
                 return;
             }
 
-            // 2. Chống spam thông báo: Kiểm tra xem thẻ nào đã được gửi thông báo DueDateReminder trong 20 giờ qua
-            var recentNotificationCutoff = now.AddHours(-20);
-            var cardIds = candidateCards.Select(c => c.CardId).ToList();
+            // 2. danh sách
+            var todayLocal = now.ToOffset(LocalTimeZoneOffset).Date;
 
-            var recentlyNotifiedCardIds = await db.Notifications
+            var CardsExpiredFrom7DayBeforeTo1DayLater = CardsNotCompleteFrom8BeforeTo2DayLater
+                .Select(c =>
+                {
+                    var dueLocal = c.DueDate.ToOffset(LocalTimeZoneOffset).Date;
+                    var diffDays = (dueLocal - todayLocal).Days;
+                    var isOverdue = diffDays < 0;
+                    return new
+                    {
+                        c.CardId,
+                        c.Title,
+                        c.AssigneeId,
+                        c.DueDate,
+                        c.BoardSlug,
+                        c.ProjectId,
+                        diffDays,
+                        isOverdue
+                    };
+                })
+                .Where(c => c.diffDays >= -7 && c.diffDays <= 1)
+                .ToList();
+
+            if (CardsExpiredFrom7DayBeforeTo1DayLater.Count == 0)
+            {
+                return;
+            }
+
+            // danh sách thẻ chưa được phân công
+            var unassignedCards = CardsExpiredFrom7DayBeforeTo1DayLater.Where(c => !c.AssigneeId.HasValue).ToList();
+            // danh sách project của các card chưua phân công
+            var unassignedProjectIds = unassignedCards.Select(c => c.ProjectId).Distinct().ToList();
+
+            var projectLeadersMap = new Dictionary<Guid, Guid>();
+            var workspaceOwnersMap = new Dictionary<Guid, Guid>();
+
+            if (unassignedProjectIds.Count > 0)
+            {
+                // tìm tất cả ProjectLeader của các dự án có thẻ chưa gán, nếu không có leader thì fallback sang WorkspaceOwner
+                var leaders = await db.ProjectMembers
+                    .AsNoTracking()
+                    .Where(pm => unassignedProjectIds.Contains(pm.ProjectId) && pm.Role.Name == RoleConstants.ProjectLeader)
+                    .Select(pm => new { pm.ProjectId, pm.UserId })
+                    .ToListAsync(cancellationToken);
+
+                projectLeadersMap = leaders.ToDictionary(l => l.ProjectId, l => l.UserId);
+
+                var wsOwners = await db.Projects
+                    .AsNoTracking()
+                    .Where(p => unassignedProjectIds.Contains(p.Id))
+                    .Select(p => new { ProjectId = p.Id, OwnerId = p.Workspace.OwnerId })
+                    .ToListAsync(cancellationToken);
+
+                workspaceOwnersMap = wsOwners
+                    .ToDictionary(x => x.ProjectId, x => x.OwnerId);
+            }
+
+            var targetRecipients = new List<(
+                Guid CardId,
+                string Title,
+                string BoardSlug,
+                Guid ProjectId,
+                DateTimeOffset DueDate,
+                bool IsOverdue,
+                int DiffDays,
+                bool IsUnassigned,
+                Guid ReceiverId)>();
+            // phân lạoi người nhận thông báo dựa trên Assignee, ProjectLeader hoặc WorkspaceOwner
+            foreach (var card in CardsExpiredFrom7DayBeforeTo1DayLater)
+            {
+                if (card.AssigneeId.HasValue)
+                {
+                    targetRecipients.Add((
+                        card.CardId,
+                        card.Title,
+                        card.BoardSlug,
+                        card.ProjectId,
+                        card.DueDate,
+                        card.isOverdue,
+                        card.diffDays,
+                        false,
+                        card.AssigneeId.Value));
+                }
+                else
+                {
+                    if (projectLeadersMap.TryGetValue(card.ProjectId, out var projectLeaderId))
+                    {
+                        targetRecipients.Add((
+                             card.CardId,
+                             card.Title,
+                             card.BoardSlug,
+                             card.ProjectId,
+                             card.DueDate,
+                             card.isOverdue,
+                             card.diffDays,
+                             true,
+                             projectLeaderId));
+                    }
+                    else if (workspaceOwnersMap.TryGetValue(card.ProjectId, out var ownerId))
+                    {
+                        targetRecipients.Add((
+                            card.CardId,
+                            card.Title,
+                            card.BoardSlug,
+                            card.ProjectId,
+                            card.DueDate,
+                            card.isOverdue,
+                            card.diffDays,
+                            true,
+                            ownerId));
+                    }
+                }
+            }
+
+            if (targetRecipients.Count == 0)
+            {
+                return;
+            }
+
+            var timeToCompare = now.AddHours(-20);// 20 tiếng trước tính từ time hiện tại
+            var cardIdsToSend = targetRecipients.Select(r => r.CardId).Distinct().ToList();
+
+            var recentNotiSended = await db.Notifications
                 .AsNoTracking()
                 .Where(n => n.Type == NotificationType.DueDateReminder
                             && n.EntityType == EntityType.Card
                             && n.EntityId.HasValue
-                            && cardIds.Contains(n.EntityId.Value)
-                            && n.CreatedAt >= recentNotificationCutoff)
-                .Select(n => n.EntityId!.Value)
-                .Distinct()
+                            && cardIdsToSend.Contains(n.EntityId.Value)
+                            && n.CreatedAt >= timeToCompare)
+                .Select(n => new { CardId = n.EntityId!.Value, n.ReceiverId })
                 .ToListAsync(cancellationToken);
 
-            var cardsToNotify = candidateCards
-                .Where(c => !recentlyNotifiedCardIds.Contains(c.CardId))
+            var recentNotiSendedSet = new HashSet<(Guid CardId, Guid ReceiverId)>(
+                recentNotiSended.Select(p => (p.CardId, p.ReceiverId)));
+
+            var itemsToDispatch = targetRecipients
+                .Where(tr => !recentNotiSendedSet.Contains((tr.CardId, tr.ReceiverId)))
+                .Select(tr => NotificationMapper.BuildDueDateReminderItem(
+                    receiverId: tr.ReceiverId,
+                    cardId: tr.CardId,
+                    cardTitle: tr.Title,
+                    boardSlug: tr.BoardSlug,
+                    projectId: tr.ProjectId,
+                    isOverdue: tr.IsOverdue,
+                    dueDate: tr.DueDate,
+                    isUnassigned: tr.IsUnassigned,
+                    diffDays: tr.DiffDays))
                 .ToList();
 
-            if (cardsToNotify.Count == 0)
+            if (itemsToDispatch.Count == 0)
             {
                 return;
             }
 
-            // 3. Tạo dispatch items và gửi qua NotificationService (Pha 1 DB + Pha 2 SignalR)
-            var dispatchItems = cardsToNotify.Select(c =>
-            {
-                var isOverdue = c.DueDate.Date < now.Date;
-                return NotificationMapper.BuildDueDateReminderItem(
-                    receiverId: c.AssigneeId,
-                    cardId: c.CardId,
-                    cardTitle: c.Title,
-                    boardSlug: c.BoardSlug,
-                    projectId: c.ProjectId,
-                    isOverdue: isOverdue,
-                    dueDate: c.DueDate);
-            }).ToList();
-
-            await notificationService.CreateAndSendManyAsync(dispatchItems, cancellationToken);
-            _logger.LogInformation("CardDueDateReminderWorker: Đã gửi {Count} thông báo nhắc hạn chót thẻ công việc.", dispatchItems.Count);
+            // 5. Gửi thông báo (Lưu DB + SignalR push nếu đang online)
+            await notificationService.CreateAndSendManyAsync(itemsToDispatch, cancellationToken);
+            _logger.LogInformation("CardDueDateReminderWorker: Đã gửi {Count} thông báo nhắc hạn chót thẻ công việc.", itemsToDispatch.Count);
         }
     }
 }
