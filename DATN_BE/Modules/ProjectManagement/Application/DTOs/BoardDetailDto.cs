@@ -11,6 +11,8 @@ namespace DATN_BE.Modules.ProjectManagement.Application.DTOs
         public string? ProjectKey { get; set; }
         public Guid? WorkspaceId { get; set; }
         public bool IsPinned { get; set; }
+        public bool IsWorkspaceOwner { get; set; }
+        public string? CurrentUserRole { get; set; }
         public SprintDto? ActiveSprint { get; set; }
         public List<ColumnDto> Columns { get; set; } = new();
     }

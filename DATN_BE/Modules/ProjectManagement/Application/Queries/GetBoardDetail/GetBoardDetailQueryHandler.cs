@@ -5,6 +5,7 @@ using DATN_BE.Modules.Task.Application.DTOs;
 using DATN_BE.Modules.Task.Domain.Entities;
 using DATN_BE.Shared.Application.Exceptions;
 using DATN_BE.Shared.Application.Interfaces;
+using DATN_BE.Shared.Domain.Constants;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,6 +55,8 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
 
             var currentUserId = _currentUserService?.UserId;
             var isPinned = false;
+            var isWorkspaceOwner = false;
+            string? currentUserRole = null;
 
             if (currentUserId.HasValue)
             {
@@ -62,6 +65,21 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                     .Where(p => p.BoardId == board.Id && p.UserId == currentUserId.Value)
                     .Select(p => p.IsPinned)
                     .FirstOrDefaultAsync(cancellationToken);
+
+                isWorkspaceOwner = await _context.Projects
+                    .AsNoTracking()
+                    .Where(p => p.Id == board.ProjectId)
+                    .Select(p => p.Workspace.OwnerId == currentUserId.Value)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                var currentMember = await _context.ProjectMembers
+                    .AsNoTracking()
+                    .Include(pm => pm.Role)
+                    .FirstOrDefaultAsync(pm => pm.ProjectId == board.ProjectId && pm.UserId == currentUserId.Value, cancellationToken);
+
+                currentUserRole = isWorkspaceOwner
+                    ? RoleConstants.WorkspaceOwner
+                    : currentMember?.Role?.Name;
             }
 
             SprintDto? activeSprintDto = null;
@@ -136,6 +154,8 @@ namespace DATN_BE.Modules.ProjectManagement.Application.Queries.GetBoardDetail
                 ProjectKey = board.Project?.ProjectKey,
                 WorkspaceId = board.Project?.WorkspaceId,
                 IsPinned = isPinned,
+                IsWorkspaceOwner = isWorkspaceOwner,
+                CurrentUserRole = currentUserRole,
                 ActiveSprint = activeSprintDto,
                 Columns = board.Columns
                     .OrderBy(c => c.Position)
